@@ -1,5 +1,14 @@
 # based on https://doc.rust-lang.org/cargo/guide/continuous-integration.html
 
+# Setup a cache to cache job parts between jobs to ensure faster builds
+cache:
+  - key:
+      files:
+        - Cargo.lock
+    paths:
+      - $HOME/.cargo/
+      - target/
+
 stages:
   - build
 
@@ -7,6 +16,7 @@ rust-latest:
   stage: build
   image: rust:latest
   script:
+    - rustup component add clippy
     - cargo build --verbose
     - cargo test --verbose
     - cargo clippy --verbose
