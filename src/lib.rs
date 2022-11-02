@@ -1,3 +1,3 @@
-mod manifest;
-mod query;
-mod graph;
+pub mod graph;
+pub mod manifest;
+pub mod query;
