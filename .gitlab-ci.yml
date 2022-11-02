@@ -1,0 +1,12 @@
+# based on https://doc.rust-lang.org/cargo/guide/continuous-integration.html
+
+stages:
+  - build
+
+rust-latest:
+  stage: build
+  image: rust:latest
+  script:
+    - cargo build --verbose
+    - cargo test --verbose
+    - cargo clippy --verbose
