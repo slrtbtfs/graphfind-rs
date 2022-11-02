@@ -15,11 +15,11 @@ pub trait Graph {
     /**
      * Returns an Iterator over all node weights.
      */
-    fn node_weights(&self) -> Box<dyn Iterator<Item = &'_ Self::NodeType> + '_>;
+    fn node_weights(&self) -> Box<dyn Iterator<Item = &Self::NodeType> + '_>;
     /**
      * Returns an Iterator over all edge weights.
      */
-    fn edge_weights(&self) -> Box<dyn Iterator<Item = &'_ Self::EdgeType> + '_>;
+    fn edge_weights(&self) -> Box<dyn Iterator<Item = &Self::EdgeType> + '_>;
 }
 
 /**
@@ -30,11 +30,11 @@ impl<N, E> Graph for petgraph::graph::Graph<N, E> {
 
     type EdgeType = E;
 
-    fn node_weights(&self) -> Box<dyn Iterator<Item = &'_ Self::NodeType> + '_> {
+    fn node_weights(&self) -> Box<dyn Iterator<Item = &Self::NodeType> + '_> {
         Box::new(self.node_weights())
     }
 
-    fn edge_weights(&self) -> Box<dyn Iterator<Item = &'_ Self::EdgeType> + '_> {
+    fn edge_weights(&self) -> Box<dyn Iterator<Item = &Self::EdgeType> + '_> {
         Box::new(self.edge_weights())
     }
 }
