@@ -2,39 +2,36 @@
  * Graph is a generic trait specifying the functionality that must be implemented by Graph storage backends used for Querying.
  */
 
-pub trait Graph {
+pub trait Graph<NodeWeight,EdgeWeight,NodeRef,EdgeRef> {
+
     /**
-     * Type used for Node Weights.
+     * Gets a readonly handle of all adjacent edges of a node.
      */
-    type NodeType;
+    fn adjacent_edges(&self,  node: &NodeRef) -> Box<dyn Iterator<Item = EdgeRef> + '_>;
+
     /**
-     * Type used for Edge Weights.
+     * Gets a readonly handle of all adjacent edges of a node.
      */
-    type EdgeType;
+    fn adjacent_nodes(&self,  node: &EdgeRef) -> (NodeRef,NodeRef);
+
+    /**
+     * Retrieve weight from a node reference.
+     */
+    fn node_weight(&self, node: &NodeRef) -> NodeWeight;
+
+    /**
+     * Retrieve weight from an edge reference.
+     */
+    fn edge_weight(&self, edge: &EdgeRef) -> EdgeWeight;
 
     /**
      * Returns an Iterator over all node weights.
      */
-    fn node_weights(&self) -> Box<dyn Iterator<Item = &Self::NodeType> + '_>;
+    fn node_weights(&self) -> Box<dyn Iterator<Item = &NodeWeight> + '_>;
     /**
      * Returns an Iterator over all edge weights.
      */
-    fn edge_weights(&self) -> Box<dyn Iterator<Item = &Self::EdgeType> + '_>;
+    fn edge_weights(&self) -> Box<dyn Iterator<Item = &EdgeWeight> + '_>;
 }
 
-/**
- * Example implementation for in memory graphs stored using the petgraph library.
- */
-impl<N, E> Graph for petgraph::graph::Graph<N, E> {
-    type NodeType = N;
 
-    type EdgeType = E;
-
-    fn node_weights(&self) -> Box<dyn Iterator<Item = &Self::NodeType> + '_> {
-        Box::new(self.node_weights())
-    }
-
-    fn edge_weights(&self) -> Box<dyn Iterator<Item = &Self::EdgeType> + '_> {
-        Box::new(self.edge_weights())
-    }
-}
