@@ -10,7 +10,7 @@ pub trait Graph<NodeWeight,EdgeWeight,NodeRef,EdgeRef> {
     fn adjacent_edges(&self,  node: &NodeRef) -> Box<dyn Iterator<Item = EdgeRef> + '_>;
 
     /**
-     * Gets a readonly handle of all adjacent edges of a node.
+     * Gets a readonly handle of the nodes an edge connects.
      */
     fn adjacent_nodes(&self,  node: &EdgeRef) -> (NodeRef,NodeRef);
 
