@@ -1,3 +1,6 @@
+use petgraph::{stable_graph::DefaultIx};
+use rustgql::graph::Graph;
+
 extern crate rustgql;
 
 #[test]
@@ -13,7 +16,7 @@ fn test_graph_weights() {
 
     // Vague explanation: Cast into a rustgql::Graph trait object.
     // More precise: Create a Box (in C++ that would be a std::unique_ptr) containing a trait implementation of with functions dynamically resolved at runtime, in order to drop any petgraph functionality and keep only what's included in the Graph trait. 
-    let g: Box<dyn rustgql::graph::Graph<NodeType = &str, EdgeType = i32>> = Box::new(pg);
+    let g: Box<dyn Graph<&str, i32, DefaultIx, DefaultIx>> = Box::new(pg);
 
     let node_weights: Vec<&&str> = g.node_weights().collect();
     assert_eq!(node_weights, vec![&"a", &"b"]);
