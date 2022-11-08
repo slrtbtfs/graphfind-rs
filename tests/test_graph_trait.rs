@@ -3,55 +3,57 @@
  */
 // Declare to use code in the module/file ./person_graph_types.rs
 pub mod person_graph_types;
-use std::{iter::Map, collections::HashMap};
 
-use petgraph::stable_graph::{StableGraph, NodeIndex, EdgeIndex};
+use petgraph::stable_graph::{StableGraph};
 
 // Use Code
-use crate::person_graph_types::{Person, Professor, ProfessorStruct, Student, StudentStruct, FriendOf};
+use crate::person_graph_types::{
+    FriendOf, Person
+};
 
-fn make_sample_graph() {
+/// In this case, the best fix would be to return an owned data type rather than a
+/// reference so the calling function is then responsible for cleaning up the value.
+fn make_sample_graph<'a>() ->
+    StableGraph<Box<&'a dyn Person>, &'a FriendOf> {
+    // Graph maintains pointers to StudentStructs, and FriendOf.
+    // &dyn Person tells Rust i want Types that have trait Person.
+    let mut graph: StableGraph<Box<&dyn Person>, &FriendOf> = StableGraph::new();
+
     // Student 1/Tobias
-    let tobias: StudentStruct = 
-        Student::new("tobias", 99, 900000);
-    
+    let x = person_graph_types::new_student("tobias", 99, 900000);
+    let tobias: Box<&dyn Person> = Box::new(&x);
+    let t = graph.add_node(tobias);
+
     // Student 2/Stefan
-    let stefan: StudentStruct =
-        Student::new("stefan", 9, 89000);
+    let x = person_graph_types::new_student("stefan", 9, 89000);
+    let stefan: Box<&dyn Person> = Box::new(&x);
+    let s = graph.add_node(stefan);
 
     // Student 3/Horst
-    let horst: StudentStruct =
-        Student::new("horst", 55, 823340);
-    
+    let x = person_graph_types::new_student("horst", 55, 823340);
+    let horst: Box<&dyn Person> = Box::new(&x);
+    let h = graph.add_node(horst);
+
     // Professor/Bettina
-    let bettina: ProfessorStruct = 
-        Professor::new("bettina", 36, "Faculty of Software Engineering and Programming Langauges");
-    
+    let x = person_graph_types::new_professor(
+        "bettina",
+        36,
+        "Faculty of Software Engineering and Programming Langauges",
+    );
+    let bettina: Box<&dyn Person> = Box::new(&x);
+    let b = graph.add_node(bettina.clone());
+
+    // Connect with edges:
     // Tobias is a friend of Horst
-    let th = FriendOf::new(2020);
     // Horst and Bettina are friends
-    let hb = FriendOf::new(2010);
-    let bh = FriendOf::new(2010);
     // Stefan is a friend of Bettina
-    let sb = FriendOf::new(2018);
+    let x = FriendOf::new(2020);
+    graph.add_edge(t, h, &x);
+    let x = FriendOf::new(2010);
+    graph.add_edge(h, b, &x);
+    let x = FriendOf::new(2010);
+    graph.add_edge(b, h, &x);
+    graph.add_edge(s, b, &FriendOf::new(2018));
 
-    // Graph maintains pointers to StudentStructs, and FriendOf.
-    // &dyn Person tells Rust I want Types that have trait Person.
-    let mut graph: StableGraph<&dyn Person, &FriendOf> =
-        StableGraph::new();
-    
-    // Add nodes to graph, maintain mapping.
-    let mut node_refs: HashMap<NodeIndex, &dyn Person> = HashMap::new();
-    let edge_refs: HashMap<EdgeIndex, &FriendOf> = HashMap::new();
-
-    let t = graph.add_node(&tobias);
-    let h = graph.add_node(&horst);
-    let b = graph.add_node(&bettina);
-    let s = graph.add_node(&stefan);
-
-    // Connect with edges
-    let th_edge = graph.add_edge(t, h, &th);
-    let hb_edge = graph.add_edge(h, b, &hb);
-    let bh_edge = graph.add_edge(b, h, &bh);
-    let sb_edge = graph.add_edge(s, b, &sb);
-} 
+    graph
+}
