@@ -9,7 +9,9 @@ use crate::graph::{Graph,Result};
  */
 impl<NodeWeight, EdgeWeight>
     Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
-    for petgraph::stable_graph::StableGraph<NodeWeight, EdgeWeight, Directed, DefaultIx>
+    for petgraph::stable_graph::StableGraph<NodeWeight, EdgeWeight, Directed, DefaultIx> where NodeWeight : Copy, EdgeWeight: Copy 
+
+
 {
     fn adjacent_edges<'a>(
         &'a self,
@@ -36,12 +38,12 @@ impl<NodeWeight, EdgeWeight>
         found_weight.ok_or(String::from("invalid node reference"))
     }
 
-    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
-        Box::new(petgraph::stable_graph::StableGraph::node_weights(self))
+    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = NodeWeight> + 'a> where NodeWeight: 'a {
+        Box::new(petgraph::stable_graph::StableGraph::node_weights(self).copied())
     }
 
-    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
-        Box::new(petgraph::stable_graph::StableGraph::edge_weights(self))
+    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeWeight> + 'a> where EdgeWeight : 'a {
+        Box::new(petgraph::stable_graph::StableGraph::edge_weights(self).copied())
     }
 
     fn is_directed(&self) -> bool {
@@ -64,11 +66,11 @@ impl<NodeWeight, EdgeWeight>
         todo!()
     }
 
-    fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeIndex> + 'a> {
+    fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeIndex> + 'a> where NodeIndex: 'a{
         todo!()
     }
 
-    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeIndex> + 'a> {
+    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeIndex> + 'a> where EdgeIndex: 'a{
         todo!()
     }
 

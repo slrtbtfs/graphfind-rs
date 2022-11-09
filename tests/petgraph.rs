@@ -17,7 +17,7 @@ fn test_graph_weights() {
     // More precise: Create a Box (in C++ that would be a std::unique_ptr)
     // containing a trait implementation of with functions dynamically resolved at runtime,
     // in order to drop any petgraph functionality and keep only what's included in the Graph trait.
-    let g: Box<dyn Graph<_, _, _, _>> = Box::new(&pg);
+    let g: Box<dyn Graph<_, _, _, _>> = Box::new(pg);
 
     let x = g.node_weights().all(
         |x| {true}
@@ -27,6 +27,6 @@ fn test_graph_weights() {
     //let node_weights: Vec<&str> = weights.map(|x|{*x}).collect();
     //assert_eq!(node_weights, vec!["a", "b"]);
 
-    let edge_weights: Vec<&i32> = g.edge_weights().collect();
-    assert_eq!(edge_weights, vec![&42]);
+    let edge_weights: Vec<i32> = g.edge_weights().collect();
+    assert_eq!(edge_weights, vec![42]);
 }

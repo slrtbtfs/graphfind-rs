@@ -6,7 +6,7 @@
  * + query lifetime is `'q`.
  */
 
-pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
+pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef>     where NodeWeight : Copy, EdgeWeight: Copy {
     /**
      * Checks if the edges of this graph are directed.
      */
@@ -51,29 +51,33 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     /**
      * Returns an Iterator over all node weights.
      */
-    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
-        Box::new(self
+    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = NodeWeight> + 'a> where NodeWeight: 'a{
+        let it= self
             .nodes()
-            .map(|x| self.node_weight(x).unwrap()))
+            .map(|x| *self.node_weight(x).unwrap());
+
+        //Box::new(it)
+        todo!()
     }
 
     /**
      * Returns an Iterator over all edge weights.
      */
-    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
-        let it = self.edges().map(|x| self.edge_weight(x).unwrap());
-        Box::new(it)
+    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeWeight> + 'a> where EdgeWeight: 'a{
+        let it = self.edges().map(|x| *self.edge_weight(x).unwrap());
+        //Box::new(it)
+        todo!()
     }
 
     /**
      * Returns an Iterator over all nodes.
      */
-    fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeRef> + 'a>;
+    fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeRef> + 'a> where NodeRef: 'a;
 
     /**
      * Returns an Iterator over all edges.
      */
-    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeRef> + 'a>;
+    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeRef> + 'a> where EdgeRef: 'a;
 }
 
 pub type Result<T> = std::result::Result<T, String>;
