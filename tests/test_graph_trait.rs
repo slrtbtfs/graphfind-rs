@@ -4,17 +4,14 @@
 // Declare to use code in the module/file ./person_graph_types.rs
 pub mod person_graph_types;
 
-use petgraph::stable_graph::{StableGraph};
+use petgraph::stable_graph::StableGraph;
 
 // Use Code
-use crate::person_graph_types::{
-    FriendOf, Person
-};
+use crate::person_graph_types::{FriendOf, Person};
 
 /// In this case, the best fix would be to return an owned data type rather than a
 /// reference so the calling function is then responsible for cleaning up the value.
-fn make_sample_graph<'a>() ->
-    StableGraph<Box<&'a dyn Person>, &'a FriendOf> {
+fn make_sample_graph<'a>() -> StableGraph<Box<&'a dyn Person>, &'a FriendOf> {
     // Graph maintains pointers to StudentStructs, and FriendOf.
     // &dyn Person tells Rust i want Types that have trait Person.
     let mut graph: StableGraph<Box<&dyn Person>, &FriendOf> = StableGraph::new();
