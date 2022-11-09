@@ -38,12 +38,12 @@ impl<NodeWeight, EdgeWeight>
         found_weight.ok_or(String::from("invalid node reference"))
     }
 
-    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = NodeWeight> + 'a> where NodeWeight: 'a {
-        Box::new(petgraph::stable_graph::StableGraph::node_weights(self).copied())
+    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a>  {
+        Box::new(petgraph::stable_graph::StableGraph::node_weights(self))
     }
 
-    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeWeight> + 'a> where EdgeWeight : 'a {
-        Box::new(petgraph::stable_graph::StableGraph::edge_weights(self).copied())
+    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
+        Box::new(petgraph::stable_graph::StableGraph::edge_weights(self))
     }
 
     fn is_directed(&self) -> bool {

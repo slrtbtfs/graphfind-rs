@@ -19,14 +19,13 @@ fn test_graph_weights() {
     // in order to drop any petgraph functionality and keep only what's included in the Graph trait.
     let g: Box<dyn Graph<_, _, _, _>> = Box::new(pg);
 
-    let x = g.node_weights().all(
-        |x| {true}
-    );
+    let x: Vec<&str> = g.node_weights().copied().collect();
+    assert_eq!(x, vec!["a", "b"]);
 
     //let weights = g.node_weights();
     //let node_weights: Vec<&str> = weights.map(|x|{*x}).collect();
     //assert_eq!(node_weights, vec!["a", "b"]);
 
-    let edge_weights: Vec<i32> = g.edge_weights().collect();
-    assert_eq!(edge_weights, vec![42]);
+    let edge_weights: Vec<&i32> = g.edge_weights().collect();
+    assert_eq!(edge_weights, vec![&42]);
 }
