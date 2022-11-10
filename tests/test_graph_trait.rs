@@ -3,12 +3,16 @@
  */
 // Declare to use code in the module/file ./person_graph_types.rs
 pub mod person_graph_types;
- 
 
 use std::{collections::HashMap, vec};
 
 use itertools::Itertools;
-use petgraph::{graph::{Graph as BaseGraph}, graph::DefaultIx, Directed, stable_graph::{NodeIndex, EdgeIndex}};
+use petgraph::{
+    graph::DefaultIx,
+    graph::Graph as BaseGraph,
+    stable_graph::{EdgeIndex, NodeIndex},
+    Directed,
+};
 use rustgql::graph::Graph as RQLGraph;
 
 // Use Code
@@ -16,10 +20,11 @@ use crate::person_graph_types::{FriendOf, Person};
 
 /// In this case, the best fix would be to return an owned data type rather than a
 /// reference so the calling function is then responsible for cleaning up the value.
-fn make_sample_graph<'a>() ->
-    (BaseGraph<Person, FriendOf>,
-        HashMap<NodeIndex, Person>,
-        HashMap<EdgeIndex, (NodeIndex, NodeIndex, FriendOf)>) {
+fn make_sample_graph<'a>() -> (
+    BaseGraph<Person, FriendOf>,
+    HashMap<NodeIndex, Person>,
+    HashMap<EdgeIndex, (NodeIndex, NodeIndex, FriendOf)>,
+) {
     // Graph maintains enumbs of Person, and FriendOf.
     let mut graph: BaseGraph<Person, FriendOf, Directed, DefaultIx> = BaseGraph::new();
     let mut node_raw = HashMap::new();
@@ -74,31 +79,25 @@ fn make_sample_graph<'a>() ->
 fn query_node_indices() {
     // Assert Node indices from 0 to 3. Petgraph should
     // guarantee these indices in a graph without deletion.
-    let graph: Box<dyn RQLGraph<Person, FriendOf, _, _>> 
-        = Box::new(make_sample_graph().0);
-    let node_indices: Vec<_> =
-        graph.nodes().map(|n|n.index()).collect();
+    let graph: Box<dyn RQLGraph<Person, FriendOf, _, _>> = Box::new(make_sample_graph().0);
+    let node_indices: Vec<_> = graph.nodes().map(|n| n.index()).collect();
     assert_eq!(node_indices, vec![0, 1, 2, 3]);
 }
 
 #[test]
 fn query_edge_indices() {
     // Assert Edge indices from 0 to 4.
-    let graph: Box<dyn RQLGraph<Person, FriendOf, _, _>> 
-        = Box::new(make_sample_graph().0);
-    let edge_indices: Vec<_> =
-        graph.edges().map(|e| e.index()).collect();
+    let graph: Box<dyn RQLGraph<Person, FriendOf, _, _>> = Box::new(make_sample_graph().0);
+    let edge_indices: Vec<_> = graph.edges().map(|e| e.index()).collect();
     assert_eq!(edge_indices, vec![0, 1, 2, 3, 4]);
 }
 
 /// Query that the node references and weights are as we inserted them.
-/// 
+///
 /// Also test the connections from nodes (which nodes are connected with what edges?)
 #[test]
 fn query_node_properties() {
-    let (base_graph,
-        node_data,
-        edge_data) = make_sample_graph();
+    let (base_graph, node_data, edge_data) = make_sample_graph();
     let graph: Box<dyn RQLGraph<Person, FriendOf, _, _>> = Box::new(base_graph);
 
     // Check nodes on their own.
@@ -106,27 +105,30 @@ fn query_node_properties() {
         assert!(graph.node_weight(*index).unwrap() == weight);
 
         // Query adjacent edges from the graph...
-        let outgoing_edges: Vec<_> = 
-            graph.adjacent_edges(index).unwrap()
-            .map(|e| e.index()).sorted().collect();
-        
+        let outgoing_edges: Vec<_> = graph
+            .adjacent_edges(index)
+            .unwrap()
+            .map(|e| e.index())
+            .sorted()
+            .collect();
+
         // ... and from the data we put into it.
-        let actual_outgoing_edges: Vec<_> =
-            edge_data.iter()
+        let actual_outgoing_edges: Vec<_> = edge_data
+            .iter()
             .filter(|(_, (a, b, _))| a == index || b == index)
-            .map(|(e, _)| e.index()).sorted().collect();
+            .map(|(e, _)| e.index())
+            .sorted()
+            .collect();
         assert_eq!(outgoing_edges, actual_outgoing_edges);
     }
 }
 
 /// Query that all edges are correctly defined,
-/// that their weights are what we expect, and their 
+/// that their weights are what we expect, and their
 /// endpoints are correclty set.
 #[test]
-fn query_edge_properties() { 
-    let (base_graph,
-        _,
-        edge_data) = make_sample_graph();
+fn query_edge_properties() {
+    let (base_graph, _, edge_data) = make_sample_graph();
     let graph: Box<dyn RQLGraph<Person, FriendOf, _, _>> = Box::new(base_graph);
     // Graph direction, edge directions should be ok.
     assert!(graph.is_directed());
@@ -134,15 +136,17 @@ fn query_edge_properties() {
     // Check single edges.
     for (e_idx, (source_idx, target_idx, e_weight)) in edge_data.iter() {
         assert!(graph.is_directed_edge(*e_idx).unwrap());
-        assert_eq!(graph.adjacent_nodes(*e_idx).unwrap(),
-            (*source_idx, *target_idx));
+        assert_eq!(
+            graph.adjacent_nodes(*e_idx).unwrap(),
+            (*source_idx, *target_idx)
+        );
         assert_eq!(graph.edge_weight(*e_idx).unwrap(), e_weight);
     }
 }
 
 /// Check if node references are set correctly.
 /// Graph should only return true when I input the same indices.
-/// 
+///
 /// Also check I don't get an edge for an invalid index.
 #[test]
 fn check_edge_references() {
@@ -162,7 +166,7 @@ fn check_edge_references() {
 
 /// Check if node references are set correctly.
 /// Graph should only return true when I input the same indices.
-/// 
+///
 /// Also check I don't get a node for an invalid index.
 #[test]
 fn check_node_references() {

@@ -23,7 +23,7 @@ fn test_graph_weights() {
     assert_eq!(x, vec!["a", "b"]);
 
     let weights = g.node_weights();
-    let node_weights: Vec<&str> = weights.map(|x|{*x}).collect();
+    let node_weights: Vec<&str> = weights.map(|x| *x).collect();
     assert_eq!(node_weights, vec!["a", "b"]);
 
     let edge_weights: Vec<&i32> = g.edge_weights().collect();
