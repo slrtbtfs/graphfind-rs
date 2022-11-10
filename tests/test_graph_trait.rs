@@ -152,7 +152,7 @@ fn query_edge_properties() {
 fn check_edge_references() {
     let graph: Box<dyn RQLGraph<Person, FriendOf, _, _>> = Box::new(make_sample_graph().0);
     // Incorrect index/out of range.
-    let faulty_idx = EdgeIndex::from(65 as u32);
+    let faulty_idx = EdgeIndex::from(65_u32);
 
     for idx in (0..4).map(|num| EdgeIndex::from(num as u32)) {
         assert!(graph.do_ref_same_edge(idx, idx));

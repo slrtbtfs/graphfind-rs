@@ -55,7 +55,7 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
      * Returns an Iterator over all node weights.
      */
     fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
-        let it = self.nodes().map(|x| self.node_weight(x).unwrap());
+        let _it = self.nodes().map(|x| self.node_weight(x).unwrap());
 
         //Box::new(it)
         todo!()
@@ -65,7 +65,7 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
      * Returns an Iterator over all edge weights.
      */
     fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
-        let it = self.edges().map(|x| self.edge_weight(x).unwrap());
+        let _it = self.edges().map(|x| self.edge_weight(x).unwrap());
         //Box::new(it)
         todo!()
     }
