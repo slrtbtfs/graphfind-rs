@@ -8,7 +8,7 @@ extern crate rustgql;
  */
 fn test_graph_weights() {
     // node and edge types are derived from added nodes and edges.
-    let mut pg = petgraph::stable_graph::StableGraph::new();
+    let mut pg = petgraph::graph::Graph::new();
     let a = pg.add_node("a");
     let b = pg.add_node("b");
     pg.add_edge(a, b, 42);
