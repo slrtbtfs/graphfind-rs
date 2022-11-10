@@ -60,7 +60,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
         NodeIndex: 'a,
     {
         // This works with the petgraph Graph type due to implementation details of petgraph, see https://docs.rs/petgraph/latest/petgraph/graph/struct.Graph.html#graph-indices
-        let it = (1..self.node_count()).map(NodeIndex::new);
+        let it = (0..self.node_count()).map(NodeIndex::new);
 
         Box::new(it)
     }
@@ -69,7 +69,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
     where
         EdgeIndex: 'a,
     {
-        let it = (1..self.node_count()).map(EdgeIndex::new);
+        let it = (0..self.node_count()).map(EdgeIndex::new);
 
         Box::new(it)
     }
