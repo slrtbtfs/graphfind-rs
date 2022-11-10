@@ -18,23 +18,13 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
             petgraph::graph::Graph::edges(self, *node).map(|e| e.id()),
         ))
     }
-    /*fn adjacent_edges(&self,  node: &NodeIndex) -> Box<dyn Iterator<Item = & petgraph::graph::EdgeReference<'a, EdgeWeight>> + 'a> {
 
-    }*/
-
-    fn adjacent_nodes(
-        &self,
-        edge: EdgeIndex,
-    ) -> std::result::Result<(NodeIndex, NodeIndex), String> {
-        /*self.edge_endpoints(
-        edge_index(edge.id().index())).
-        expect("Edge Reference invalid.")*/
-        todo!();
+    fn adjacent_nodes(&self, edge: EdgeIndex) -> Option<(NodeIndex, NodeIndex)> {
+        self.edge_endpoints(edge)
     }
 
-    fn node_weight(&self, node: NodeIndex) -> std::result::Result<&NodeWeight, String> {
-        let found_weight = petgraph::graph::Graph::node_weight(self, node);
-        found_weight.ok_or(String::from("invalid node reference"))
+    fn node_weight(&self, node: NodeIndex) -> Option<&NodeWeight> {
+        petgraph::graph::Graph::node_weight(self, node)
     }
 
     fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
@@ -46,36 +36,41 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
     }
 
     fn is_directed(&self) -> bool {
-        todo!()
+        petgraph::graph::Graph::is_directed(self)
     }
 
     fn is_directed_edge(&self, edge: EdgeIndex) -> Result<bool> {
-        todo!()
+        petgraph::graph::Graph::is_directed_edge(self, edge)
     }
 
-    fn do_ref_same_edge(&self, edge1: EdgeIndex, edge2: EdgeIndex) -> Result<bool> {
-        todo!()
+    fn do_ref_same_edge(&self, edge1: EdgeIndex, edge2: EdgeIndex) -> bool {
+        edge1 == edge2
     }
 
-    fn do_ref_same_node(&self, node1: NodeIndex, node2: NodeIndex) -> Result<bool> {
-        todo!()
+    fn do_ref_same_node(&self, node1: NodeIndex, node2: NodeIndex) -> bool {
+        node1 == node2
     }
 
-    fn edge_weight(&self, edge: EdgeIndex) -> Result<&EdgeWeight> {
-        todo!()
+    fn edge_weight(&self, edge: EdgeIndex) -> Option<&EdgeWeight> {
+        petgraph::graph::Graph::edge_weight(self, edge)
     }
 
     fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeIndex> + 'a>
     where
         NodeIndex: 'a,
     {
-        todo!()
+        // This works with the petgraph Graph type due to implementation details of petgraph, see https://docs.rs/petgraph/latest/petgraph/graph/struct.Graph.html#graph-indices
+        let it = (1..self.node_count()).map(NodeIndex::new);
+
+        Box::new(it)
     }
 
     fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeIndex> + 'a>
     where
         EdgeIndex: 'a,
     {
-        todo!()
+        let it = (1..self.node_count()).map(EdgeIndex::new);
+
+        Box::new(it)
     }
 }
