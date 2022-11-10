@@ -16,7 +16,7 @@ use petgraph::stable_graph::StableGraph;
  * Person enum/Uses redundant data for now.
  */
 
-#[derive(Debug, PartialEq, Eq,Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Person {
     Student {
         name: String,
