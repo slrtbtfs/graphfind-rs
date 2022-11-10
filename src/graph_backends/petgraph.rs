@@ -18,15 +18,13 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
             petgraph::graph::Graph::edges(self, *node).map(|e| e.id()),
         ))
     }
-    /*fn adjacent_edges(&self,  node: &NodeIndex) -> Box<dyn Iterator<Item = & petgraph::graph::EdgeReference<'a, EdgeWeight>> + 'a> {
 
     fn adjacent_nodes(&self, edge: EdgeIndex) -> Option<(NodeIndex, NodeIndex)> {
         self.edge_endpoints(edge)
     }
 
-    fn node_weight(&self, node: NodeIndex) -> std::result::Result<&NodeWeight, String> {
-        let found_weight = petgraph::graph::Graph::node_weight(self, node);
-        found_weight.ok_or(String::from("invalid node reference"))
+    fn node_weight(&self, node: NodeIndex) -> Option<&NodeWeight> {
+        petgraph::graph::Graph::node_weight(self, node)
     }
 
     fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
@@ -62,7 +60,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
         NodeIndex: 'a,
     {
         // This works with the petgraph Graph type due to implementation details of petgraph, see https://docs.rs/petgraph/latest/petgraph/graph/struct.Graph.html#graph-indices
-        let it = (0..self.node_count()).map(NodeIndex::new);
+        let it = (1..self.node_count()).map(NodeIndex::new);
 
         Box::new(it)
     }
@@ -71,7 +69,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
     where
         EdgeIndex: 'a,
     {
-        let it = (0..self.edge_count()).map(EdgeIndex::new);
+        let it = (1..self.node_count()).map(EdgeIndex::new);
 
         Box::new(it)
     }
