@@ -69,7 +69,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
     where
         EdgeIndex: 'a,
     {
-        let it = (0..self.node_count()).map(EdgeIndex::new);
+        let it = (0..self.edge_count()).map(EdgeIndex::new);
 
         Box::new(it)
     }
