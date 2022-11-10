@@ -30,10 +30,21 @@ pub enum Person {
     },
 }
 
+impl Clone for Person {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Student { name, age, matrical_number }
+            => Self::Student { name: name.clone(), age: *age, matrical_number: *matrical_number },
+            Self::Professor { name, age, faculty } 
+            => Self::Professor { name: name.clone(), age: *age, faculty: faculty.clone() },
+        }
+    }
+}
+
 /**
  * FriendOf Struct
  */
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct FriendOf {
     since_year: i32,
 }
