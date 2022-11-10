@@ -1,24 +1,24 @@
 use petgraph::graph::NodeIndex;
-use petgraph::stable_graph::{EdgeIndex, EdgeReference, Edges};
+use petgraph::graph::{EdgeIndex, EdgeReference, Edges};
 use petgraph::visit::EdgeRef;
-use petgraph::{stable_graph::DefaultIx, Directed};
+use petgraph::{graph::DefaultIx, Directed};
 
 use crate::graph::{Graph, Result};
 /**
  * Example implementation for in memory graphs stored using the petgraph library.
  */
 impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
-    for petgraph::stable_graph::StableGraph<NodeWeight, EdgeWeight, Directed, DefaultIx>
+    for petgraph::graph::Graph<NodeWeight, EdgeWeight, Directed, DefaultIx>
 {
     fn adjacent_edges<'a>(
         &'a self,
         node: &NodeIndex,
     ) -> std::result::Result<Box<(dyn Iterator<Item = EdgeIndex> + 'a)>, String> {
         Ok(Box::new(
-            petgraph::stable_graph::StableGraph::edges(self, *node).map(|e| e.id()),
+            petgraph::graph::Graph::edges(self, *node).map(|e| e.id()),
         ))
     }
-    /*fn adjacent_edges(&self,  node: &NodeIndex) -> Box<dyn Iterator<Item = & petgraph::stable_graph::EdgeReference<'a, EdgeWeight>> + 'a> {
+    /*fn adjacent_edges(&self,  node: &NodeIndex) -> Box<dyn Iterator<Item = & petgraph::graph::EdgeReference<'a, EdgeWeight>> + 'a> {
 
     }*/
 
@@ -33,16 +33,16 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
     }
 
     fn node_weight(&self, node: NodeIndex) -> std::result::Result<&NodeWeight, String> {
-        let found_weight = petgraph::stable_graph::StableGraph::node_weight(self, node);
+        let found_weight = petgraph::graph::Graph::node_weight(self, node);
         found_weight.ok_or(String::from("invalid node reference"))
     }
 
     fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
-        Box::new(petgraph::stable_graph::StableGraph::node_weights(self))
+        Box::new(petgraph::graph::Graph::node_weights(self))
     }
 
     fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
-        Box::new(petgraph::stable_graph::StableGraph::edge_weights(self))
+        Box::new(petgraph::graph::Graph::edge_weights(self))
     }
 
     fn is_directed(&self) -> bool {
