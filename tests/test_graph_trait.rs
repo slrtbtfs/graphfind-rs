@@ -3,6 +3,7 @@
  */
 // Declare to use code in the module/file ./person_graph_types.rs
 pub mod person_graph_types;
+ 
 
 use petgraph::stable_graph::StableGraph;
 
@@ -13,33 +14,29 @@ use crate::person_graph_types::{FriendOf, Person};
 /// reference so the calling function is then responsible for cleaning up the value.
 
 fn make_sample_graph<'a>() ->
-    StableGraph<Box<Person>, FriendOf> {
+    StableGraph<Person, FriendOf> {
     // Graph maintains pointers to Person, and FriendOf.
-    let mut graph: StableGraph<Box<Person>, FriendOf> = StableGraph::new();
+    let mut graph: StableGraph<Person, FriendOf> = StableGraph::new();
 
 
     // Student 1/Tobias
-    let x = person_graph_types::new_student("tobias", 99, 900000);
-    //let tobias: Box<&'a Person> = Box::new(&x);
-    let t = graph.add_node(Box::new(x));
+    let tobias = person_graph_types::new_student("tobias", 99, 900000);
+    let t = graph.add_node(tobias);
 
     // Student 2/Stefan
-    let x = person_graph_types::new_student("stefan", 9, 89000);
-    let stefan: Box<Person> = Box::new(x);
+    let stefan = person_graph_types::new_student("stefan", 9, 89000);
     let s = graph.add_node(stefan);
 
     // Student 3/Horst
-    let x = person_graph_types::new_student("horst", 55, 823340);
-    let horst: Box<Person> = Box::new(x);
+    let horst = person_graph_types::new_student("horst", 55, 823340);
     let h = graph.add_node(horst);
 
     // Professor/Bettina
-    let x = person_graph_types::new_professor(
+    let bettina = person_graph_types::new_professor(
         "bettina",
         36,
         "Faculty of Software Engineering and Programming Langauges",
     );
-    let bettina: Box<Person> = Box::new(x);
     let b = graph.add_node(bettina);
 
     // Connect with edges:
