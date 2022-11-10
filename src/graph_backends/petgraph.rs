@@ -1,20 +1,22 @@
-use petgraph::graph::{NodeIndex};
-use petgraph::stable_graph::{EdgeReference,Edges};
+use petgraph::graph::NodeIndex;
+use petgraph::stable_graph::{EdgeIndex, EdgeReference, Edges};
+use petgraph::visit::EdgeRef;
 use petgraph::{stable_graph::DefaultIx, Directed};
 
-use crate::graph::{Graph,Result};
+use crate::graph::{Graph, Result};
 /**
  * Example implementation for in memory graphs stored using the petgraph library.
  */
-impl<'g: 'q, 'q, NodeWeight, EdgeWeight>
-    Graph<'g, 'q, NodeWeight, EdgeWeight, &'q NodeIndex, EdgeReference<'q, EdgeWeight>>
-    for &'g petgraph::stable_graph::StableGraph<NodeWeight, EdgeWeight, Directed, DefaultIx>
+impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
+    for petgraph::stable_graph::StableGraph<NodeWeight, EdgeWeight, Directed, DefaultIx>
 {
-    fn adjacent_edges(
-        &'g self,
+    fn adjacent_edges<'a>(
+        &'a self,
         node: &NodeIndex,
-    ) -> std::result::Result<Box<(dyn Iterator<Item =  petgraph::stable_graph::EdgeReference<'q, EdgeWeight>> + 'q)>, String> {
-        Ok(Box::new(petgraph::stable_graph::StableGraph::edges(self, *node)))
+    ) -> std::result::Result<Box<(dyn Iterator<Item = EdgeIndex> + 'a)>, String> {
+        Ok(Box::new(
+            petgraph::stable_graph::StableGraph::edges(self, *node).map(|e| e.id()),
+        ))
     }
     /*fn adjacent_edges(&self,  node: &NodeIndex) -> Box<dyn Iterator<Item = & petgraph::stable_graph::EdgeReference<'a, EdgeWeight>> + 'a> {
 
@@ -22,24 +24,24 @@ impl<'g: 'q, 'q, NodeWeight, EdgeWeight>
 
     fn adjacent_nodes(
         &self,
-        edge: petgraph::stable_graph::EdgeReference<'q, EdgeWeight>,
-    ) -> std::result::Result<(&'q NodeIndex, &'q NodeIndex), String> {
+        edge: EdgeIndex,
+    ) -> std::result::Result<(NodeIndex, NodeIndex), String> {
         /*self.edge_endpoints(
         edge_index(edge.id().index())).
         expect("Edge Reference invalid.")*/
         todo!();
     }
 
-    fn node_weight(&self, node: &NodeIndex) -> std::result::Result<&'g NodeWeight, String> {
-        let found_weight = petgraph::stable_graph::StableGraph::node_weight(self, *node);
+    fn node_weight(&self, node: NodeIndex) -> std::result::Result<&NodeWeight, String> {
+        let found_weight = petgraph::stable_graph::StableGraph::node_weight(self, node);
         found_weight.ok_or(String::from("invalid node reference"))
     }
 
-    fn node_weights(&self) -> Box<dyn Iterator<Item = &NodeWeight> + '_> {
+    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
         Box::new(petgraph::stable_graph::StableGraph::node_weights(self))
     }
 
-    fn edge_weights(&self) -> Box<dyn Iterator<Item = &EdgeWeight> + '_> {
+    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
         Box::new(petgraph::stable_graph::StableGraph::edge_weights(self))
     }
 
@@ -47,29 +49,33 @@ impl<'g: 'q, 'q, NodeWeight, EdgeWeight>
         todo!()
     }
 
-    fn is_directed_edge(&self, edge:  EdgeReference<'q, EdgeWeight>) -> Result<bool> {
+    fn is_directed_edge(&self, edge: EdgeIndex) -> Result<bool> {
         todo!()
     }
 
-    fn do_ref_same_edge(&'g self, edge1: EdgeReference<'q, EdgeWeight>, edge2:  EdgeReference<'q, EdgeWeight>) -> Result<bool> {
+    fn do_ref_same_edge(&self, edge1: EdgeIndex, edge2: EdgeIndex) -> Result<bool> {
         todo!()
     }
 
-    fn do_ref_same_node(&'g self, node1: &'q NodeIndex, node2: &'q NodeIndex) -> Result<bool> {
+    fn do_ref_same_node(&self, node1: NodeIndex, node2: NodeIndex) -> Result<bool> {
         todo!()
     }
 
-    fn edge_weight(&'g self, edge:  EdgeReference<'q, EdgeWeight>) -> Result<&EdgeWeight> {
+    fn edge_weight(&self, edge: EdgeIndex) -> Result<&EdgeWeight> {
         todo!()
     }
 
-    fn nodes(&'g self) -> Box<dyn Iterator<Item = &'q NodeIndex> + 'q> {
+    fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeIndex> + 'a>
+    where
+        NodeIndex: 'a,
+    {
         todo!()
     }
 
-    fn edges(&'g self) -> Box<dyn Iterator<Item = EdgeReference<'q, EdgeWeight>> + 'q> {
+    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeIndex> + 'a>
+    where
+        EdgeIndex: 'a,
+    {
         todo!()
     }
-
-
 }
