@@ -1,5 +1,5 @@
 use petgraph::graph::NodeIndex;
-use petgraph::graph::{EdgeIndex};
+use petgraph::graph::{EdgeIndex, EdgeReference, Edges};
 use petgraph::visit::EdgeRef;
 use petgraph::{graph::DefaultIx, Directed};
 
@@ -18,13 +18,15 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
             petgraph::graph::Graph::edges(self, *node).map(|e| e.id()),
         ))
     }
+    /*fn adjacent_edges(&self,  node: &NodeIndex) -> Box<dyn Iterator<Item = & petgraph::graph::EdgeReference<'a, EdgeWeight>> + 'a> {
 
     fn adjacent_nodes(&self, edge: EdgeIndex) -> Option<(NodeIndex, NodeIndex)> {
         self.edge_endpoints(edge)
     }
 
-    fn node_weight(&self, node: NodeIndex) -> Option<&NodeWeight> {
-        petgraph::graph::Graph::node_weight(self, node)
+    fn node_weight(&self, node: NodeIndex) -> std::result::Result<&NodeWeight, String> {
+        let found_weight = petgraph::graph::Graph::node_weight(self, node);
+        found_weight.ok_or(String::from("invalid node reference"))
     }
 
     fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
