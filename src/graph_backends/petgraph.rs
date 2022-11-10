@@ -9,9 +9,6 @@ use crate::graph::{Graph, Result};
  */
 impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
     for petgraph::stable_graph::StableGraph<NodeWeight, EdgeWeight, Directed, DefaultIx>
-where
-    NodeWeight: Copy,
-    EdgeWeight: Copy,
 {
     fn adjacent_edges<'a>(
         &'a self,

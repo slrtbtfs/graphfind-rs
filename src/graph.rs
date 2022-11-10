@@ -7,9 +7,6 @@
  */
 
 pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef>
-where
-    NodeWeight: Copy,
-    EdgeWeight: Copy,
 {
     /**
      * Checks if the edges of this graph are directed.
@@ -69,7 +66,7 @@ where
      * Returns an Iterator over all edge weights.
      */
     fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
-        let it = self.edges().map(|x| *self.edge_weight(x).unwrap());
+        let it = self.edges().map(|x| self.edge_weight(x).unwrap());
         //Box::new(it)
         todo!()
     }
