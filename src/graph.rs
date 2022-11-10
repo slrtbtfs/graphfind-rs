@@ -28,28 +28,28 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     /**
      * Checks whether two references refer to the same edge.
      */
-    fn do_ref_same_edge(&self, edge1: EdgeRef, edge2: EdgeRef) -> Result<bool>;
+    fn do_ref_same_edge(&self, edge1: EdgeRef, edge2: EdgeRef) -> bool;
 
     /**
      * Checks whether two references refer to the same node.
      */
-    fn do_ref_same_node(&self, node1: NodeRef, node2: NodeRef) -> Result<bool>;
+    fn do_ref_same_node(&self, node1: NodeRef, node2: NodeRef) -> bool;
 
     /**
      * Gets a readonly handle of the nodes an edge connects.
      * If the edge is directed, the first node is its source, and the second node its destination.
      */
-    fn adjacent_nodes(&self, node: EdgeRef) -> Result<(NodeRef, NodeRef)>;
+    fn adjacent_nodes(&self, node: EdgeRef) -> Option<(NodeRef, NodeRef)>;
 
     /**
      * Retrieve weight from a node reference.
      */
-    fn node_weight(&self, node: NodeRef) -> Result<&NodeWeight>;
+    fn node_weight(&self, node: NodeRef) -> Option<&NodeWeight>;
 
     /**
      * Retrieve weight from an edge reference.
      */
-    fn edge_weight(&self, edge: EdgeRef) -> Result<&EdgeWeight>;
+    fn edge_weight(&self, edge: EdgeRef) -> Option<&EdgeWeight>;
 
     /**
      * Returns an Iterator over all node weights.
