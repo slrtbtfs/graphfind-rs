@@ -1,5 +1,5 @@
 use petgraph::graph::NodeIndex;
-use petgraph::graph::{EdgeIndex, EdgeReference, Edges};
+use petgraph::graph::{EdgeIndex};
 use petgraph::visit::EdgeRef;
 use petgraph::{graph::DefaultIx, Directed};
 
