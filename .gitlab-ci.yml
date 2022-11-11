@@ -13,6 +13,7 @@ stages:
 # from https://gitlab.com/dlalic/gitlab-clippy#gitlab-ci-example
 clippy:
   stage: cargo
+  image: rust:latest
   before_script:
     - rustup component add clippy
     - cargo install gitlab_clippy
