@@ -1,3 +1,4 @@
+/*
 use rustgql::{print::VizDotGraph};
 
 pub mod person_graph_types;
@@ -21,3 +22,4 @@ fn test_petgraph_print() {
     ");
     assert_eq!(actual_print.replace(" ", ""), dot_print.replace(" ", ""));
 }
+*/
