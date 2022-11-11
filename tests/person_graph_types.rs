@@ -18,8 +18,16 @@ use petgraph::stable_graph::StableGraph;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Person {
-    Student{name: String, age: u32, matrical_number: u32},
-    Professor{name: String, age: u32, faculty: String},
+    Student {
+        name: String,
+        age: u32,
+        matrical_number: u32,
+    },
+    Professor {
+        name: String,
+        age: u32,
+        faculty: String,
+    },
 }
 
 /**
@@ -43,8 +51,7 @@ impl FriendOf {
 
 // Factory Methods
 pub fn new_student(name: &str, age: u32, matrical_number: u32) -> Person {
-    Person
-::Student {
+    Person::Student {
         name: String::from(name),
         age,
         matrical_number,
@@ -52,8 +59,7 @@ pub fn new_student(name: &str, age: u32, matrical_number: u32) -> Person {
 }
 
 pub fn new_professor(name: &str, age: u32, faculty: &str) -> Person {
-    Person
-::Professor {
+    Person::Professor {
         name: String::from(name),
         age,
         faculty: String::from(faculty),
@@ -65,11 +71,9 @@ pub fn new_professor(name: &str, age: u32, faculty: &str) -> Person {
 
 /// Returns an owned data type rather than a
 /// reference so the calling function is then responsible for cleaning up the value.
-pub fn make_sample_graph() ->
-    StableGraph<Person, FriendOf> {
+pub fn make_sample_graph() -> StableGraph<Person, FriendOf> {
     // Graph maintains pointers to Person, and FriendOf.
     let mut graph: StableGraph<Person, FriendOf> = StableGraph::new();
-
 
     // Student 1/Tobias
     let tobias = new_student("tobias", 99, 900000);
