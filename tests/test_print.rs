@@ -1,5 +1,4 @@
-/*
-use rustgql::{print::VizDotGraph};
+use rustgql::print::VizDotGraph;
 
 pub mod person_graph_types;
 
@@ -20,6 +19,5 @@ fn test_petgraph_print() {
         1 -> 3 [ label = \"FriendOf { since_year: 2018 }\" ]
     }
     ");
-    assert_eq!(actual_print.replace(" ", ""), dot_print.replace(" ", ""));
+    assert_eq!(actual_print.replace(' ', ""), dot_print.replace(' ', ""));
 }
-*/
