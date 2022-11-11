@@ -2,11 +2,8 @@
 
 # Setup a cache to cache job parts between jobs to ensure faster builds
 cache:
-  - key:
-      files:
-        - Cargo.lock
+  - key: "$CI_JOB_NAME"
     paths:
-      - $HOME/.cargo/
       - target/
 
 stages:
@@ -36,6 +33,7 @@ coverage:
   variables:
     RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
     LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
+    CARGO_INCREMENTAL: "0"
   script:
     - rustup component add llvm-tools-preview
     - cargo test
