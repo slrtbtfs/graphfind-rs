@@ -1,46 +1,53 @@
+use petgraph::graph::EdgeIndex;
 use petgraph::graph::NodeIndex;
-use petgraph::graph::{EdgeIndex};
 use petgraph::visit::EdgeRef;
 use petgraph::{graph::DefaultIx, Directed};
 
-use crate::graph::{Graph, Result};
+use crate::graph::Graph;
 /**
  * Example implementation for in memory graphs stored using the petgraph library.
  */
 impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
     for petgraph::graph::Graph<NodeWeight, EdgeWeight, Directed, DefaultIx>
 {
-    fn adjacent_edges<'a>(
-        &'a self,
-        node: &NodeIndex,
-    ) -> std::result::Result<Box<(dyn Iterator<Item = EdgeIndex> + 'a)>, String> {
-        Ok(Box::new(
-            petgraph::graph::Graph::edges(self, *node).map(|e| e.id()),
-        ))
-    }
-
-    fn adjacent_nodes(&self, edge: EdgeIndex) -> Option<(NodeIndex, NodeIndex)> {
-        self.edge_endpoints(edge)
-    }
-
-    fn node_weight(&self, node: NodeIndex) -> Option<&NodeWeight> {
-        petgraph::graph::Graph::node_weight(self, node)
-    }
-
-    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
-        Box::new(petgraph::graph::Graph::node_weights(self))
-    }
-
-    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
-        Box::new(petgraph::graph::Graph::edge_weights(self))
-    }
-
     fn is_directed(&self) -> bool {
         petgraph::graph::Graph::is_directed(self)
     }
 
-    fn is_directed_edge(&self, edge: EdgeIndex) -> Result<bool> {
+    fn is_directed_edge(&self, edge: EdgeIndex) -> Option<bool> {
         petgraph::graph::Graph::is_directed_edge(self, edge)
+    }
+
+    fn adjacent_edges<'a>(
+        &'a self,
+        node: &NodeIndex,
+    ) -> Option<Box<(dyn Iterator<Item = EdgeIndex> + 'a)>>
+    where
+        EdgeIndex: 'a,
+    {
+        Some(Box::new(
+            petgraph::graph::Graph::edges(self, *node).map(|e| e.id()),
+        ))
+    }
+
+    fn incoming_edges<'a>(
+        &'a self,
+        node: &'a NodeIndex,
+    ) -> Option<Box<dyn Iterator<Item = EdgeIndex> + 'a>>
+    where
+        EdgeIndex: 'a,
+    {
+        todo!()
+    }
+
+    fn outgoing_edges<'a>(
+        &'a self,
+        node: &'a NodeIndex,
+    ) -> Option<Box<dyn Iterator<Item = EdgeIndex> + 'a>>
+    where
+        EdgeIndex: 'a,
+    {
+        todo!()
     }
 
     fn do_ref_same_edge(&self, edge1: EdgeIndex, edge2: EdgeIndex) -> bool {
@@ -51,8 +58,24 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
         node1 == node2
     }
 
+    fn adjacent_nodes(&self, edge: EdgeIndex) -> Option<(NodeIndex, NodeIndex)> {
+        self.edge_endpoints(edge)
+    }
+
+    fn node_weight(&self, node: NodeIndex) -> Option<&NodeWeight> {
+        petgraph::graph::Graph::node_weight(self, node)
+    }
+
     fn edge_weight(&self, edge: EdgeIndex) -> Option<&EdgeWeight> {
         petgraph::graph::Graph::edge_weight(self, edge)
+    }
+
+    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
+        Box::new(petgraph::graph::Graph::node_weights(self))
+    }
+
+    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
+        Box::new(petgraph::graph::Graph::edge_weights(self))
     }
 
     fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeIndex> + 'a>

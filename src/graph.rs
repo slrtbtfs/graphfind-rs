@@ -15,15 +15,39 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     /**
      * Checks if the given edge is directed.
      */
-    fn is_directed_edge(&self, edge: EdgeRef) -> Result<bool>;
+    fn is_directed_edge(&self, edge: EdgeRef) -> Option<bool>;
 
     /**
      * Gets a readonly handle of all adjacent edges of a node.
+     * For directed graphs this includes all incoming and outgoing
+     * edges.
      */
     fn adjacent_edges<'a>(
         &'a self,
         node: &'a NodeRef,
-    ) -> Result<Box<dyn Iterator<Item = EdgeRef> + 'a>>;
+    ) -> Option<Box<dyn Iterator<Item = EdgeRef> + 'a>>
+    where
+        EdgeRef: 'a;
+    /**
+     * Gets a readonly handle of all incoming edges of a node.
+     * For undirected graphs this is equivalent to calling `adjacent_edges`.
+     */
+    fn incoming_edges<'a>(
+        &'a self,
+        node: &'a NodeRef,
+    ) -> Option<Box<dyn Iterator<Item = EdgeRef> + 'a>>
+    where
+        EdgeRef: 'a;
+    /**
+     * Gets a readonly handle of all outgoing edges of a node.
+     * For undirected graphs this is equivalent to calling `adjacent_edges`.
+     */
+    fn outgoing_edges<'a>(
+        &'a self,
+        node: &'a NodeRef,
+    ) -> Option<Box<dyn Iterator<Item = EdgeRef> + 'a>>
+    where
+        EdgeRef: 'a;
 
     /**
      * Checks whether two references refer to the same edge.
@@ -84,5 +108,3 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     where
         EdgeRef: 'a;
 }
-
-pub type Result<T> = std::result::Result<T, String>;
