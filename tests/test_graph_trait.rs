@@ -3,7 +3,7 @@
  */
 // Declare to use code in the module/file ./person_graph_types.rs
 pub mod person_graph_types;
- 
+
 #[test]
 fn trial_and_error() {
     let graph = person_graph_types::make_sample_graph();

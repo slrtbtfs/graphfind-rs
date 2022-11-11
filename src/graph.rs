@@ -6,8 +6,7 @@
  * + query lifetime is `'q`.
  */
 
-pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef>
-{
+pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     /**
      * Checks if the edges of this graph are directed.
      */
