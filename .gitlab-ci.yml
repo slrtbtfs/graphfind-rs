@@ -34,7 +34,7 @@ coverage:
   image: "rustdocker/rust:nightly"
   stage: cargo
   variables:
-    RUSTFLAGS: "-Zinstrument-coverage"
+    RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
     LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
   script:
     - rustup component add llvm-tools-preview
