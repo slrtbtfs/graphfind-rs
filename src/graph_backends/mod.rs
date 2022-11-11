@@ -1,1 +1,1 @@
-pub mod petgraph;
+mod petgraph;
