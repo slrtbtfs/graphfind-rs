@@ -87,7 +87,7 @@ pub fn make_sample_graph() ->
     let bettina = new_professor(
         "bettina",
         36,
-        "Faculty of Software Engineering and Programming Langauges",
+        "Faculty_of_Software_Engineering_and_Programming_Languages",
     );
     let b = graph.add_node(bettina);
 
