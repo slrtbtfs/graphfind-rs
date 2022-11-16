@@ -22,6 +22,6 @@ fn test_petgraph_print() {
         3 -> 2 [ label = \"FriendOf { since_year: 2010 }\" ]
         1 -> 3 [ label = \"FriendOf { since_year: 2018 }\" ]
     }
-    ");
+    ";
     assert_eq!(actual_print.replace(' ', ""), dot_print.replace(' ', ""));
 }
