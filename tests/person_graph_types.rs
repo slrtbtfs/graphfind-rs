@@ -1,4 +1,5 @@
 use petgraph::stable_graph::StableGraph;
+use serde::{Serialize, Deserialize};
 
 /**
  * Defines the data of a test graph:
@@ -16,7 +17,7 @@ use petgraph::stable_graph::StableGraph;
  * Person enum/Uses redundant data for now.
  */
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Person {
     Student {
         name: String,
@@ -32,7 +33,7 @@ pub enum Person {
 /**
  * FriendOf Struct
  */
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct FriendOf {
     since_year: i32,
 }

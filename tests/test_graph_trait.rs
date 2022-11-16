@@ -1,6 +1,6 @@
-/**
- * Defines simple tests for the graph API using a Petgraph backend.
- */
+///
+/// Defines simple tests for the graph API using a Petgraph backend.
+///
 // Declare to use code in the module/file ./person_graph_types.rs
 pub mod person_graph_types;
 
