@@ -2,6 +2,10 @@ use rustgql::print::VizDotGraph;
 
 pub mod person_graph_types;
 
+///
+/// Test Case for Printing to GraphViz dot format:
+/// Create the String representation of a StableGraph, then compare it to the created String.
+/// 
 #[test]
 fn test_petgraph_print() {
     let graph: Box<dyn VizDotGraph<_, _, _ , _>> = Box::new(person_graph_types::make_sample_graph());

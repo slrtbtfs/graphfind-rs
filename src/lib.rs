@@ -8,4 +8,4 @@ pub mod file_io;
 // Implementations in their own folgers.
 mod print_backends;
 mod graph_backends;
-mod file_io_backends;
+pub mod file_io_backends;

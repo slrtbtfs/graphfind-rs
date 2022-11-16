@@ -1,47 +1,65 @@
-use std::fs::File;
-
-use petgraph::{stable_graph::{DefaultIx, EdgeIndex, NodeIndex}, Directed};
 use serde::{Serialize, de::DeserializeOwned};
+use crate::file_io::{StableGraphImpl, StableGraphReadWriter};
+use std::{io::Error as IOError, fs::File};
 
-use serde_json::Error as JSONError;
-use std::io::Error as RustError;
+///
+/// Struct to be used by clients.
+///
+pub struct JsonStableGraphReadWriter {}
 
-use crate::file_io::FileIO;
-
-/**
- * PetgraphToJsonIO Implements the FileIO trait for:
- * 
- * 1. Graphs using the petgraph input format,
- * 2. Output files that store JSON objects.
- * 
- * This implementation is based on serde 1.0; it requires nodes and edges to
- * implement Serializable/DeserializeOwned. See https://serde.rs/lifetimes.html.
- */
-impl<NodeWeight, EdgeWeight>
-    FileIO<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
-    for petgraph::stable_graph::StableGraph<NodeWeight, EdgeWeight, Directed, DefaultIx>
-where
-    NodeWeight: DeserializeOwned + Serialize,
-    EdgeWeight: DeserializeOwned + Serialize,
-{
-    /// Serializes this graph. 
-    fn serialize_graph(&self, path: &str) -> Result<(), RustError> {
-        let file_handle = File::create(path)?;
-        translate_error(serde_json::ser::to_writer(file_handle, &self))
-    }
-
-    /// Deserializes the file under the given handle into a new graph.
-    /// Asserts that "path" only holds the graph to deserialize.
-    fn deserialize_graph(path: &str) -> Result<Box<petgraph::prelude::StableGraph<NodeWeight, EdgeWeight>>, RustError> {
-        let file_handle = File::open(path)?;
-        translate_error(serde_json::de::from_reader(file_handle))
+impl JsonStableGraphReadWriter {
+    pub fn new() -> Self {
+        JsonStableGraphReadWriter {}
     }
 }
 
-/// Translates an serde_json error into a Rust IO Error (basically packs the serde_json in an IO error).
-fn translate_error<T> (res: Result<T, JSONError>) -> Result<T, RustError> {
-    match res {
-        Ok(x) => Ok(x),
-        Err(json_error) => Err(RustError::new(std::io::ErrorKind::Other, json_error)),
+impl Default for JsonStableGraphReadWriter {
+    ///
+    /// Constructs a new JsonStableGraphReadWriter struct.
+    /// 
+    fn default() -> Self {
+        JsonStableGraphReadWriter::new()
+    }
+}
+
+///
+/// Implementation of StableGraphReadWriter trait using serde_json.
+/// Nodes and Edges need to implement Serializable and Deserializable
+/// in order for serde to work.
+///  
+impl <NodeWeight, EdgeWeight>
+    StableGraphReadWriter<NodeWeight, EdgeWeight>
+    for JsonStableGraphReadWriter
+where
+    NodeWeight: Serialize + DeserializeOwned,
+    EdgeWeight: Serialize + DeserializeOwned
+{
+    ///
+    /// Serializes the graph to JSON. This overwrites the file given under path.
+    /// If serde_json fails, packs the underlying error in an std::io::Error for examination.
+    /// 
+    fn serialize_graph(&self, 
+        path: &str,
+        graph: &StableGraphImpl<NodeWeight, EdgeWeight>) -> Result<(), IOError> {
+        let file = File::create(path)?;
+        match serde_json::ser::to_writer(file, graph) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(IOError::new(std::io::ErrorKind::Other, e)),
+        }
+    }
+
+    ///
+    /// Deserializes a graph stored as JSON, and packs it into a Box.
+    /// If serde_json fails, packs the underlying error in an std::io::Error for examination.
+    /// 
+    fn deserialize_graph(&self, 
+        path: &str) -> Result<Box<StableGraphImpl<NodeWeight, EdgeWeight>>, IOError> {
+        let file = File::open(path)?;
+        let res: Result<StableGraphImpl<NodeWeight, EdgeWeight>, serde_json::Error> 
+            = serde_json::de::from_reader(file);
+        match res {
+            Ok(graph) => Ok(Box::new(graph)),
+            Err(e) => Err(IOError::new(std::io::ErrorKind::Other, e))
+        }
     }
 }
