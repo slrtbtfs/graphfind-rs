@@ -25,7 +25,7 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     fn adjacent_edges<'a>(
         &'a self,
         node: &'a NodeRef,
-    ) -> Option<Box<dyn Iterator<Item = EdgeRef> + 'a>>
+    ) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
     where
         EdgeRef: 'a;
     /**
@@ -35,7 +35,7 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     fn incoming_edges<'a>(
         &'a self,
         node: &'a NodeRef,
-    ) -> Option<Box<dyn Iterator<Item = EdgeRef> + 'a>>
+    ) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
     where
         EdgeRef: 'a;
     /**
@@ -45,7 +45,7 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     fn outgoing_edges<'a>(
         &'a self,
         node: &'a NodeRef,
-    ) -> Option<Box<dyn Iterator<Item = EdgeRef> + 'a>>
+    ) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
     where
         EdgeRef: 'a;
 

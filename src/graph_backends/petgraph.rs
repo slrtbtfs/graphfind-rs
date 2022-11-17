@@ -1,7 +1,10 @@
 use petgraph::graph::EdgeIndex;
 use petgraph::graph::NodeIndex;
 use petgraph::visit::EdgeRef;
+use petgraph::Direction::Incoming;
+use petgraph::Direction::Outgoing;
 use petgraph::{graph::DefaultIx, Directed};
+
 
 use crate::graph::Graph;
 /**
@@ -20,34 +23,34 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
 
     fn adjacent_edges<'a>(
         &'a self,
-        node: &NodeIndex,
-    ) -> Option<Box<(dyn Iterator<Item = EdgeIndex> + 'a)>>
+        node: &'a NodeIndex,
+    ) -> Box<(dyn Iterator<Item = EdgeIndex> + 'a)>
     where
         EdgeIndex: 'a,
     {
-        Some(Box::new(
-            petgraph::graph::Graph::edges(self, *node).map(|e| e.id()),
-        ))
+        if self.is_directed() {
+            Box::new(
+                self.edges_directed(*node, Incoming)
+                    .chain(self.edges_directed(*node, Outgoing))
+                    .map(|e| e.id()),
+            )
+        } else {
+            self.outgoing_edges(node)
+        }
     }
 
-    fn incoming_edges<'a>(
-        &'a self,
-        node: &'a NodeIndex,
-    ) -> Option<Box<dyn Iterator<Item = EdgeIndex> + 'a>>
+    fn incoming_edges<'a>(&'a self, node: &'a NodeIndex) -> Box<dyn Iterator<Item = EdgeIndex> + 'a>
     where
         EdgeIndex: 'a,
     {
-        todo!()
+        Box::new(self.edges_directed(*node, Incoming).map(|e| e.id()))
     }
 
-    fn outgoing_edges<'a>(
-        &'a self,
-        node: &'a NodeIndex,
-    ) -> Option<Box<dyn Iterator<Item = EdgeIndex> + 'a>>
+    fn outgoing_edges<'a>(&'a self, node: &'a NodeIndex) -> Box<dyn Iterator<Item = EdgeIndex> + 'a>
     where
         EdgeIndex: 'a,
     {
-        todo!()
+        Box::new(self.edges_directed(*node, Outgoing).map(|e| e.id()))
     }
 
     fn do_ref_same_edge(&self, edge1: EdgeIndex, edge2: EdgeIndex) -> bool {
