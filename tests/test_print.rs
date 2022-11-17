@@ -34,8 +34,6 @@ fn test_petgraph_print() {
 fn test_petgraph_svg_print() {
     let dir = TestDir::temp();
     let graph: Box<dyn VizDotGraph<_, _, _, _>> = Box::new(person_graph_types::make_sample_graph());
-    let graph_svg_test_res = graph.print_to_svg(
-        dir.path("persons").to_str().unwrap()
-    );
+    let graph_svg_test_res = graph.print_to_svg(dir.path("persons").to_str().unwrap());
     assert!(graph_svg_test_res.is_ok());
 }
