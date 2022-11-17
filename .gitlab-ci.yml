@@ -35,7 +35,7 @@ test:
   image: rust:latest
   script:
     - cat /etc/issue
-    - apt install graphviz -y
+    - apt install graphviz -y || dot --help
     - cargo test
 
 build:
@@ -53,7 +53,8 @@ coverage:
     LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
     CARGO_INCREMENTAL: "0"
   script:
-    - apt install graphviz -y
+    - cat /etc/issue
+    - apt install graphviz -y || dot --help
     - rustup component add llvm-tools-preview
     - cargo test
     # generate html report
