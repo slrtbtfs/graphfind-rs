@@ -107,7 +107,6 @@ fn query_node_properties() {
         // Query adjacent edges from the graph...
         let outgoing_edges: Vec<_> = graph
             .adjacent_edges(index)
-            .unwrap()
             .map(|e| e.index())
             .sorted()
             .collect();
