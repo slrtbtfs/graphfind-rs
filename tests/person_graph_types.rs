@@ -16,7 +16,7 @@ use petgraph::stable_graph::StableGraph;
  * Person enum/Uses redundant data for now.
  */
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Person {
     Student {
         name: String,
@@ -29,11 +29,10 @@ pub enum Person {
         faculty: String,
     },
 }
-
 /**
  * FriendOf Struct
  */
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct FriendOf {
     since_year: i32,
 }

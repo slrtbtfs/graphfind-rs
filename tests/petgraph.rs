@@ -8,7 +8,7 @@ extern crate rustgql;
  */
 fn test_graph_weights() {
     // node and edge types are derived from added nodes and edges.
-    let mut pg = petgraph::stable_graph::StableGraph::new();
+    let mut pg = petgraph::graph::Graph::new();
     let a = pg.add_node("a");
     let b = pg.add_node("b");
     pg.add_edge(a, b, 42);
@@ -22,9 +22,9 @@ fn test_graph_weights() {
     let x: Vec<&str> = g.node_weights().copied().collect();
     assert_eq!(x, vec!["a", "b"]);
 
-    //let weights = g.node_weights();
-    //let node_weights: Vec<&str> = weights.map(|x|{*x}).collect();
-    //assert_eq!(node_weights, vec!["a", "b"]);
+    let weights = g.node_weights();
+    let node_weights: Vec<&str> = weights.copied().collect();
+    assert_eq!(node_weights, vec!["a", "b"]);
 
     let edge_weights: Vec<&i32> = g.edge_weights().collect();
     assert_eq!(edge_weights, vec![&42]);
