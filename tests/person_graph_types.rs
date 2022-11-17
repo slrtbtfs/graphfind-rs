@@ -1,4 +1,5 @@
-use petgraph::stable_graph::StableGraph;
+use petgraph::graph::Graph;
+use serde::{Deserialize, Serialize};
 
 /**
  * Defines the data of a test graph:
@@ -16,7 +17,7 @@ use petgraph::stable_graph::StableGraph;
  * Person enum/Uses redundant data for now.
  */
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Person {
     Student {
         name: String,
@@ -32,7 +33,7 @@ pub enum Person {
 /**
  * FriendOf Struct
  */
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct FriendOf {
     since_year: i32,
 }
@@ -70,9 +71,9 @@ pub fn new_professor(name: &str, age: u32, faculty: &str) -> Person {
 
 /// Returns an owned data type rather than a
 /// reference so the calling function is then responsible for cleaning up the value.
-pub fn make_sample_graph() -> StableGraph<Person, FriendOf> {
+pub fn make_sample_graph() -> Graph<Person, FriendOf> {
     // Graph maintains pointers to Person, and FriendOf.
-    let mut graph: StableGraph<Person, FriendOf> = StableGraph::new();
+    let mut graph: Graph<Person, FriendOf> = Graph::new();
 
     // Student 1/Tobias
     let tobias = new_student("tobias", 99, 900000);
