@@ -1,4 +1,5 @@
 use rustgql::print::VizDotGraph;
+use test_dir::{TestDir, DirBuilder};
 
 pub mod person_graph_types;
 
@@ -24,4 +25,18 @@ fn test_petgraph_print() {
     }
     ";
     assert_eq!(actual_print.replace(' ', ""), dot_print.replace(' ', ""));
+}
+
+///
+/// Tests that graphviz can generate a .svg file for our sample graph.
+///
+#[test]
+fn test_petgraph_svg_print() {
+    let dir = TestDir::temp();
+
+    let graph: Box<dyn VizDotGraph<_, _, _, _>> = Box::new(person_graph_types::make_sample_graph());
+    let graph_svg_test_res = graph.print_to_svg(
+        dir.path("persons").to_str().unwrap()
+    );
+    assert!(graph_svg_test_res.is_ok());
 }
