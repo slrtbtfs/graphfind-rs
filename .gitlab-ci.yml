@@ -7,8 +7,8 @@ cache:
       - target/
 
 stages:
+  - install_packages
   - cargo
-
 
 # from https://gitlab.com/dlalic/gitlab-clippy#gitlab-ci-example
 clippy:
@@ -34,8 +34,9 @@ test:
   stage: cargo
   image: rust:latest
   script:
-    - cat /etc/issue
-    - apt install graphviz -y || dot --help
+    # Install script for graphviz
+    - apt-get update
+    - apt-get install graphviz -y
     - cargo test
 
 build:
@@ -53,8 +54,8 @@ coverage:
     LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
     CARGO_INCREMENTAL: "0"
   script:
-    - cat /etc/issue
-    - apt install graphviz -y || dot --help
+    - apt-get update
+    - apt-get install graphviz -y
     - rustup component add llvm-tools-preview
     - cargo test
     # generate html report
