@@ -34,6 +34,7 @@ test:
   stage: cargo
   image: rust:latest
   script:
+    - cat /etc/issue
     - apt install graphviz -y
     - cargo test
 
