@@ -7,5 +7,12 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-petgraph = "0.6.2"
+# for Petgraph backend
+petgraph = {version = "0.6.2", features=["serde-1"]}
+# for Serde (+ JSON) to read/write from files
+serde = {version = "1.0.147", features=["derive"]}
+serde_json = "1.0.87"
+# for Test directories (experimental)
+test_dir = "0.2.0"
+
 itertools = "0.10.5"
