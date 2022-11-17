@@ -5,7 +5,6 @@ use petgraph::Direction::Incoming;
 use petgraph::Direction::Outgoing;
 use petgraph::{graph::DefaultIx, Directed};
 
-
 use crate::graph::Graph;
 /**
  * Example implementation for in memory graphs stored using the petgraph library.

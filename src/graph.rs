@@ -22,30 +22,21 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
      * For directed graphs this includes all incoming and outgoing
      * edges.
      */
-    fn adjacent_edges<'a>(
-        &'a self,
-        node: &'a NodeRef,
-    ) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
+    fn adjacent_edges<'a>(&'a self, node: &'a NodeRef) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
     where
         EdgeRef: 'a;
     /**
      * Gets a readonly handle of all incoming edges of a node.
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
-    fn incoming_edges<'a>(
-        &'a self,
-        node: &'a NodeRef,
-    ) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
+    fn incoming_edges<'a>(&'a self, node: &'a NodeRef) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
     where
         EdgeRef: 'a;
     /**
      * Gets a readonly handle of all outgoing edges of a node.
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
-    fn outgoing_edges<'a>(
-        &'a self,
-        node: &'a NodeRef,
-    ) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
+    fn outgoing_edges<'a>(&'a self, node: &'a NodeRef) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
     where
         EdgeRef: 'a;
 
