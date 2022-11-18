@@ -7,8 +7,8 @@ cache:
       - target/
 
 stages:
-  - install_packages
   - cargo
+
 
 # from https://gitlab.com/dlalic/gitlab-clippy#gitlab-ci-example
 clippy:
