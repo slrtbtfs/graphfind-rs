@@ -13,8 +13,7 @@ fn test_petgraph_print() {
     // Printed String we get
     let dot_print = r#graph.print();
     // Result String we expect
-    let actual_print = 
-r#"digraph {
+    let actual_print = r#"digraph {
     0 [ label = "Student { name: \"tobias\", age: 99, matrical_number: 900000 }" ]
     1 [ label = "Student { name: \"stefan\", age: 9, matrical_number: 89000 }" ]
     2 [ label = "Student { name: \"horst\", age: 55, matrical_number: 823340 }" ]
