@@ -6,7 +6,9 @@
  * + query lifetime is `'q`.
  */
 
-pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
+pub trait Graph<NodeWeight, EdgeWeight> {
+    type NodeRef<'a>;
+    type EdgeRef<'a>;
     /**
      * Checks if the edges of this graph are directed.
      */
@@ -15,56 +17,62 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     /**
      * Checks if the given edge is directed.
      */
-    fn is_directed_edge(&self, edge: EdgeRef) -> Option<bool>;
+    fn is_directed_edge(&self, edge: Self::EdgeRef<'_>) -> Option<bool>;
 
     /**
      * Gets a readonly handle of all adjacent edges of a node.
      * For directed graphs this includes all incoming and outgoing
      * edges.
      */
-    fn adjacent_edges<'a>(&'a self, node: &'a NodeRef) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
-    where
-        EdgeRef: 'a;
+    fn adjacent_edges<'a>(
+        &'a self,
+        node: &'a Self::NodeRef<'a>,
+    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a>;
     /**
      * Gets a readonly handle of all incoming edges of a node.
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
-    fn incoming_edges<'a>(&'a self, node: &'a NodeRef) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
-    where
-        EdgeRef: 'a;
+    fn incoming_edges<'a>(
+        &'a self,
+        node: &'a Self::NodeRef<'a>,
+    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a>;
     /**
      * Gets a readonly handle of all outgoing edges of a node.
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
-    fn outgoing_edges<'a>(&'a self, node: &'a NodeRef) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
-    where
-        EdgeRef: 'a;
+    fn outgoing_edges<'a>(
+        &'a self,
+        node: &'a Self::NodeRef<'a>,
+    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a>;
 
     /**
      * Checks whether two references refer to the same edge.
      */
-    fn do_ref_same_edge(&self, edge1: EdgeRef, edge2: EdgeRef) -> bool;
+    fn do_ref_same_edge(&self, edge1: Self::EdgeRef<'_>, edge2: Self::EdgeRef<'_>) -> bool;
 
     /**
      * Checks whether two references refer to the same node.
      */
-    fn do_ref_same_node(&self, node1: NodeRef, node2: NodeRef) -> bool;
+    fn do_ref_same_node(&self, node1: Self::NodeRef<'_>, node2: Self::NodeRef<'_>) -> bool;
 
     /**
      * Gets a readonly handle of the nodes an edge connects.
      * If the edge is directed, the first node is its source, and the second node its destination.
      */
-    fn adjacent_nodes(&self, node: EdgeRef) -> Option<(NodeRef, NodeRef)>;
+    fn adjacent_nodes(
+        &self,
+        node: Self::EdgeRef<'_>,
+    ) -> Option<(Self::NodeRef<'_>, Self::NodeRef<'_>)>;
 
     /**
      * Retrieve weight from a node reference.
      */
-    fn node_weight(&self, node: NodeRef) -> Option<&NodeWeight>;
+    fn node_weight(&self, node: Self::NodeRef<'_>) -> Option<&NodeWeight>;
 
     /**
      * Retrieve weight from an edge reference.
      */
-    fn edge_weight(&self, edge: EdgeRef) -> Option<&EdgeWeight>;
+    fn edge_weight(&self, edge: Self::EdgeRef<'_>) -> Option<&EdgeWeight>;
 
     /**
      * Returns an Iterator over all node weights.
@@ -85,9 +93,8 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
         todo!()
     }
 
-    type NodesIterator<'a>: Iterator<Item = NodeRef>
+    type NodesIterator<'a>: Iterator<Item = Self::NodeRef<'a>>
     where
-        NodeRef: 'a,
         Self: 'a;
     /**
      * Returns an Iterator over all nodes.
@@ -97,7 +104,5 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
     /**
      * Returns an Iterator over all edges.
      */
-    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeRef> + 'a>
-    where
-        EdgeRef: 'a;
+    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a>;
 }

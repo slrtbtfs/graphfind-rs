@@ -9,9 +9,11 @@ use crate::graph::Graph;
 /**
  * Example implementation for in memory graphs stored using the petgraph library.
  */
-impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
+impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
     for petgraph::graph::Graph<NodeWeight, EdgeWeight, Directed, DefaultIx>
 {
+    type NodeRef<'a> = NodeIndex where NodeIndex: 'a;
+    type EdgeRef<'a> = EdgeIndex where EdgeIndex: 'a;
     fn is_directed(&self) -> bool {
         petgraph::graph::Graph::is_directed(self)
     }
@@ -23,11 +25,8 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
 
     fn adjacent_edges<'a>(
         &'a self,
-        node: &'a NodeIndex,
-    ) -> Box<(dyn Iterator<Item = EdgeIndex> + 'a)>
-    where
-        EdgeIndex: 'a,
-    {
+        node: &'a Self::NodeRef<'a>,
+    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a> {
         if self.is_directed() {
             Box::new(
                 self.edges_directed(*node, Incoming)
@@ -39,17 +38,17 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
         }
     }
 
-    fn incoming_edges<'a>(&'a self, node: &'a NodeIndex) -> Box<dyn Iterator<Item = EdgeIndex> + 'a>
-    where
-        EdgeIndex: 'a,
-    {
+    fn incoming_edges<'a>(
+        &'a self,
+        node: &'a Self::NodeRef<'a>,
+    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a> {
         Box::new(self.edges_directed(*node, Incoming).map(|e| e.id()))
     }
 
-    fn outgoing_edges<'a>(&'a self, node: &'a NodeIndex) -> Box<dyn Iterator<Item = EdgeIndex> + 'a>
-    where
-        EdgeIndex: 'a,
-    {
+    fn outgoing_edges<'a>(
+        &'a self,
+        node: &'a Self::NodeRef<'a>,
+    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a> {
         Box::new(self.edges_directed(*node, Outgoing).map(|e| e.id()))
     }
 
@@ -89,10 +88,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
         it
     }
 
-    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeIndex> + 'a>
-    where
-        EdgeIndex: 'a,
-    {
+    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a> {
         let it = (0..self.edge_count()).map(EdgeIndex::new);
 
         Box::new(it)
