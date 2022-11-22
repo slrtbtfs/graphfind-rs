@@ -81,14 +81,12 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
         Box::new(petgraph::graph::Graph::edge_weights(self))
     }
 
-    fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeIndex> + 'a>
-    where
-        NodeIndex: 'a,
-    {
+    type NodesIterator<'a> = impl Iterator<Item = NodeIndex> + 'a where NodeIndex: 'a, EdgeIndex: 'a, NodeWeight: 'a, EdgeWeight: 'a;
+    fn nodes<'a>(&'a self) -> Self::NodesIterator<'a> {
         // This works with the petgraph Graph type due to implementation details of petgraph, see https://docs.rs/petgraph/latest/petgraph/graph/struct.Graph.html#graph-indices
         let it = (0..self.node_count()).map(NodeIndex::new);
 
-        Box::new(it)
+        it
     }
 
     fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = EdgeIndex> + 'a>

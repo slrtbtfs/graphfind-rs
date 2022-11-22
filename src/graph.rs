@@ -85,12 +85,14 @@ pub trait Graph<NodeWeight, EdgeWeight, NodeRef, EdgeRef> {
         todo!()
     }
 
+    type NodesIterator<'a>: Iterator<Item = NodeRef>
+    where
+        NodeRef: 'a,
+        Self: 'a;
     /**
      * Returns an Iterator over all nodes.
      */
-    fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = NodeRef> + 'a>
-    where
-        NodeRef: 'a;
+    fn nodes(&self) -> Self::NodesIterator<'_>;
 
     /**
      * Returns an Iterator over all edges.
