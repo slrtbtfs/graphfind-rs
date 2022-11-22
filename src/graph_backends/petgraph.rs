@@ -78,9 +78,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
 
     type EdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where Self: 'a;
     fn edges(&self) -> Self::EdgesIterator<'_> {
-        let it = (0..self.edge_count()).map(EdgeIndex::new);
-
-        Box::new(it)
+        (0..self.edge_count()).map(EdgeIndex::new)
     }
 
     type NodeWeightsIterator<'a>
