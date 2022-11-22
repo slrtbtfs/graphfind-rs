@@ -1,5 +1,3 @@
-use petgraph::Direction::Incoming;
-
 /**
  * Graph is a generic trait specifying the functionality that must be implemented by Graph storage backends used for Querying.
  *
@@ -76,24 +74,23 @@ pub trait Graph<NodeWeight, EdgeWeight> {
      */
     fn edge_weight(&self, edge: Self::EdgeRef<'_>) -> Option<&EdgeWeight>;
 
+    type NodeWeightsIterator<'a>: Iterator<Item = &'a NodeWeight>
+    where
+        Self: 'a,
+        NodeWeight: 'a;
     /**
      * Returns an Iterator over all node weights.
      */
-    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
-        let _it = self.nodes().map(|x| self.node_weight(x).unwrap());
+    fn node_weights(&self) -> Self::NodeWeightsIterator<'_>;
 
-        //Box::new(it)
-        todo!()
-    }
-
+    type EdgeWeightsIterator<'a>: Iterator<Item = &'a EdgeWeight>
+    where
+        Self: 'a,
+        EdgeWeight: 'a;
     /**
      * Returns an Iterator over all edge weights.
      */
-    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
-        let _it = self.edges().map(|x| self.edge_weight(x).unwrap());
-        //Box::new(it)
-        todo!()
-    }
+    fn edge_weights(&self) -> Self::EdgeWeightsIterator<'_>;
 
     type NodesIterator<'a>: Iterator<Item = Self::NodeRef<'a>>
     where

@@ -62,12 +62,12 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
         petgraph::graph::Graph::edge_weight(self, edge)
     }
 
-    fn node_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a NodeWeight> + 'a> {
-        Box::new(petgraph::graph::Graph::node_weights(self))
+    fn node_weights(&self) -> Self::NodeWeightsIterator<'_> {
+        petgraph::graph::Graph::node_weights(self)
     }
 
-    fn edge_weights<'a>(&'a self) -> Box<dyn Iterator<Item = &'a EdgeWeight> + 'a> {
-        Box::new(petgraph::graph::Graph::edge_weights(self))
+    fn edge_weights(& self) -> Self::EdgeWeightsIterator<'_> {
+        petgraph::graph::Graph::edge_weights(self)
     }
 
     type NodesIterator<'a> = impl Iterator<Item = NodeIndex> + 'a where NodeIndex: 'a, EdgeIndex: 'a, NodeWeight: 'a, EdgeWeight: 'a;
@@ -82,4 +82,10 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
 
         Box::new(it)
     }
+
+    type NodeWeightsIterator<'a>
+     = impl Iterator<Item = &'a NodeWeight> + 'a where NodeIndex: 'a, EdgeIndex: 'a, NodeWeight: 'a, EdgeWeight: 'a, Self: 'a, NodeWeight: 'a;
+
+    type EdgeWeightsIterator<'a>
+     = impl Iterator<Item = &'a EdgeWeight> + 'a where NodeIndex: 'a, EdgeIndex: 'a, NodeWeight: 'a, EdgeWeight: 'a, Self: 'a, EdgeWeight: 'a;
 }
