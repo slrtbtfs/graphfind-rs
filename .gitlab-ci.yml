@@ -14,7 +14,7 @@ stages:
 # from https://gitlab.com/dlalic/gitlab-clippy#gitlab-ci-example
 clippy:
   stage: cargo
-  image: rust:nightly
+  image: "rustdocker/rust:nightly"
   before_script:
     - rustup component add clippy
     - cargo install gitlab_clippy
@@ -34,7 +34,7 @@ clippy:
 
 test:
   stage: cargo
-  image: rust:nightly
+  image: "rustdocker/rust:nightly"
   script:
     # Install script for graphviz
     - apt-get update
@@ -43,7 +43,7 @@ test:
 
 build:
   stage: cargo
-  image: rust:nightly
+  image: "rustdocker/rust:nightly"
   script:
     - cargo build --verbose
 
@@ -75,7 +75,7 @@ coverage:
 
 formatting:
   stage: cargo
-  image: rust:nightly
+  image: "rustdocker/rust:nightly"
   script:
     - rustup component add rustfmt
     - cargo fmt -- --check
