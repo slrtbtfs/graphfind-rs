@@ -23,23 +23,23 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
         Some(self.is_directed())
     }
     type AdjacentEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where Self: 'a;
-    fn adjacent_edges(&self, node: &Self::NodeRef) -> Self::AdjacentEdgesIterator<'_> {
-        self.edges_directed(*node, Incoming)
+    fn adjacent_edges(&self, node: Self::NodeRef) -> Self::AdjacentEdgesIterator<'_> {
+        self.edges_directed(node, Incoming)
             .chain(
-                self.edges_directed(*node, Outgoing)
+                self.edges_directed(node, Outgoing)
                     .filter(|_| self.is_directed()),
             )
             .map(|e| e.id())
     }
 
     type IncomingEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where Self: 'a;
-    fn incoming_edges(&self, node: &Self::NodeRef) -> Self::IncomingEdgesIterator<'_> {
-        Box::new(self.edges_directed(*node, Incoming).map(|e| e.id()))
+    fn incoming_edges(&self, node: Self::NodeRef) -> Self::IncomingEdgesIterator<'_> {
+        Box::new(self.edges_directed(node, Incoming).map(|e| e.id()))
     }
 
     type OutgoingEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where Self: 'a;
-    fn outgoing_edges(&self, node: &Self::NodeRef) -> Self::OutgoingEdgesIterator<'_> {
-        Box::new(self.edges_directed(*node, Outgoing).map(|e| e.id()))
+    fn outgoing_edges(&self, node: Self::NodeRef) -> Self::OutgoingEdgesIterator<'_> {
+        Box::new(self.edges_directed(node, Outgoing).map(|e| e.id()))
     }
 
     fn do_ref_same_edge(&self, edge1: EdgeIndex, edge2: EdgeIndex) -> bool {

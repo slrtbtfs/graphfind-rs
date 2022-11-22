@@ -3,7 +3,7 @@ use std::vec;
 
 use graphviz_rust::cmd::{CommandArg, Format};
 use petgraph::dot::Dot;
-use petgraph::graph::{DefaultIx, EdgeIndex, NodeIndex};
+use petgraph::graph::{DefaultIx};
 use petgraph::Directed;
 
 use crate::print::VizDotGraph;
@@ -13,7 +13,7 @@ use crate::print::VizDotGraph;
  *
  * Requires NodeWeight, EdgeWeight to posess the Debug trait.
  */
-impl<NodeWeight, EdgeWeight> VizDotGraph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
+impl<NodeWeight, EdgeWeight> VizDotGraph<NodeWeight, EdgeWeight>
     for petgraph::graph::Graph<NodeWeight, EdgeWeight, Directed, DefaultIx>
 where
     NodeWeight: Debug,

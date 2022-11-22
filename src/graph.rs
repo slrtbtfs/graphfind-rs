@@ -7,8 +7,8 @@
  */
 
 pub trait Graph<NodeWeight, EdgeWeight> {
-    type NodeRef;
-    type EdgeRef;
+    type NodeRef : Copy;
+    type EdgeRef : Copy;
     /**
      * Checks if the edges of this graph are directed.
      */
@@ -27,7 +27,7 @@ pub trait Graph<NodeWeight, EdgeWeight> {
      * For directed graphs this includes all incoming and outgoing
      * edges.
      */
-    fn adjacent_edges(&self, node: &Self::NodeRef) -> Self::AdjacentEdgesIterator<'_>;
+    fn adjacent_edges(&self, node: Self::NodeRef) -> Self::AdjacentEdgesIterator<'_>;
     type IncomingEdgesIterator<'a>: Iterator<Item = Self::EdgeRef>
     where
         Self: 'a;
@@ -35,7 +35,7 @@ pub trait Graph<NodeWeight, EdgeWeight> {
      * Gets a readonly handle of all incoming edges of a node.
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
-    fn incoming_edges(&self, node: &Self::NodeRef) -> Self::IncomingEdgesIterator<'_>;
+    fn incoming_edges(&self, node: Self::NodeRef) -> Self::IncomingEdgesIterator<'_>;
     type OutgoingEdgesIterator<'a>: Iterator<Item = Self::EdgeRef>
     where
         Self: 'a;
@@ -43,7 +43,7 @@ pub trait Graph<NodeWeight, EdgeWeight> {
      * Gets a readonly handle of all outgoing edges of a node.
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
-    fn outgoing_edges(&self, node: &Self::NodeRef) -> Self::OutgoingEdgesIterator<'_>;
+    fn outgoing_edges(&self, node: Self::NodeRef) -> Self::OutgoingEdgesIterator<'_>;
 
     /**
      * Checks whether two references refer to the same edge.

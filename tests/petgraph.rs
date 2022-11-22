@@ -31,4 +31,6 @@ fn test_graph_weights() {
 
     let edge_weights: Vec<&i32> = g.edge_weights().collect();
     assert_eq!(edge_weights, vec![&42]);
+
+    assert!(g.is_directed())
 }
