@@ -12,8 +12,8 @@ use crate::graph::Graph;
 impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
     for petgraph::graph::Graph<NodeWeight, EdgeWeight, Directed, DefaultIx>
 {
-    type NodeRef<'a> = NodeIndex where NodeIndex: 'a;
-    type EdgeRef<'a> = EdgeIndex where EdgeIndex: 'a;
+    type NodeRef = NodeIndex;
+    type EdgeRef = EdgeIndex;
     fn is_directed(&self) -> bool {
         petgraph::graph::Graph::is_directed(self)
     }
@@ -23,7 +23,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
         Some(self.is_directed())
     }
     type AdjacentEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where Self: 'a;
-    fn adjacent_edges(&self, node: &Self::NodeRef<'_>) -> Self::AdjacentEdgesIterator<'_> {
+    fn adjacent_edges(&self, node: &Self::NodeRef) -> Self::AdjacentEdgesIterator<'_> {
         self.edges_directed(*node, Incoming)
             .chain(
                 self.edges_directed(*node, Outgoing)
@@ -33,12 +33,12 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
     }
 
     type IncomingEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where Self: 'a;
-    fn incoming_edges(&self, node: &Self::NodeRef<'_>) -> Self::IncomingEdgesIterator<'_> {
+    fn incoming_edges(&self, node: &Self::NodeRef) -> Self::IncomingEdgesIterator<'_> {
         Box::new(self.edges_directed(*node, Incoming).map(|e| e.id()))
     }
 
     type OutgoingEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where Self: 'a;
-    fn outgoing_edges(&self, node: &Self::NodeRef<'_>) -> Self::OutgoingEdgesIterator<'_> {
+    fn outgoing_edges(&self, node: &Self::NodeRef) -> Self::OutgoingEdgesIterator<'_> {
         Box::new(self.edges_directed(*node, Outgoing).map(|e| e.id()))
     }
 
