@@ -16,8 +16,9 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight, NodeIndex, EdgeIndex>
         petgraph::graph::Graph::is_directed(self)
     }
 
-    fn is_directed_edge(&self, edge: EdgeIndex) -> Option<bool> {
-        petgraph::graph::Graph::is_directed_edge(self, edge)
+    fn is_directed_edge(&self, _edge: EdgeIndex) -> Option<bool> {
+        // petgraph doesn't support mixing directed and undirected edges.
+        Some(self.is_directed())
     }
 
     fn adjacent_edges<'a>(
