@@ -101,8 +101,11 @@ pub trait Graph<NodeWeight, EdgeWeight> {
      */
     fn nodes(&self) -> Self::NodesIterator<'_>;
 
+    type EdgesIterator<'a>: Iterator<Item = Self::EdgeRef<'a>>
+    where
+        Self: 'a;
     /**
      * Returns an Iterator over all edges.
      */
-    fn edges<'a>(&'a self) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a>;
+    fn edges(&self) -> Self::EdgesIterator<'_>;
 }
