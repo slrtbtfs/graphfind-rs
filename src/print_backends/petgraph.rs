@@ -3,7 +3,7 @@ use std::vec;
 
 use graphviz_rust::cmd::{CommandArg, Format};
 use petgraph::dot::Dot;
-use petgraph::graph::{DefaultIx};
+use petgraph::graph::DefaultIx;
 use petgraph::Directed;
 
 use crate::print::VizDotGraph;

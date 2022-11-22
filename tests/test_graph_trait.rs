@@ -36,18 +36,10 @@ fn trial_and_error() {
         graph.outgoing_edges(tobias).next().unwrap()
     ));
     let tobi_and_horst = graph.outgoing_edges(tobias).next().unwrap();
-    assert!(graph.do_ref_same_node(
-        graph
-            .adjacent_nodes(tobi_and_horst)
-            .unwrap()
-            .0,
-        tobias
-    ));
+    assert!(graph.do_ref_same_node(graph.adjacent_nodes(tobi_and_horst).unwrap().0, tobias));
 
     let x = FriendOf::new(2020);
     assert!(graph.is_directed());
-    assert!(graph
-        .is_directed_edge(tobi_and_horst)
-        .unwrap());
+    assert!(graph.is_directed_edge(tobi_and_horst).unwrap());
     assert_eq!(*graph.edge_weight(tobi_and_horst).unwrap(), x);
 }

@@ -3,9 +3,7 @@ use crate::graph::Graph;
 ///
 /// The VizDotGraph trait allows a given Graph to be printed to the GraphViz format.
 ///
-pub trait VizDotGraph<NodeWeight, EdgeWeight>:
-    Graph<NodeWeight, EdgeWeight>
-{
+pub trait VizDotGraph<NodeWeight, EdgeWeight>: Graph<NodeWeight, EdgeWeight> {
     ///
     /// Prints the given graph. This function returns a String.
     ///

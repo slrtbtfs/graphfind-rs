@@ -7,8 +7,8 @@
  */
 
 pub trait Graph<NodeWeight, EdgeWeight> {
-    type NodeRef : Copy;
-    type EdgeRef : Copy;
+    type NodeRef: Copy;
+    type EdgeRef: Copy;
     /**
      * Checks if the edges of this graph are directed.
      */
