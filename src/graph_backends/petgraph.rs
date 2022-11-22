@@ -22,33 +22,23 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
         // petgraph doesn't support mixing directed and undirected edges.
         Some(self.is_directed())
     }
-
-    fn adjacent_edges<'a>(
-        &'a self,
-        node: &'a Self::NodeRef<'a>,
-    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a> {
-        if self.is_directed() {
-            Box::new(
-                self.edges_directed(*node, Incoming)
-                    .chain(self.edges_directed(*node, Outgoing))
-                    .map(|e| e.id()),
+    type AdjacentEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where NodeIndex: 'a, EdgeIndex: 'a, NodeWeight: 'a, EdgeWeight: 'a;
+    fn adjacent_edges(&self, node: &Self::NodeRef<'_>) -> Self::AdjacentEdgesIterator<'_> {
+        self.edges_directed(*node, Incoming)
+            .chain(
+                self.edges_directed(*node, Outgoing)
+                    .filter(|_| self.is_directed()),
             )
-        } else {
-            self.outgoing_edges(node)
-        }
+            .map(|e| e.id())
     }
 
-    fn incoming_edges<'a>(
-        &'a self,
-        node: &'a Self::NodeRef<'a>,
-    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a> {
+    type IncomingEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where NodeIndex: 'a, EdgeIndex: 'a, NodeWeight: 'a, EdgeWeight: 'a;
+    fn incoming_edges(&self, node: &Self::NodeRef<'_>) -> Self::IncomingEdgesIterator<'_> {
         Box::new(self.edges_directed(*node, Incoming).map(|e| e.id()))
     }
 
-    fn outgoing_edges<'a>(
-        &'a self,
-        node: &'a Self::NodeRef<'a>,
-    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a> {
+    type OutgoingEdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where NodeIndex: 'a, EdgeIndex: 'a, NodeWeight: 'a, EdgeWeight: 'a;
+    fn outgoing_edges(&self, node: &Self::NodeRef<'_>) -> Self::OutgoingEdgesIterator<'_> {
         Box::new(self.edges_directed(*node, Outgoing).map(|e| e.id()))
     }
 
@@ -87,7 +77,7 @@ impl<NodeWeight, EdgeWeight> Graph<NodeWeight, EdgeWeight>
     }
 
     type EdgesIterator<'a> = impl Iterator<Item = EdgeIndex> + 'a where NodeIndex: 'a, EdgeIndex: 'a, NodeWeight: 'a, EdgeWeight: 'a;
-    fn edges(& self) -> Self::EdgesIterator<'_> {
+    fn edges(&self) -> Self::EdgesIterator<'_> {
         let it = (0..self.edge_count()).map(EdgeIndex::new);
 
         Box::new(it)

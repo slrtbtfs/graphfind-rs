@@ -1,3 +1,5 @@
+use petgraph::Direction::Incoming;
+
 /**
  * Graph is a generic trait specifying the functionality that must be implemented by Graph storage backends used for Querying.
  *
@@ -19,31 +21,31 @@ pub trait Graph<NodeWeight, EdgeWeight> {
      */
     fn is_directed_edge(&self, edge: Self::EdgeRef<'_>) -> Option<bool>;
 
+    type AdjacentEdgesIterator<'a>: Iterator<Item = Self::EdgeRef<'a>>
+    where
+        Self: 'a;
     /**
      * Gets a readonly handle of all adjacent edges of a node.
      * For directed graphs this includes all incoming and outgoing
      * edges.
      */
-    fn adjacent_edges<'a>(
-        &'a self,
-        node: &'a Self::NodeRef<'a>,
-    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a>;
+    fn adjacent_edges(&self, node: &Self::NodeRef<'_>) -> Self::AdjacentEdgesIterator<'_>;
+    type IncomingEdgesIterator<'a>: Iterator<Item = Self::EdgeRef<'a>>
+    where
+        Self: 'a;
     /**
      * Gets a readonly handle of all incoming edges of a node.
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
-    fn incoming_edges<'a>(
-        &'a self,
-        node: &'a Self::NodeRef<'a>,
-    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a>;
+    fn incoming_edges(&self, node: &Self::NodeRef<'_>) -> Self::IncomingEdgesIterator<'_>;
+    type OutgoingEdgesIterator<'a>: Iterator<Item = Self::EdgeRef<'a>>
+    where
+        Self: 'a;
     /**
      * Gets a readonly handle of all outgoing edges of a node.
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
-    fn outgoing_edges<'a>(
-        &'a self,
-        node: &'a Self::NodeRef<'a>,
-    ) -> Box<dyn Iterator<Item = Self::EdgeRef<'a>> + 'a>;
+    fn outgoing_edges(&self, node: &Self::NodeRef<'_>) -> Self::OutgoingEdgesIterator<'_>;
 
     /**
      * Checks whether two references refer to the same edge.
