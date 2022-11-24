@@ -23,7 +23,7 @@ fn trial_and_error() {
 
     let tobias = graph.nodes().next().unwrap();
     assert_eq!(
-        *graph.node_weight(tobias).unwrap(),
+        *graph.node_weight(tobias),
         new_student("tobias", 99, 900000)
     );
 
@@ -35,6 +35,6 @@ fn trial_and_error() {
 
     let x = FriendOf::new(2020);
     assert!(graph.is_directed());
-    assert!(graph.is_directed_edge(tobi_and_horst).unwrap());
-    assert_eq!(*graph.edge_weight(tobi_and_horst).unwrap(), x);
+    assert!(graph.is_directed_edge(tobi_and_horst));
+    assert_eq!(*graph.edge_weight(tobi_and_horst), x);
 }

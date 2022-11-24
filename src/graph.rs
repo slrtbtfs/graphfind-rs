@@ -24,7 +24,7 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     /**
      * Checks if the given edge is directed.
      */
-    fn is_directed_edge(&self, edge: Self::EdgeRef) -> Option<bool>;
+    fn is_directed_edge(&self, edge: Self::EdgeRef) -> bool;
 
     type AdjacentEdgesIterator<'a>: Iterator<Item = Self::EdgeRef>
     where
@@ -61,12 +61,12 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     /**
      * Retrieve weight from a node reference.
      */
-    fn node_weight(&self, node: Self::NodeRef) -> Option<&NodeWeight>;
+    fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight;
 
     /**
      * Retrieve weight from an edge reference.
      */
-    fn edge_weight(&self, edge: Self::EdgeRef) -> Option<&EdgeWeight>;
+    fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight;
 
     type NodeWeightsIterator<'a>: Iterator<Item = &'a NodeWeight>
     where

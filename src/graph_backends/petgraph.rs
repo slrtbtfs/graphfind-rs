@@ -20,9 +20,10 @@ where
         petgraph::graph::Graph::is_directed(self)
     }
 
-    fn is_directed_edge(&self, _edge: Self::EdgeRef) -> Option<bool> {
+    fn is_directed_edge(&self, edge: Self::EdgeRef) -> bool {
+        assert!(edge.index() < self.edge_count());
         // petgraph doesn't support mixing directed and undirected edges.
-        Some(self.is_directed())
+        self.is_directed()
     }
     type AdjacentEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a where Self: 'a;
     fn adjacent_edges(&self, node: Self::NodeRef) -> Self::AdjacentEdgesIterator<'_> {
@@ -48,12 +49,14 @@ where
         self.edge_endpoints(edge)
     }
 
-    fn node_weight(&self, node: Self::NodeRef) -> Option<&NodeWeight> {
+    fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight {
         petgraph::graph::Graph::node_weight(self, node)
+            .expect("Couldn't find node weight: Node reference invalid.")
     }
 
-    fn edge_weight(&self, edge: Self::EdgeRef) -> Option<&EdgeWeight> {
+    fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight {
         petgraph::graph::Graph::edge_weight(self, edge)
+            .expect("Couldn't find edge weight: Eode reference invalid.")
     }
 
     fn node_weights(&self) -> Self::NodeWeightsIterator<'_> {
