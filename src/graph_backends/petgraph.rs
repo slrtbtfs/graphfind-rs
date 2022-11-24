@@ -45,8 +45,9 @@ where
         Box::new(self.edges_directed(node, Outgoing).map(|e| e.id()))
     }
 
-    fn adjacent_nodes(&self, edge: Self::EdgeRef) -> Option<(Self::NodeRef, Self::NodeRef)> {
+    fn adjacent_nodes(&self, edge: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef) {
         self.edge_endpoints(edge)
+            .expect("Couldn't find edge endpoint references: Edge reference invalid.")
     }
 
     fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight {
