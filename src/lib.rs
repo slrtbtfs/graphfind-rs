@@ -1,3 +1,5 @@
+#![feature(type_alias_impl_trait)]
+
 // Public Interface defined within the root.
 pub mod file_io;
 pub mod graph;

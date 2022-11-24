@@ -1,4 +1,5 @@
 use petgraph::graph::Graph;
+
 use serde::{Deserialize, Serialize};
 
 /**
@@ -42,10 +43,6 @@ pub struct FriendOf {
 impl FriendOf {
     pub fn new(year: i32) -> FriendOf {
         FriendOf { since_year: year }
-    }
-
-    pub fn since_year(&self) -> i32 {
-        self.since_year
     }
 }
 

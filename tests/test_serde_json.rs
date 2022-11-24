@@ -3,7 +3,7 @@ use petgraph::{
     graph::Graph,
     visit::{EdgeRef, IntoNodeReferences},
 };
-use rustgql::{file_io::GraphReadWriter, file_io_backends, graph};
+use rustgql::{file_io::GraphReadWriter, file_io_backends};
 use test_dir::{DirBuilder, TestDir};
 
 mod person_graph_types;
@@ -30,7 +30,7 @@ fn test_serde_json_graph_read_write() {
         )
         .unwrap();
     // Deserialize and pack in a Box.
-    let graph: Box<dyn graph::Graph<Person, FriendOf, _, _>> = read_writer
+    let graph: Box<petgraph::graph::Graph<Person, FriendOf, _, _>> = read_writer
         .deserialize_graph(&append_path(&dir, NAME_TO_READ_AND_WRITE))
         .unwrap();
 
