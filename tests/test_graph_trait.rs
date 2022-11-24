@@ -31,12 +31,7 @@ fn trial_and_error() {
     assert_eq!(graph.outgoing_edges(tobias).count(), 1);
     assert_eq!(graph.incoming_edges(tobias).count(), 0);
 
-    assert!(graph.do_ref_same_edge(
-        graph.adjacent_edges(tobias).next().unwrap(),
-        graph.outgoing_edges(tobias).next().unwrap()
-    ));
     let tobi_and_horst = graph.outgoing_edges(tobias).next().unwrap();
-    assert!(graph.do_ref_same_node(graph.adjacent_nodes(tobi_and_horst).unwrap().0, tobias));
 
     let x = FriendOf::new(2020);
     assert!(graph.is_directed());

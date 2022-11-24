@@ -44,14 +44,6 @@ where
         Box::new(self.edges_directed(node, Outgoing).map(|e| e.id()))
     }
 
-    fn do_ref_same_edge(&self, edge1: Self::EdgeRef, edge2: Self::EdgeRef) -> bool {
-        edge1 == edge2
-    }
-
-    fn do_ref_same_node(&self, node1: Self::NodeRef, node2: Self::NodeRef) -> bool {
-        node1 == node2
-    }
-
     fn adjacent_nodes(&self, edge: Self::EdgeRef) -> Option<(Self::NodeRef, Self::NodeRef)> {
         self.edge_endpoints(edge)
     }

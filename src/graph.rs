@@ -1,14 +1,21 @@
-/**
- * Graph is a generic trait specifying the functionality that must be implemented by Graph storage backends used for Querying.
- *
- * Lifetimes:
- * + Graph lifetime is `'g`.
- * + query lifetime is `'q`.
- */
+use std::hash::Hash;
 
+///
+/// Graph is a generic trait specifying the functionality that must be implemented by Graph storage backends used for Querying.
+///
 pub trait Graph<NodeWeight, EdgeWeight> {
-    type NodeRef: Copy;
-    type EdgeRef: Copy;
+    ///
+    /// NodeRef is the associated type for node references.
+    /// It implements the Eq and PartialOrd traits (compare references),
+    /// Hash (allows insertion of Node Weights and their references into a Table),
+    /// and Copy (allows use of references in function parameters).
+    ///
+    type NodeRef: Copy + Eq + Hash + PartialOrd;
+    ///
+    /// EdgeRef is the associated type for edge references.
+    /// It implements the same traits as NodeRef.
+    ///
+    type EdgeRef: Copy + Eq + Hash + PartialOrd;
     /**
      * Checks if the edges of this graph are directed.
      */
@@ -44,16 +51,6 @@ pub trait Graph<NodeWeight, EdgeWeight> {
      * For undirected graphs this is equivalent to calling `adjacent_edges`.
      */
     fn outgoing_edges(&self, node: Self::NodeRef) -> Self::OutgoingEdgesIterator<'_>;
-
-    /**
-     * Checks whether two references refer to the same edge.
-     */
-    fn do_ref_same_edge(&self, edge1: Self::EdgeRef, edge2: Self::EdgeRef) -> bool;
-
-    /**
-     * Checks whether two references refer to the same node.
-     */
-    fn do_ref_same_node(&self, node1: Self::NodeRef, node2: Self::NodeRef) -> bool;
 
     /**
      * Gets a readonly handle of the nodes an edge connects.
