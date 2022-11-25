@@ -289,6 +289,7 @@ fn check_node_references() {
 /// 1. Graph is undirected.
 /// 2. Every edge is undirected.
 /// 3. adjacent_edges, outgoing_edges, incoming_edges all yield the same result.
+/// 4. adjacent_nodes yields the correct nodes.
 ///
 #[test]
 fn check_undirected_edges() {
@@ -329,6 +330,22 @@ fn check_undirected_edges() {
         assert_eq!(actual_routes, incoming_edges);
         assert_eq!(actual_routes, adjacent_edges);
     }
+
+    for (e_idx, (f, t, _)) in routes.iter() {
+        let (start, end) = graph.adjacent_nodes(*e_idx);
+        assert!((start == *f && end == *t) || (start == *t && end == *f));
+    }
+}
+
+///
+/// Tests that we reject invalid edge indices for undirected graphs.
+///
+#[test]
+#[should_panic]
+fn wrong_edge_index_directed_test() {
+    let graph = into_trait_object_undirected(make_sample_graph_undirected().0);
+    let wrong_idx = EdgeIndex::from(42);
+    graph.is_directed_edge(wrong_idx);
 }
 
 ///
