@@ -1,6 +1,6 @@
 use petgraph::{
     graph::{DefaultIx, EdgeIndex, Graph as BaseGraph, NodeIndex},
-    Directed,
+    Directed, Undirected,
 };
 use rustgql::graph::Graph as RQLGraph;
 use std::collections::HashMap;
@@ -24,16 +24,31 @@ fn into_trait_object<N, E>(
     g
 }
 
+fn into_trait_object_undirected<N, E>(
+    g: petgraph::graph::Graph<N, E, Undirected, DefaultIx>,
+) -> impl rustgql::graph::Graph<
+    N,
+    E,
+    NodeRef = petgraph::graph::NodeIndex,
+    EdgeRef = petgraph::graph::EdgeIndex,
+> {
+    g
+}
+
 /// NodeInfo and EdgeInfo types that allow us to compare
 /// what we inserted into a Graph and what we get back-
-type NodeInfo = HashMap<NodeIndex, Person>;
-type EdgeInfo = HashMap<EdgeIndex, (NodeIndex, NodeIndex, FriendOf)>;
+type NodeInfo<N> = HashMap<NodeIndex, N>;
+type EdgeInfo<E> = HashMap<EdgeIndex, (NodeIndex, NodeIndex, E)>;
 
 ///
 /// Creates a sample graph for testing directed graphs.
 /// See (TODO add file) for an graphical overview.
 ///
-fn make_sample_graph() -> (BaseGraph<Person, FriendOf>, NodeInfo, EdgeInfo) {
+fn make_sample_graph() -> (
+    BaseGraph<Person, FriendOf>,
+    NodeInfo<Person>,
+    EdgeInfo<FriendOf>,
+) {
     // Graph maintains enums of Person, and FriendOf.
     let mut graph: BaseGraph<Person, FriendOf, Directed, DefaultIx> = BaseGraph::new();
     let mut node_raw = HashMap::new();
@@ -85,6 +100,64 @@ fn make_sample_graph() -> (BaseGraph<Person, FriendOf>, NodeInfo, EdgeInfo) {
 }
 
 ///
+/// Creates a new undirected sample graph, based in part
+/// on the tramways in Ulm.
+///
+fn make_sample_graph_undirected<'a>() -> (
+    BaseGraph<&'a str, i32, Undirected>,
+    NodeInfo<&'a str>,
+    EdgeInfo<i32>,
+) {
+    let mut g = BaseGraph::new_undirected();
+    let mut stations = HashMap::new();
+
+    // Ehinger Tor
+    let e = "Ehinger Tor";
+    // Theater
+    let t = "Theater";
+    // Science Park
+    let s = "Science Park";
+    // Kuhberg Schools
+    let k = "Kuhberg Schulzentrum";
+    // Böfingen
+    let b = "Böflingen";
+    // Söflingen
+    let sö = "Söflingen";
+
+    // Add stations
+    let ei = g.add_node(e);
+    let ti = g.add_node(t);
+    let si = g.add_node(s);
+    let ki = g.add_node(k);
+    let bi = g.add_node(b);
+    let söi = g.add_node(sö);
+
+    stations.insert(ti, t);
+    stations.insert(si, s);
+    stations.insert(ei, e);
+    stations.insert(ki, k);
+    stations.insert(bi, b);
+    stations.insert(söi, sö);
+
+    // Connections
+    let ei_ti = g.add_edge(ei, ti, 5);
+    let ti_si = g.add_edge(ti, si, 12);
+    let ti_ki = g.add_edge(ti, ki, 15);
+    let bi_ti = g.add_edge(bi, ti, 17);
+    let ei_söi = g.add_edge(ei, söi, 8);
+
+    // Add connections
+    let mut routes = HashMap::new();
+    routes.insert(ei_ti, (ei, ti, 5));
+    routes.insert(ti_si, (si, ti, 12));
+    routes.insert(ti_ki, (ki, ti, 15));
+    routes.insert(bi_ti, (bi, ti, 17));
+    routes.insert(ei_söi, (ei, söi, 8));
+
+    (g, stations, routes)
+}
+
+///
 /// Assert Node indices from 0 to 3. Petgraph should
 /// guarantee these indices in a graph without deletion.
 ///
@@ -130,8 +203,29 @@ fn query_node_properties() {
             .map(|(e, _)| e.index())
             .collect();
         actual_adjacent_edges.sort();
-
         assert_eq!(adjacent_edges, actual_adjacent_edges);
+
+        // Repeat this process for outgoing edges.
+        let mut outgoing_edges: Vec<_> = graph.outgoing_edges(*index).map(|e| e.index()).collect();
+        outgoing_edges.sort();
+        let mut actual_outgoing_edges: Vec<_> = edge_data
+            .iter()
+            .filter(|(_, (a, _, _))| a == index)
+            .map(|(e, _)| e.index())
+            .collect();
+        actual_outgoing_edges.sort();
+        assert_eq!(outgoing_edges, actual_outgoing_edges);
+
+        // And once again for incoming edges.
+        let mut incoming_edges: Vec<_> = graph.incoming_edges(*index).map(|e| e.index()).collect();
+        incoming_edges.sort();
+        let mut actual_incoming_edges: Vec<_> = edge_data
+            .iter()
+            .filter(|(_, (_, a, _))| a == index)
+            .map(|(e, _)| e.index())
+            .collect();
+        actual_incoming_edges.sort();
+        assert_eq!(incoming_edges, actual_incoming_edges);
     }
 }
 
@@ -188,6 +282,53 @@ fn check_node_references() {
     }
 
     let _panic_provoke = graph.node_weight(faulty_idx);
+}
+
+///
+/// Checks special properties for undirected graphs:
+/// 1. Graph is undirected.
+/// 2. Every edge is undirected.
+/// 3. adjacent_edges, outgoing_edges, incoming_edges all yield the same result.
+///
+#[test]
+fn check_undirected_edges() {
+    let (tramways, stations, routes) = make_sample_graph_undirected();
+    let graph = into_trait_object_undirected(tramways);
+
+    assert!(!graph.is_directed());
+    assert!(!routes.keys().any(|edge| graph.is_directed_edge(*edge)));
+
+    for station_idx in stations.keys() {
+        let mut actual_routes: Vec<_> = routes
+            .iter()
+            .filter(|(_, (f, t, _))| f == station_idx || t == station_idx)
+            .map(|(e, _)| e.index())
+            .collect();
+        actual_routes.sort();
+
+        let mut outgoing_edges: Vec<_> = graph
+            .outgoing_edges(*station_idx)
+            .map(|e| e.index())
+            .collect();
+        outgoing_edges.sort();
+
+        // TODO Don't make me access e.index()/Petgraph interna anymore. Hide that
+        let mut incoming_edges: Vec<_> = graph
+            .incoming_edges(*station_idx)
+            .map(|e| e.index())
+            .collect();
+        incoming_edges.sort();
+
+        let mut adjacent_edges: Vec<_> = graph
+            .adjacent_edges(*station_idx)
+            .map(|e| e.index())
+            .collect();
+        adjacent_edges.sort();
+
+        assert_eq!(actual_routes, outgoing_edges);
+        assert_eq!(actual_routes, incoming_edges);
+        assert_eq!(actual_routes, adjacent_edges);
+    }
 }
 
 ///

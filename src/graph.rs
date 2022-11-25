@@ -73,18 +73,18 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     where
         Self: 'a,
         NodeWeight: 'a;
-    /**
-     * Returns an Iterator over all node weights.
-     */
+    ///
+    /// Returns an Iterator over all node weights.
+    ///
     fn node_weights(&self) -> Self::NodeWeightsIterator<'_>;
 
     type EdgeWeightsIterator<'a>: Iterator<Item = &'a EdgeWeight>
     where
         Self: 'a,
         EdgeWeight: 'a;
-    /**
-     * Returns an Iterator over all edge weights.
-     */
+    ///
+    /// Returns an Iterator over all edge weights.
+    ///
     fn edge_weights(&self) -> Self::EdgeWeightsIterator<'_>;
 
     type NodesIterator<'a>: Iterator<Item = Self::NodeRef>
