@@ -34,7 +34,7 @@ pub enum Person {
 /**
  * FriendOf Struct
  */
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq)]
 pub struct FriendOf {
     since_year: i32,
 }
