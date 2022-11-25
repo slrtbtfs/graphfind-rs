@@ -57,7 +57,7 @@ where
 
     fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight {
         petgraph::graph::Graph::edge_weight(self, edge)
-            .expect("Couldn't find edge weight: Eode reference invalid.")
+            .expect("Couldn't find edge weight: Edge reference invalid.")
     }
 
     fn node_weights(&self) -> Self::NodeWeightsIterator<'_> {

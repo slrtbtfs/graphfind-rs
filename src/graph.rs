@@ -6,6 +6,7 @@ use std::hash::Hash;
 pub trait Graph<NodeWeight, EdgeWeight> {
     ///
     /// NodeRef is the associated type for node references.
+    ///
     /// It implements the Eq and PartialOrd traits (compare references),
     /// Hash (allows insertion of Node Weights and their references into a Table),
     /// and Copy (allows use of references in function parameters).
@@ -31,7 +32,7 @@ pub trait Graph<NodeWeight, EdgeWeight> {
         Self: 'a;
     ///
     /// Gets a readonly handle of all adjacent edges of a node.
-    /// For directed graphs this includes all incoming and outgoing
+    /// For directed graphs, this includes all incoming and outgoing
     /// edges.
     ///
     fn adjacent_edges(&self, node: Self::NodeRef) -> Self::AdjacentEdgesIterator<'_>;
@@ -58,14 +59,14 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     ///
     fn adjacent_nodes(&self, node: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef);
 
-    /**
-     * Retrieve weight from a node reference.
-     */
+    ///
+    /// Retrieve weight from a node reference.
+    ///
     fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight;
 
-    /**
-     * Retrieve weight from an edge reference.
-     */
+    ///
+    /// Retrieve weight from an edge reference.
+    ///
     fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight;
 
     type NodeWeightsIterator<'a>: Iterator<Item = &'a NodeWeight>
@@ -90,16 +91,16 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     where
         Self: 'a;
 
-    /**
-     * Returns an Iterator over all nodes.
-     */
+    ///
+    /// Returns an Iterator over all nodes by their references.
+    ///
     fn nodes(&self) -> Self::NodesIterator<'_>;
 
     type EdgesIterator<'a>: Iterator<Item = Self::EdgeRef>
     where
         Self: 'a;
-    /**
-     * Returns an Iterator over all edges.
-     */
+    ///
+    /// Returns an Iterator over all edges by their references.
+    ///
     fn edges(&self) -> Self::EdgesIterator<'_>;
 }
