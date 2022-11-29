@@ -24,33 +24,46 @@ impl<
         Graph: graph::Graph<BaseNodeWeight, BaseEdgeWeight>,
     > FilterMap<'g, BaseNodeWeight, BaseEdgeWeight, NodeWeight, EdgeWeight, Graph>
 {
-    fn new<NodeFn, EdgeFn>(graph: &'g Graph, node_fn: NodeFn, edge_fn: EdgeFn) -> Self
+    /// Creates a new Graph derived from the base graph, both filtering nodes and edges and mapping their weights to new values.
+    /// `node_fn` takes a function closure that can either return None, to remove that node from the derived graph or `Some(weight)` to keep it and at the same time equip it with a possibly new value for weight.
+    /// `edge_fn` works similarly but with edges.
+    /// By also passing a reference to the base graph into these closures this allows quite complex graph filtering and mapping, but for simpler cases it might be more appropriate to use on of the derived constructors.
+    fn new<NodeFn, EdgeFn>(base_graph: &'g Graph, node_fn: NodeFn, edge_fn: EdgeFn) -> Self
     where
         NodeFn: Fn(&'g Graph, Graph::NodeRef) -> Option<NodeWeight>,
         EdgeFn: Fn(&'g Graph, Graph::EdgeRef) -> Option<EdgeWeight>,
     {
-        let node_map: HashMap<Graph::NodeRef, NodeWeight> = graph
+        let node_map: HashMap<Graph::NodeRef, NodeWeight> = base_graph
+            // take nodes from base graph
             .nodes()
+            // apply filter map function
             .filter_map(|n| {
-                let weight = node_fn(graph, n)?;
+                // in case None is returned by `node_fn` we skip this node due to the `?` operator
+                let weight = node_fn(base_graph, n)?;
+                // otherwise we return the key, value pair used for constructing the node map
                 Some((n, weight))
             })
+            // collect into hash table
             .collect();
 
-        let edge_map: HashMap<Graph::EdgeRef, EdgeWeight> = graph
+        let edge_map: HashMap<Graph::EdgeRef, EdgeWeight> = base_graph
+            // take edges from base graph
             .edges()
+            // filter out edges connected to nodes that don't exist in the new graph
             .filter(|e| {
-                let (a, b) = graph.adjacent_nodes(*e);
+                let (a, b) = base_graph.adjacent_nodes(*e);
                 node_map.contains_key(&a) && node_map.contains_key(&b)
             })
+            // apply edge map
             .filter_map(|e| {
-                let weight = edge_fn(graph, e)?;
+                let weight = edge_fn(base_graph, e)?;
                 Some((e, weight))
             })
+            // collect into hash table
             .collect();
 
         Self {
-            base_graph: graph,
+            base_graph,
             node_map,
             edge_map,
         }
