@@ -28,7 +28,11 @@ impl<
     /// `node_fn` takes a function closure that can either return None, to remove that node from the derived graph or `Some(weight)` to keep it and at the same time equip it with a possibly new value for weight.
     /// `edge_fn` works similarly but with edges.
     /// By also passing a reference to the base graph into these closures this allows quite complex graph filtering and mapping, but for simpler cases it might be more appropriate to use on of the derived constructors.
-    fn new<NodeFn, EdgeFn>(base_graph: &'g Graph, node_fn: NodeFn, edge_fn: EdgeFn) -> Self
+    fn general_filter_map<NodeFn, EdgeFn>(
+        base_graph: &'g Graph,
+        node_fn: NodeFn,
+        edge_fn: EdgeFn,
+    ) -> Self
     where
         NodeFn: Fn(&'g Graph, Graph::NodeRef) -> Option<NodeWeight>,
         EdgeFn: Fn(&'g Graph, Graph::EdgeRef) -> Option<EdgeWeight>,
@@ -67,6 +71,24 @@ impl<
             node_map,
             edge_map,
         }
+    }
+    /// Creates a new graph derived from the base graph, similarly to `general_filter_map` but the function closures just take the respective node and edge weights as arguments, making the constructor less general but more convenient to use.
+    fn weight_filter_map<NodeFn, EdgeFn>(
+        base_graph: &'g Graph,
+        node_fn: NodeFn,
+        edge_fn: EdgeFn,
+    ) -> Self
+    where
+        NodeFn: Fn(&'g BaseNodeWeight) -> Option<NodeWeight>,
+        EdgeFn: Fn(&'g BaseEdgeWeight) -> Option<EdgeWeight>,
+        BaseNodeWeight: 'g,
+        BaseEdgeWeight: 'g,
+    {
+        Self::general_filter_map(
+            base_graph,
+            |_, n| node_fn(base_graph.node_weight(n)),
+            |_, e| edge_fn(base_graph.edge_weight(e)),
+        )
     }
 }
 
