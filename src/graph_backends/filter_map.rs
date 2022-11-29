@@ -92,6 +92,44 @@ impl<
     }
 }
 
+impl<'g, NodeWeight, EdgeWeight, Graph: graph::Graph<NodeWeight, EdgeWeight>>
+    FilterMap<'g, NodeWeight, EdgeWeight, &'g NodeWeight, &'g EdgeWeight, Graph>
+{
+    /// Creates a new graph derived from the base graph, just filtering out
+    /// nodes and edges based on a given condition on their weights.
+    /// Instead of copying the weights into the new graph it adds a layer
+    /// of references into the old graph.
+    fn weight_filter<NodeFn, EdgeFn>(
+        base_graph: &'g Graph,
+        node_fn: NodeFn,
+        edge_fn: EdgeFn,
+    ) -> Self
+    where
+        NodeFn: Fn(&'g NodeWeight) -> bool,
+        EdgeFn: Fn(&'g EdgeWeight) -> bool,
+        NodeWeight: 'g,
+        EdgeWeight: 'g,
+    {
+        Self::weight_filter_map(
+            base_graph,
+            |n| {
+                if node_fn(n) {
+                    Some(n)
+                } else {
+                    None
+                }
+            },
+            |e| {
+                if edge_fn(e) {
+                    Some(e)
+                } else {
+                    None
+                }
+            },
+        )
+    }
+}
+
 impl<
         'g,
         BaseNodeWeight,
