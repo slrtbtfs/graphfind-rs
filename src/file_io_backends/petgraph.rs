@@ -8,15 +8,6 @@ use std::{fs::File, io::Error as IOError};
 #[derive(Default)]
 pub struct JsonGraphReadWriter {}
 
-impl JsonGraphReadWriter {
-    ///
-    /// Constructs a new JsonGraphReadWriter struct.
-    ///
-    pub fn new() -> Self {
-        JsonGraphReadWriter {}
-    }
-}
-
 ///
 /// Implementation of GraphReadWriter trait using serde_json.
 /// Nodes and Edges need to implement Serializable and Deserializable

@@ -5,9 +5,15 @@ use petgraph::Direction::Incoming;
 use petgraph::Direction::Outgoing;
 
 use crate::graph::Graph;
-/**
- * Example implementation for in memory graphs stored using the petgraph library.
- */
+///
+/// Example implementation for in memory graphs stored using the petgraph library.
+///
+/// Both undirected and directed graphs are supported.
+///
+/// Node and Edge indices are by default 32-bit unsigned integers. Valid indices are
+/// {0, ..., n - 1} and {0, ..., m - 1}, where n is the number of nodes, and m the
+/// number of edges stored in this graph implementation.
+///
 impl<NodeWeight, EdgeWeight, Direction, IndexType> Graph<NodeWeight, EdgeWeight>
     for petgraph::graph::Graph<NodeWeight, EdgeWeight, Direction, IndexType>
 where
@@ -45,8 +51,9 @@ where
         Box::new(self.edges_directed(node, Outgoing).map(|e| e.id()))
     }
 
-    fn adjacent_nodes(&self, edge: Self::EdgeRef) -> Option<(Self::NodeRef, Self::NodeRef)> {
+    fn adjacent_nodes(&self, edge: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef) {
         self.edge_endpoints(edge)
+            .expect("Couldn't find edge endpoint references: Edge reference invalid.")
     }
 
     fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight {
@@ -56,7 +63,7 @@ where
 
     fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight {
         petgraph::graph::Graph::edge_weight(self, edge)
-            .expect("Couldn't find edge weight: Eode reference invalid.")
+            .expect("Couldn't find edge weight: Edge reference invalid.")
     }
 
     fn node_weights(&self) -> Self::NodeWeightsIterator<'_> {
