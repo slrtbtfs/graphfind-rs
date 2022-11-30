@@ -76,12 +76,10 @@ impl<
             edge_map,
         }
     }
-    ///
     /// Creates a new graph derived from the base graph, similarly to `general_filter_map`.
     ///
     /// However, the function closures just take the respective node and edge weights as arguments,
     /// making the constructor less general but more convenient to use.
-    ///
     pub fn weight_filter_map<NodeFn, EdgeFn>(
         base_graph: &'g Graph,
         node_fn: NodeFn,
