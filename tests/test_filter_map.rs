@@ -19,7 +19,7 @@ pub mod person_graph_types;
 /// edge 1 0 and 2, edge 2 nodes 3 and 4, edge 3 3 and 5, etc.
 /// This graph is undirected.
 ///
-fn make_sample_graph() -> Graph<u32, u32, Undirected> {
+fn make_sample_graph_mass_filter_map() -> Graph<u32, u32, Undirected> {
     let mut graph = petgraph::graph::Graph::new_undirected();
 
     for i in 0..1000 {
@@ -39,7 +39,7 @@ fn make_sample_graph() -> Graph<u32, u32, Undirected> {
 ///
 #[test]
 fn test_filter_only() {
-    let graph = make_sample_graph();
+    let graph = make_sample_graph_mass_filter_map();
     let result = FilterMapGraph::weight_filter(&graph, |n| n % 3 != 2, |e| e % 2 != 1);
 
     // Check nodes.
@@ -51,6 +51,15 @@ fn test_filter_only() {
         let w = *result.node_weight(n);
         let w_actual = graph.node_weight(n).unwrap();
         assert_eq!(*w, *w_actual);
+
+        // Only one edge: Edge 2i connects nodes 3i and 3i + 1.
+        let edges: Vec<_> = result.adjacent_edges(n).map(|e| e.index()).collect();
+        let e_idx = if idx % 3 == 1 {
+            (2 * (idx - 1)) / 3
+        } else {
+            (2 * idx) / 3
+        };
+        assert_eq!(edges, vec![e_idx]);
     }
 
     // Check edges.
@@ -72,7 +81,7 @@ fn test_filter_only() {
 ///
 #[test]
 fn test_weight_node_only() {
-    let graph = make_sample_graph();
+    let graph = make_sample_graph_mass_filter_map();
     let result = FilterMapGraph::weight_filter_map(
         &graph,
         |n| Some(3 * n).filter(|n| n % 3 != 0),
@@ -119,4 +128,16 @@ fn test_edge_node_projection() {
     dates.sort();
     let actual_dates = vec![2018, 2020];
     assert_eq!(dates, actual_dates);
+
+    // We assume all edges still to be directed.
+    assert!(result.is_directed());
+    for e in result.edges() {
+        assert!(result.is_directed_edge(e));
+    }
 }
+
+///
+/// Take the Tramways graph, and take all stations with >= 2 incoming/outgoing edges.
+/// Use general_filter_map directly.
+///
+fn test_filter_map_directly() {}
