@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::graph::{self};
 
-struct FilterMap<
+pub struct FilterMap<
     'g,
     BaseNodeWeight,
     BaseEdgeWeight,
@@ -28,7 +28,7 @@ impl<
     /// `node_fn` takes a function closure that can either return None, to remove that node from the derived graph or `Some(weight)` to keep it and at the same time equip it with a possibly new value for weight.
     /// `edge_fn` works similarly but with edges.
     /// By also passing a reference to the base graph into these closures this allows quite complex graph filtering and mapping, but for simpler cases it might be more appropriate to use on of the derived constructors.
-    fn general_filter_map<NodeFn, EdgeFn>(
+    pub fn general_filter_map<NodeFn, EdgeFn>(
         base_graph: &'g Graph,
         node_fn: NodeFn,
         edge_fn: EdgeFn,
@@ -73,7 +73,7 @@ impl<
         }
     }
     /// Creates a new graph derived from the base graph, similarly to `general_filter_map` but the function closures just take the respective node and edge weights as arguments, making the constructor less general but more convenient to use.
-    fn weight_filter_map<NodeFn, EdgeFn>(
+    pub fn weight_filter_map<NodeFn, EdgeFn>(
         base_graph: &'g Graph,
         node_fn: NodeFn,
         edge_fn: EdgeFn,
@@ -99,7 +99,7 @@ impl<'g, NodeWeight, EdgeWeight, Graph: graph::Graph<NodeWeight, EdgeWeight>>
     /// nodes and edges based on a given condition on their weights.
     /// Instead of copying the weights into the new graph it adds a layer
     /// of references into the old graph.
-    fn weight_filter<NodeFn, EdgeFn>(
+    pub fn weight_filter<NodeFn, EdgeFn>(
         base_graph: &'g Graph,
         node_fn: NodeFn,
         edge_fn: EdgeFn,
