@@ -1,9 +1,13 @@
+use std::vec;
+
 use petgraph::{
     graph::{EdgeIndex, NodeIndex},
     stable_graph::DefaultIx,
     Graph, Undirected,
 };
 use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMapGraph};
+
+pub mod person_graph_types;
 
 ///
 /// Function Tests for filter_map
@@ -15,7 +19,7 @@ use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMapGra
 /// edge 1 0 and 2, edge 2 nodes 3 and 4, edge 3 3 and 5, etc.
 /// This graph is undirected.
 ///
-fn make_sample_graph() -> Graph<i32, i32, Undirected> {
+fn make_sample_graph() -> Graph<u32, u32, Undirected> {
     let mut graph = petgraph::graph::Graph::new_undirected();
 
     for i in 0..1000 {
@@ -60,4 +64,59 @@ fn test_filter_only() {
         assert_eq!((3 * idx) / 2, n1.index());
         assert_eq!(((3 * idx) / 2) + 1, n2.index());
     }
+}
+
+///
+/// Remove one of three nodes (0, 3, ...), thus removing all edges.
+/// Triple the weights of remaining nodes. This also tests edge removal.
+///
+#[test]
+fn test_weight_node_only() {
+    let graph = make_sample_graph();
+    let result = FilterMapGraph::weight_filter_map(
+        &graph,
+        |n| Some(3 * n).filter(|n| n % 3 != 0),
+        |e| Some(2 * e),
+    );
+
+    // Assert no edges.
+    let edge_count = result.edges().count();
+    assert_eq!(edge_count, 0);
+
+    // Check nodes: Expected Values, no edges.
+    for node in result.nodes() {
+        let weight = result.node_weight(node);
+        let idx = node.index();
+        assert!(idx % 3 != 0 && idx < 3000);
+        assert_eq!(3 * weight, idx as u32);
+
+        let adj_edge_count = result.adjacent_edges(node).count();
+        assert_eq!(adj_edge_count, 0);
+    }
+}
+
+///
+/// Take the Persons graph, and give me the names of all persons,
+/// and all existing friendships that existed after 2011.
+///
+#[test]
+fn test_edge_node_projection() {
+    let graph = person_graph_types::make_sample_graph();
+    let result = FilterMapGraph::weight_filter_map(
+        &graph,
+        |p| Some(p.name()),
+        |e| Some(e.since_year).filter(|year| *year > 2011),
+    );
+
+    // We should get still the same names.
+    let mut names: Vec<_> = result.node_weights().copied().collect();
+    names.sort();
+    let actual_names = vec!["bettina", "horst", "stefan", "tobias"];
+    assert_eq!(names, actual_names);
+
+    // We should only get two dates.
+    let mut dates: Vec<_> = result.edge_weights().copied().collect();
+    dates.sort();
+    let actual_dates = vec![2018, 2020];
+    assert_eq!(dates, actual_dates);
 }

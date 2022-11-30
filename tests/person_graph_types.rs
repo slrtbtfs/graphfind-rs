@@ -1,22 +1,47 @@
-use petgraph::graph::Graph;
+use petgraph::{graph::Graph, stable_graph::DefaultIx, Directed, Undirected};
 
 use serde::{Deserialize, Serialize};
 
-/**
- * Defines the data of a test graph:
- *
- * - Nodes:
- *  - Person (name, age)
- *  - Student (extends Student, matrical number)
- *  - Professor (extends Student, faculty)
- * - Edges:
- *  - FriendOf (since year)
- */
+///
+/// Turn into Trait Object, moved here.
+///
+pub fn into_trait_object<N, E>(
+    g: petgraph::graph::Graph<N, E, Directed, DefaultIx>,
+) -> impl rustgql::graph::Graph<
+    N,
+    E,
+    NodeRef = petgraph::graph::NodeIndex,
+    EdgeRef = petgraph::graph::EdgeIndex,
+> {
+    g
+}
+
+pub fn into_trait_object_undirected<N, E>(
+    g: petgraph::graph::Graph<N, E, Undirected, DefaultIx>,
+) -> impl rustgql::graph::Graph<
+    N,
+    E,
+    NodeRef = petgraph::graph::NodeIndex,
+    EdgeRef = petgraph::graph::EdgeIndex,
+> {
+    g
+}
+
+///
+/// Defines the data of a test graph:
+///
+/// - Nodes:
+/// - Person (name, age)
+/// - Student (extends Student, matrical number)
+/// - Professor (extends Student, faculty)
+/// - Edges:
+/// - FriendOf (since year)
+///
 
 // Defined Node Types
-/**
- * Person enum/Uses redundant data for now.
- */
+///
+/// Person enum/Uses redundant data for now.
+///
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Person {
@@ -31,12 +56,22 @@ pub enum Person {
         faculty: String,
     },
 }
+
+impl Person {
+    pub fn name(&self) -> &String {
+        match self {
+            Person::Student { name, .. } => name,
+            Person::Professor { name, .. } => name,
+        }
+    }
+}
+
 /**
  * FriendOf Struct
  */
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq)]
 pub struct FriendOf {
-    since_year: i32,
+    pub since_year: i32,
 }
 
 // Implementation of Edge Type

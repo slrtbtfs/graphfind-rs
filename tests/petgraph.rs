@@ -1,32 +1,6 @@
-use petgraph::{stable_graph::DefaultIx, Directed, Undirected};
 use rustgql::graph::Graph;
 
 extern crate rustgql;
-
-///
-/// Turn into Trait Object, moved here.
-///
-fn into_trait_object<N, E>(
-    g: petgraph::graph::Graph<N, E, Directed, DefaultIx>,
-) -> impl rustgql::graph::Graph<
-    N,
-    E,
-    NodeRef = petgraph::graph::NodeIndex,
-    EdgeRef = petgraph::graph::EdgeIndex,
-> {
-    g
-}
-
-fn into_trait_object_undirected<N, E>(
-    g: petgraph::graph::Graph<N, E, Undirected, DefaultIx>,
-) -> impl rustgql::graph::Graph<
-    N,
-    E,
-    NodeRef = petgraph::graph::NodeIndex,
-    EdgeRef = petgraph::graph::EdgeIndex,
-> {
-    g
-}
 
 fn test_graph() -> impl rustgql::graph::Graph<String, i32> {
     let mut g = petgraph::graph::Graph::new();

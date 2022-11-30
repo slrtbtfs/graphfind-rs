@@ -163,7 +163,7 @@ fn query_edge_indices() {
 #[test]
 fn query_node_properties() {
     let (base_graph, node_data, edge_data) = make_sample_graph();
-    let graph = into_trait_object(base_graph);
+    let graph = person_graph_types::into_trait_object(base_graph);
 
     // Check nodes on their own.
     for (index, weight) in node_data.iter() {
@@ -214,7 +214,7 @@ fn query_node_properties() {
 #[test]
 fn query_edge_properties() {
     let (base_graph, _, edge_data) = make_sample_graph();
-    let graph = into_trait_object(base_graph);
+    let graph = person_graph_types::into_trait_object(base_graph);
     // Graph direction, edge directions should be ok.
     assert!(graph.is_directed());
 
@@ -233,7 +233,7 @@ fn query_edge_properties() {
 #[test]
 #[should_panic(expected = "Couldn't find edge weight: Edge reference invalid.")]
 fn check_edge_references() {
-    let graph = into_trait_object(make_sample_graph().0);
+    let graph = person_graph_types::into_trait_object(make_sample_graph().0);
     // Incorrect index/out of range.
     let faulty_idx = EdgeIndex::from(65);
 
@@ -252,7 +252,7 @@ fn check_edge_references() {
 #[test]
 #[should_panic(expected = "Couldn't find node weight: Node reference invalid.")]
 fn check_node_references() {
-    let graph = into_trait_object(make_sample_graph().0);
+    let graph = person_graph_types::into_trait_object(make_sample_graph().0);
     let faulty_idx = NodeIndex::from(45);
 
     for idx in graph.nodes() {
@@ -272,7 +272,7 @@ fn check_node_references() {
 #[test]
 fn check_undirected_edges() {
     let (tramways, stations, routes) = make_sample_graph_undirected();
-    let graph = into_trait_object_undirected(tramways);
+    let graph = person_graph_types::into_trait_object_undirected(tramways);
 
     assert!(!graph.is_directed());
     assert!(!routes.keys().any(|edge| graph.is_directed_edge(*edge)));
@@ -321,7 +321,7 @@ fn check_undirected_edges() {
 #[test]
 #[should_panic]
 fn wrong_edge_index_directed_test() {
-    let graph = into_trait_object_undirected(make_sample_graph_undirected().0);
+    let graph = person_graph_types::into_trait_object_undirected(make_sample_graph_undirected().0);
     let wrong_idx = EdgeIndex::from(42);
     graph.is_directed_edge(wrong_idx);
 }
@@ -331,7 +331,7 @@ fn wrong_edge_index_directed_test() {
 ///
 #[test]
 fn trial_and_error() {
-    let graph = into_trait_object(person_graph_types::make_sample_graph());
+    let graph = person_graph_types::into_trait_object(person_graph_types::make_sample_graph());
     assert_eq!(graph.nodes().count(), 4);
     assert_eq!(graph.edges().count(), 4);
 
