@@ -90,6 +90,26 @@ impl<
             |_, e| edge_fn(base_graph.edge_weight(e)),
         )
     }
+    /// Creates a new graph derived from the case graph, mapping each node
+    /// and edge weight trough the respective function, without removing
+    /// any graph elements.
+    pub fn weight_map<NodeFn, EdgeFn>(
+        base_graph: &'g Graph,
+        node_fn: NodeFn,
+        edge_fn: EdgeFn,
+    ) -> Self
+    where
+        NodeFn: Fn(&'g BaseNodeWeight) -> NodeWeight,
+        EdgeFn: Fn(&'g BaseEdgeWeight) -> EdgeWeight,
+        BaseNodeWeight: 'g,
+        BaseEdgeWeight: 'g,
+    {
+        Self::general_filter_map(
+            base_graph,
+            |_, n| Some(node_fn(base_graph.node_weight(n))),
+            |_, e| Some(edge_fn(base_graph.edge_weight(e))),
+        )
+    }
 }
 
 impl<'g, NodeWeight, EdgeWeight, Graph: graph::Graph<NodeWeight, EdgeWeight>>
