@@ -205,7 +205,7 @@ impl<
         let (a, b) = self.base_graph.adjacent_nodes(edge);
 
         assert!(self.node_map.contains_key(&a));
-        assert!(self.node_map.contains_key(&a));
+        assert!(self.node_map.contains_key(&b));
 
         (a, b)
     }
