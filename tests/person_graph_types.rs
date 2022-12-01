@@ -105,7 +105,7 @@ pub fn new_professor(name: &str, age: u32, faculty: &str) -> Person {
 
 /// Provide Test Data -> TODO: Once graph_impl-branch is correct and merged into main,
 /// update main so that test data is created in a own module, and used in other modules.
-
+///
 /// Returns an owned data type rather than a
 /// reference so the calling function is then responsible for cleaning up the value.
 pub fn make_sample_graph_2() -> BaseGraph<Person, FriendOf> {

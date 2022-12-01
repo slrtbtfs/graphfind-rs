@@ -129,6 +129,15 @@ fn test_edge_node_projection() {
     let actual_dates = vec![2018, 2020];
     assert_eq!(dates, actual_dates);
 
+    // From Tobias, only Horst
+    let edges_out_t: Vec<_> = result.outgoing_edges(NodeIndex::from(0)).collect();
+    assert_eq!(edges_out_t.len(), 1);
+    assert_eq!(edges_out_t[0].index(), 0);
+    // From Bettina, only Stefan
+    let edges_in_t: Vec<_> = result.incoming_edges(NodeIndex::from(3)).collect();
+    assert_eq!(edges_in_t.len(), 1);
+    assert_eq!(edges_in_t[0].index(), 3);
+
     // We assume all edges still to be directed.
     assert!(result.is_directed());
     for e in result.edges() {
