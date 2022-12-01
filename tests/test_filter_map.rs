@@ -187,8 +187,7 @@ fn test_filter_map_directly() {
 ///
 #[test]
 fn test_map_only() {
-    let graph =
-        person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
     let temp_1 = FilterMap::weight_map(&graph, |n| n * n, |e| e * e);
     let result = FilterMap::weight_map(&temp_1, |n| n * n, |e| e * e);
 
@@ -227,4 +226,79 @@ fn test_map_only() {
         assert_eq!(p1, a1);
         assert_eq!(p2, a2);
     }
+}
+
+///
+/// Test that access to a non-existing node fails in the result graph of a filter-map.
+///
+#[test]
+#[should_panic]
+fn test_wrong_node_index() {
+    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
+    assert_eq!(*graph.node_weight(NodeIndex::from(0)), 0);
+    let _invalid_weight = result.node_weight(NodeIndex::from(0));
+}
+
+///
+/// Test that access to the adjacent non-existing node fails in the result graph of a filter-map.
+///
+#[test]
+#[should_panic]
+fn test_wrong_node_adjacent_edges() {
+    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
+    assert_eq!(graph.adjacent_edges(NodeIndex::from(0)).count(), 2);
+    let _invalid_edge_iter = result.adjacent_edges(NodeIndex::from(0));
+}
+
+///
+/// Test that access to the outgoing non-existing node fails in the result graph of a filter-map.
+///
+#[test]
+#[should_panic]
+fn test_wrong_node_outgoing_edges() {
+    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
+    assert_eq!(graph.outgoing_edges(NodeIndex::from(0)).count(), 2);
+    let _invalid_edge_iter = result.outgoing_edges(NodeIndex::from(0));
+}
+
+///
+/// Test that access to the incoming non-existing node fails in the result graph of a filter-map.
+///
+#[test]
+#[should_panic]
+fn test_wrong_node_incoming_edges() {
+    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
+    assert_eq!(graph.incoming_edges(NodeIndex::from(0)).count(), 0);
+    let _invalid_edge_iter = result.outgoing_edges(NodeIndex::from(0));
+}
+
+///
+/// Test that access to a non-existing edge fails.
+///
+#[test]
+#[should_panic]
+fn test_wrong_edge_index() {
+    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
+    assert_eq!(*graph.edge_weight(EdgeIndex::from(0)), 0);
+    let _invalid_weight = result.edge_weight(EdgeIndex::from(0));
+}
+
+///
+/// Test that access to the ends of a non-existing node fails.
+///
+#[test]
+#[should_panic]
+fn test_wrong_edge_ends() {
+    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
+    assert_eq!(
+        graph.adjacent_nodes(EdgeIndex::from(0)),
+        (NodeIndex::from(0), NodeIndex::from(1))
+    );
+    let (_s, _e) = result.adjacent_nodes(EdgeIndex::from(0));
 }
