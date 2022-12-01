@@ -2,7 +2,7 @@ use std::vec;
 
 use petgraph::{
     graph::{EdgeIndex, NodeIndex},
-    stable_graph::{DefaultIx, IndexType},
+    stable_graph::DefaultIx,
     Graph, Undirected,
 };
 use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMap};
@@ -19,7 +19,7 @@ pub mod person_graph_types;
 /// edge 1 0 and 2, edge 2 nodes 3 and 4, edge 3 3 and 5, etc.
 /// This graph is undirected.
 ///
-fn make_sample_graph_mass_filter_map() -> Graph<u32, u32, Undirected> {
+fn make_sample_graph_mass_filter_map() -> Graph<u64, u64, Undirected> {
     let mut graph = petgraph::graph::Graph::new_undirected();
 
     for i in 0..1000 {
@@ -97,7 +97,7 @@ fn test_weight_node_only() {
         let weight = result.node_weight(node);
         let idx = node.index();
         assert!(idx % 3 != 0 && idx < 3000);
-        assert_eq!(3 * weight, idx as u32);
+        assert_eq!(3 * weight, idx as u64);
 
         let adj_edge_count = result.adjacent_edges(node).count();
         assert_eq!(adj_edge_count, 0);
@@ -176,6 +176,46 @@ fn test_filter_map_directly() {
 /// Square all weights in the filter_map sample graph twice, using weight_map.
 /// Assert that the structure remains unchanged.
 ///
+#[test]
 fn test_map_only() {
-    let graph = make_sample_graph_mass_filter_map();
+    let graph =
+        person_graph_types::into_trait_object_undirected(make_sample_graph_mass_filter_map());
+    let temp_1 = FilterMap::weight_map(&graph, |n| n * n, |e| e * e);
+    let result = FilterMap::weight_map(&temp_1, |n| n * n, |e| e * e);
+
+    // Check node + edge refs.
+    let mut node_refs: Vec<_> = result.nodes().collect();
+    let mut node_refs_actual: Vec<_> = graph.nodes().collect();
+    node_refs.sort();
+    node_refs_actual.sort();
+    assert_eq!(node_refs, node_refs_actual);
+    for n in node_refs {
+        let weight = *result.node_weight(n);
+        let w = n.index() as u64;
+        assert_eq!(w * w * w * w, weight);
+
+        // Check edges.
+        let mut edges: Vec<_> = result.adjacent_edges(n).collect();
+        edges.sort();
+        let mut edges_actual: Vec<_> = graph.adjacent_edges(n).collect();
+        edges_actual.sort();
+        assert_eq!(edges, edges_actual);
+    }
+
+    let mut edge_refs: Vec<_> = result.edges().collect();
+    edge_refs.sort();
+    let mut edge_refs_actual: Vec<_> = graph.edges().collect();
+    edge_refs_actual.sort();
+    assert_eq!(edge_refs, edge_refs_actual);
+
+    for e in edge_refs {
+        let weight = *result.edge_weight(e);
+        let w = e.index() as u64;
+        assert_eq!(w * w * w * w, weight);
+
+        let (p1, p2) = result.adjacent_nodes(e);
+        let (a1, a2) = graph.adjacent_nodes(e);
+        assert_eq!(p1, a1);
+        assert_eq!(p2, a2);
+    }
 }
