@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::graph::{self};
 
-pub struct FilterMapGraph<
+pub struct FilterMap<
     'g,
     BaseNodeWeight,
     BaseEdgeWeight,
@@ -22,7 +22,7 @@ impl<
         NodeWeight,
         EdgeWeight,
         Graph: graph::Graph<BaseNodeWeight, BaseEdgeWeight>,
-    > FilterMapGraph<'g, BaseNodeWeight, BaseEdgeWeight, NodeWeight, EdgeWeight, Graph>
+    > FilterMap<'g, BaseNodeWeight, BaseEdgeWeight, NodeWeight, EdgeWeight, Graph>
 {
     /// Creates a new Graph derived from the base graph, both filtering nodes and edges and mapping their weights to new values.
     ///
@@ -99,10 +99,30 @@ impl<
             |_, e| edge_fn(base_graph.edge_weight(e)),
         )
     }
+    /// Creates a new graph derived from the case graph, mapping each node
+    /// and edge weight trough the respective function, without removing
+    /// any graph elements.
+    pub fn weight_map<NodeFn, EdgeFn>(
+        base_graph: &'g Graph,
+        node_fn: NodeFn,
+        edge_fn: EdgeFn,
+    ) -> Self
+    where
+        NodeFn: Fn(&'g BaseNodeWeight) -> NodeWeight,
+        EdgeFn: Fn(&'g BaseEdgeWeight) -> EdgeWeight,
+        BaseNodeWeight: 'g,
+        BaseEdgeWeight: 'g,
+    {
+        Self::general_filter_map(
+            base_graph,
+            |_, n| Some(node_fn(base_graph.node_weight(n))),
+            |_, e| Some(edge_fn(base_graph.edge_weight(e))),
+        )
+    }
 }
 
 impl<'g, NodeWeight, EdgeWeight, Graph: graph::Graph<NodeWeight, EdgeWeight>>
-    FilterMapGraph<'g, NodeWeight, EdgeWeight, &'g NodeWeight, &'g EdgeWeight, Graph>
+    FilterMap<'g, NodeWeight, EdgeWeight, &'g NodeWeight, &'g EdgeWeight, Graph>
 {
     /// Creates a new graph derived from the base graph, just filtering out
     /// nodes and edges based on a given condition on their weights.
@@ -147,7 +167,7 @@ impl<
         EdgeWeight,
         Graph: graph::Graph<BaseNodeWeight, BaseEdgeWeight>,
     > graph::Graph<NodeWeight, EdgeWeight>
-    for FilterMapGraph<'g, BaseNodeWeight, BaseEdgeWeight, NodeWeight, EdgeWeight, Graph>
+    for FilterMap<'g, BaseNodeWeight, BaseEdgeWeight, NodeWeight, EdgeWeight, Graph>
 {
     type NodeRef = Graph::NodeRef;
 
@@ -194,7 +214,7 @@ impl<
         let (a, b) = self.base_graph.adjacent_nodes(edge);
 
         assert!(self.node_map.contains_key(&a));
-        assert!(self.node_map.contains_key(&a));
+        assert!(self.node_map.contains_key(&b));
 
         (a, b)
     }

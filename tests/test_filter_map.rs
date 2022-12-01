@@ -5,7 +5,7 @@ use petgraph::{
     stable_graph::{DefaultIx, IndexType},
     Graph, Undirected,
 };
-use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMapGraph};
+use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMap};
 
 pub mod person_graph_types;
 
@@ -40,7 +40,7 @@ fn make_sample_graph_mass_filter_map() -> Graph<u32, u32, Undirected> {
 #[test]
 fn test_filter_only() {
     let graph = make_sample_graph_mass_filter_map();
-    let result = FilterMapGraph::weight_filter(&graph, |n| n % 3 != 2, |e| e % 2 != 1);
+    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 2, |e| e % 2 != 1);
 
     // Check nodes.
     let nodes: Vec<NodeIndex<DefaultIx>> = result.nodes().collect();
@@ -82,7 +82,7 @@ fn test_filter_only() {
 #[test]
 fn test_weight_node_only() {
     let graph = make_sample_graph_mass_filter_map();
-    let result = FilterMapGraph::weight_filter_map(
+    let result = FilterMap::weight_filter_map(
         &graph,
         |n| Some(3 * n).filter(|n| n % 3 != 0),
         |e| Some(2 * e),
@@ -111,7 +111,7 @@ fn test_weight_node_only() {
 #[test]
 fn test_edge_node_projection() {
     let graph = person_graph_types::make_sample_graph_2();
-    let result = FilterMapGraph::weight_filter_map(
+    let result = FilterMap::weight_filter_map(
         &graph,
         |p| Some(p.name()),
         |e| Some(e.since_year).filter(|year| *year > 2011),
@@ -143,7 +143,7 @@ fn test_edge_node_projection() {
 #[test]
 fn test_filter_map_directly() {
     let graph = person_graph_types::make_sample_graph_undirected().0;
-    let result = FilterMapGraph::general_filter_map(
+    let result = FilterMap::general_filter_map(
         &graph,
         |g, n| {
             let degree = g.edges(n).count();
