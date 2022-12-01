@@ -187,7 +187,8 @@ fn test_filter_map_directly() {
 ///
 #[test]
 fn test_map_only() {
-    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph =
+        person_graph_types::into_trait_object_undirected(make_sample_graph_mass_filter_map());
     let temp_1 = FilterMap::weight_map(&graph, |n| n * n, |e| e * e);
     let result = FilterMap::weight_map(&temp_1, |n| n * n, |e| e * e);
 
