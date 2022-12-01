@@ -57,7 +57,7 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     /// Gets a readonly handle of the nodes an edge connects.
     /// If the edge is directed, the first node is its source, and the second node its destination.
     ///
-    fn adjacent_nodes(&self, node: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef);
+    fn adjacent_nodes(&self, edge: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef);
 
     ///
     /// Retrieve weight from a node reference.

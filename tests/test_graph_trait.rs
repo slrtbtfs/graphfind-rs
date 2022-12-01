@@ -1,6 +1,6 @@
 use petgraph::{
     graph::{DefaultIx, EdgeIndex, Graph as BaseGraph, NodeIndex},
-    Directed, Undirected,
+    Directed, EdgeType, Undirected,
 };
 use rustgql::graph::Graph as RQLGraph;
 use std::collections::HashMap;
@@ -13,19 +13,8 @@ use crate::person_graph_types::{new_student, FriendOf, Person};
 // Declare to use code in the module/file ./person_graph_types.rs
 pub mod person_graph_types;
 
-fn into_trait_object<N, E>(
-    g: petgraph::graph::Graph<N, E, Directed, DefaultIx>,
-) -> impl rustgql::graph::Graph<
-    N,
-    E,
-    NodeRef = petgraph::graph::NodeIndex,
-    EdgeRef = petgraph::graph::EdgeIndex,
-> {
-    g
-}
-
-fn into_trait_object_undirected<N, E>(
-    g: petgraph::graph::Graph<N, E, Undirected, DefaultIx>,
+fn into_trait_object<N, E, D: EdgeType>(
+    g: petgraph::graph::Graph<N, E, D, DefaultIx>,
 ) -> impl rustgql::graph::Graph<
     N,
     E,
@@ -294,7 +283,7 @@ fn check_node_references() {
 #[test]
 fn check_undirected_edges() {
     let (tramways, stations, routes) = make_sample_graph_undirected();
-    let graph = into_trait_object_undirected(tramways);
+    let graph = into_trait_object(tramways);
 
     assert!(!graph.is_directed());
     assert!(!routes.keys().any(|edge| graph.is_directed_edge(*edge)));
@@ -343,7 +332,7 @@ fn check_undirected_edges() {
 #[test]
 #[should_panic]
 fn wrong_edge_index_directed_test() {
-    let graph = into_trait_object_undirected(make_sample_graph_undirected().0);
+    let graph = into_trait_object(make_sample_graph_undirected().0);
     let wrong_idx = EdgeIndex::from(42);
     graph.is_directed_edge(wrong_idx);
 }
