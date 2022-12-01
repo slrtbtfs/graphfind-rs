@@ -19,7 +19,7 @@ fn test_serde_json_graph_read_write() {
     let dir = TestDir::current_rnd();
 
     let read_writer = file_io_backends::petgraph::JsonGraphReadWriter::default();
-    let graph_back = person_graph_types::make_sample_graph();
+    let graph_back = person_graph_types::make_sample_graph_2();
 
     // Serialize graph.
     read_writer

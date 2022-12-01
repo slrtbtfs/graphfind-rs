@@ -2,7 +2,7 @@ use std::vec;
 
 use petgraph::{
     graph::{EdgeIndex, NodeIndex},
-    stable_graph::DefaultIx,
+    stable_graph::{DefaultIx, IndexType},
     Graph, Undirected,
 };
 use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMapGraph};
@@ -110,7 +110,7 @@ fn test_weight_node_only() {
 ///
 #[test]
 fn test_edge_node_projection() {
-    let graph = person_graph_types::make_sample_graph();
+    let graph = person_graph_types::make_sample_graph_2();
     let result = FilterMapGraph::weight_filter_map(
         &graph,
         |p| Some(p.name()),
@@ -140,4 +140,42 @@ fn test_edge_node_projection() {
 /// Take the Tramways graph, and take all stations with >= 2 incoming/outgoing edges.
 /// Use general_filter_map directly.
 ///
-fn test_filter_map_directly() {}
+#[test]
+fn test_filter_map_directly() {
+    let graph = person_graph_types::make_sample_graph_undirected().0;
+    let result = FilterMapGraph::general_filter_map(
+        &graph,
+        |g, n| {
+            let degree = g.edges(n).count();
+            Some(degree).filter(|_| degree >= 2)
+        },
+        |g, e| Some(("highly frequented", g.edge_weight(e).unwrap())),
+    );
+
+    // Two nodes; new data is degree (3).
+    // Assert one connection to the same edge.
+    let mut node_indices: Vec<_> = result.nodes().map(|n| n.index()).collect();
+    node_indices.sort();
+    assert_eq!(node_indices, vec![0, 1]);
+    for n in result.nodes() {
+        assert_eq!(*result.node_weight(n), 3);
+        assert_eq!(result.adjacent_edges(n).count(), 1);
+    }
+
+    // One edge; data is "highly frequented" + old edge weight.
+    let edge_index: Vec<_> = result.edges().collect();
+    assert_eq!(edge_index[0].index(), 0);
+    assert_eq!(edge_index.len(), 1);
+    assert_eq!(
+        *result.edge_weight(edge_index[0]),
+        ("highly frequented", &5)
+    );
+}
+
+///
+/// Square all weights in the filter_map sample graph twice, using weight_map.
+/// Assert that the structure remains unchanged.
+///
+fn test_map_only() {
+    let graph = make_sample_graph_mass_filter_map();
+}
