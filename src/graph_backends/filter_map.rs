@@ -211,6 +211,7 @@ impl<
     }
 
     fn adjacent_nodes(&self, edge: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef) {
+        assert!(self.edge_map.contains_key(&edge));
         let (a, b) = self.base_graph.adjacent_nodes(edge);
 
         assert!(self.node_map.contains_key(&a));
@@ -220,10 +221,12 @@ impl<
     }
 
     fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight {
+        assert!(self.node_map.contains_key(&node));
         &self.node_map[&node]
     }
 
     fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight {
+        assert!(self.edge_map.contains_key(&edge));
         &self.edge_map[&edge]
     }
 
