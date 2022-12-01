@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use petgraph::{
     graph::{DefaultIx, EdgeIndex, Graph as BaseGraph, NodeIndex},
-    Directed, Undirected,
+    Directed, EdgeType, Undirected,
 };
 
 use serde::{Deserialize, Serialize};
@@ -10,19 +10,8 @@ use serde::{Deserialize, Serialize};
 ///
 /// Turn into Trait Object, moved here.
 ///
-pub fn into_trait_object<N, E>(
-    g: petgraph::graph::Graph<N, E, Directed, DefaultIx>,
-) -> impl rustgql::graph::Graph<
-    N,
-    E,
-    NodeRef = petgraph::graph::NodeIndex,
-    EdgeRef = petgraph::graph::EdgeIndex,
-> {
-    g
-}
-
-pub fn into_trait_object_undirected<N, E>(
-    g: petgraph::graph::Graph<N, E, Undirected, DefaultIx>,
+pub fn into_trait_object<N, E, D: EdgeType>(
+    g: petgraph::graph::Graph<N, E, D, DefaultIx>,
 ) -> impl rustgql::graph::Graph<
     N,
     E,
@@ -148,7 +137,7 @@ pub fn make_sample_graph_2() -> BaseGraph<Person, FriendOf> {
 }
 
 /// NodeInfo and EdgeInfo types that allow us to compare
-/// what we inserted into a Graph and what we get back-
+/// what we inserted into a Graph and what we get back.
 type NodeInfo<N> = HashMap<NodeIndex, N>;
 type EdgeInfo<E> = HashMap<EdgeIndex, (NodeIndex, NodeIndex, E)>;
 
