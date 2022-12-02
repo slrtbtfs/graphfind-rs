@@ -1,7 +1,7 @@
 use rustgql::print::VizDotGraph;
 use test_dir::{DirBuilder, TestDir};
 
-mod common;
+pub mod common;
 use common::{make_sample_graph_variant};
 
 ///

@@ -5,7 +5,7 @@ use petgraph::{
 use rustgql::{file_io::GraphReadWriter, file_io_backends};
 use test_dir::{DirBuilder, TestDir};
 
-mod common;
+pub mod common;
 use common::{make_sample_graph_variant,FriendOf,Person};
 /// File names
 const NAME_TO_READ_AND_WRITE: &str = "path.json";

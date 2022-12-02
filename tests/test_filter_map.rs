@@ -7,7 +7,7 @@ use petgraph::{
 };
 use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMap};
 
-mod common;
+pub mod common;
 use common::{make_sample_graph_variant,make_sample_graph_undirected,into_trait_object};
 
 

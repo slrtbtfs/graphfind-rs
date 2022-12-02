@@ -1,7 +1,7 @@
 use petgraph::graph::{EdgeIndex, NodeIndex};
 use rustgql::graph::Graph as RQLGraph;
 
-mod common;
+pub mod common;
 use common::{make_sample_graph_variant,make_sample_graph_undirected,make_sample_graph,into_trait_object,new_student,FriendOf};
 
 
