@@ -9,5 +9,5 @@ pub mod query;
 
 // Implementations in their own folders.
 pub mod file_io_backends;
-mod graph_backends;
+pub mod graph_backends;
 mod print_backends;
