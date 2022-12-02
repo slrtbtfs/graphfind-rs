@@ -206,7 +206,8 @@ fn wrong_edge_index_directed_test() {
 ///
 #[test]
 fn trial_and_error() {
-    let graph = person_graph_types::into_trait_object(person_graph_types::make_sample_graph_2());
+    let graph =
+        person_graph_types::into_trait_object(person_graph_types::make_sample_graph_variant());
     assert_eq!(graph.nodes().count(), 4);
     assert_eq!(graph.edges().count(), 4);
 

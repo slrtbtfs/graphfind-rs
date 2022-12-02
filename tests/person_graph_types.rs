@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use petgraph::{
-    graph::{DefaultIx, EdgeIndex, Graph as BaseGraph, NodeIndex},
+    graph::{DefaultIx, EdgeIndex, Graph, NodeIndex},
     Directed, EdgeType, Undirected,
 };
 
@@ -92,66 +92,24 @@ pub fn new_professor(name: &str, age: u32, faculty: &str) -> Person {
     }
 }
 
-/// Provide Test Data -> TODO: Once graph_impl-branch is correct and merged into main,
-/// update main so that test data is created in a own module, and used in other modules.
-///
-/// Returns an owned data type rather than a
-/// reference so the calling function is then responsible for cleaning up the value.
-pub fn make_sample_graph_2() -> BaseGraph<Person, FriendOf> {
-    // Graph maintains pointers to Person, and FriendOf.
-    let mut graph: BaseGraph<Person, FriendOf> = petgraph::graph::Graph::new();
-
-    // Student 1/Tobias
-    let tobias = new_student("tobias", 99, 900000);
-    let t = graph.add_node(tobias);
-
-    // Student 2/Stefan
-    let stefan = new_student("stefan", 9, 89000);
-    let s = graph.add_node(stefan);
-
-    // Student 3/Horst
-    let horst = new_student("horst", 55, 823340);
-    let h = graph.add_node(horst);
-
-    // Professor/Bettina
-    let bettina = new_professor(
-        "bettina",
-        36,
-        "Faculty of Software Engineering and Programming Languages",
-    );
-    let b = graph.add_node(bettina);
-
-    // Connect with edges:
-    // Tobias is a friend of Horst
-    // Horst and Bettina are friends
-    // Stefan is a friend of Bettina
-    let x = FriendOf::new(2020);
-    graph.add_edge(t, h, x);
-    let x = FriendOf::new(2010);
-    graph.add_edge(h, b, x);
-    let x = FriendOf::new(2010);
-    graph.add_edge(b, h, x);
-    graph.add_edge(s, b, FriendOf::new(2018));
-
-    graph
-}
-
 /// NodeInfo and EdgeInfo types that allow us to compare
 /// what we inserted into a Graph and what we get back.
 type NodeInfo<N> = HashMap<NodeIndex, N>;
 type EdgeInfo<E> = HashMap<EdgeIndex, (NodeIndex, NodeIndex, E)>;
 
 ///
-/// Creates a sample graph for testing directed graphs.
+/// Creates a sample graph for testing directed graphs, and copies of node/edge weights & references
+/// to conduct structural tests.
+///
 /// See (TODO add file) for an graphical overview.
 ///
 pub fn make_sample_graph() -> (
-    BaseGraph<Person, FriendOf>,
+    Graph<Person, FriendOf>,
     NodeInfo<Person>,
     EdgeInfo<FriendOf>,
 ) {
     // Graph maintains enums of Person, and FriendOf.
-    let mut graph: BaseGraph<Person, FriendOf, Directed, DefaultIx> = BaseGraph::new();
+    let mut graph: Graph<Person, FriendOf, Directed, DefaultIx> = Graph::new();
     let mut node_raw = HashMap::new();
     let mut edge_raw = HashMap::new();
 
@@ -200,16 +158,59 @@ pub fn make_sample_graph() -> (
     (graph, node_raw, edge_raw)
 }
 
+/// Provides a second set of test data; missing one edge and directly accessible structural information.
+///
+/// Returns an owned data type rather than a reference so the calling function
+/// is then responsible for cleaning up the value.
+pub fn make_sample_graph_variant() -> Graph<Person, FriendOf> {
+    // Graph maintains pointers to Person, and FriendOf.
+    let mut graph: Graph<Person, FriendOf> = Graph::new();
+
+    // Student 1/Tobias
+    let tobias = new_student("tobias", 99, 900000);
+    let t = graph.add_node(tobias);
+
+    // Student 2/Stefan
+    let stefan = new_student("stefan", 9, 89000);
+    let s = graph.add_node(stefan);
+
+    // Student 3/Horst
+    let horst = new_student("horst", 55, 823340);
+    let h = graph.add_node(horst);
+
+    // Professor/Bettina
+    let bettina = new_professor(
+        "bettina",
+        36,
+        "Faculty of Software Engineering and Programming Languages",
+    );
+    let b = graph.add_node(bettina);
+
+    // Connect with edges:
+    // Tobias is a friend of Horst
+    // Horst and Bettina are friends
+    // Stefan is a friend of Bettina
+    let x = FriendOf::new(2020);
+    graph.add_edge(t, h, x);
+    let x = FriendOf::new(2010);
+    graph.add_edge(h, b, x);
+    let x = FriendOf::new(2010);
+    graph.add_edge(b, h, x);
+    graph.add_edge(s, b, FriendOf::new(2018));
+
+    graph
+}
+
 ///
 /// Creates a new undirected sample graph, based in part
 /// on the tramways in Ulm.
 ///
 pub fn make_sample_graph_undirected<'a>() -> (
-    BaseGraph<&'a str, i32, Undirected>,
+    Graph<&'a str, i32, Undirected>,
     NodeInfo<&'a str>,
     EdgeInfo<i32>,
 ) {
-    let mut g = BaseGraph::new_undirected();
+    let mut g = Graph::new_undirected();
     let mut stations = HashMap::new();
 
     // Ehinger Tor

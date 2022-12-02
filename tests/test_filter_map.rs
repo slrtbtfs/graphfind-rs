@@ -110,7 +110,7 @@ fn test_weight_node_only() {
 ///
 #[test]
 fn test_edge_node_projection() {
-    let graph = person_graph_types::make_sample_graph_2();
+    let graph = person_graph_types::make_sample_graph_variant();
     let result = FilterMap::weight_filter_map(
         &graph,
         |p| Some(p.name()),
