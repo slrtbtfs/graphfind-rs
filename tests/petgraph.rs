@@ -2,7 +2,6 @@ use rustgql::graph::Graph;
 
 extern crate rustgql;
 
-
 fn test_graph() -> impl rustgql::graph::Graph<String, i32> {
     let mut g = petgraph::graph::Graph::new();
     let a = g.add_node(String::from("a"));

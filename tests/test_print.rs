@@ -2,7 +2,7 @@ use rustgql::print::VizDotGraph;
 use test_dir::{DirBuilder, TestDir};
 
 pub mod common;
-use common::{make_sample_graph_variant};
+use common::make_sample_graph_variant;
 
 ///
 /// Test Case for Printing to GraphViz dot format:
@@ -13,12 +13,13 @@ fn test_petgraph_print() {
     let graph = make_sample_graph_variant();
     // Printed String we get
     let dot_print = r#graph.print();
+    println!("{}", &dot_print);
     // Result String we expect
     let actual_print = r#"digraph {
-    0 [ label = "Student { name: \"tobias\", age: 99, matrical_number: 900000 }" ]
-    1 [ label = "Student { name: \"stefan\", age: 9, matrical_number: 89000 }" ]
-    2 [ label = "Student { name: \"horst\", age: 55, matrical_number: 823340 }" ]
-    3 [ label = "Professor { name: \"bettina\", age: 36, faculty: \"Faculty of Software Engineering and Programming Languages\" }" ]
+    0 [ label = "Person { name: \"tobias\", age: 99, role: Student { matrical_number: 900000 } }" ]
+    1 [ label = "Person { name: \"stefan\", age: 9, role: Student { matrical_number: 89000 } }" ]
+    2 [ label = "Person { name: \"horst\", age: 55, role: Student { matrical_number: 823340 } }" ]
+    3 [ label = "Person { name: \"bettina\", age: 36, role: Professor { faculty: \"Faculty of Software Engineering and Programming Languages\" } }" ]
     0 -> 2 [ label = "FriendOf { since_year: 2020 }" ]
     2 -> 3 [ label = "FriendOf { since_year: 2010 }" ]
     3 -> 2 [ label = "FriendOf { since_year: 2010 }" ]

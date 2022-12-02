@@ -8,8 +8,7 @@ use petgraph::{
 use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMap};
 
 pub mod common;
-use common::{make_sample_graph_variant,make_sample_graph_undirected,into_trait_object};
-
+use common::{into_trait_object, make_sample_graph_undirected, make_sample_graph_variant};
 
 ///
 /// Function Tests for filter_map
@@ -115,7 +114,7 @@ fn test_edge_node_projection() {
     let graph = make_sample_graph_variant();
     let result = FilterMap::weight_filter_map(
         &graph,
-        |p| Some(p.name()),
+        |p| Some(&p.name),
         |e| Some(e.since_year).filter(|year| *year > 2011),
     );
 

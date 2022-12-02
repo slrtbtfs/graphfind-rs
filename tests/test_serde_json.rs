@@ -6,7 +6,7 @@ use rustgql::{file_io::GraphReadWriter, file_io_backends};
 use test_dir::{DirBuilder, TestDir};
 
 pub mod common;
-use common::{make_sample_graph_variant,FriendOf,Person};
+use common::{make_sample_graph_variant, FriendOf, Person};
 /// File names
 const NAME_TO_READ_AND_WRITE: &str = "path.json";
 const EMPTY_FILE_NAME: &str = "empty.json";

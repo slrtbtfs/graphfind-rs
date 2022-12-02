@@ -2,8 +2,10 @@ use petgraph::graph::{EdgeIndex, NodeIndex};
 use rustgql::graph::Graph as RQLGraph;
 
 pub mod common;
-use common::{make_sample_graph_variant,make_sample_graph_undirected,make_sample_graph,into_trait_object,new_student,FriendOf};
-
+use common::{
+    into_trait_object, make_sample_graph, make_sample_graph_undirected, make_sample_graph_variant,
+    new_student, FriendOf,
+};
 
 ///
 /// Assert Node indices from 0 to 3. Petgraph should
@@ -191,8 +193,7 @@ fn check_undirected_edges() {
 #[test]
 #[should_panic]
 fn wrong_edge_index_directed_test() {
-    let graph =
-        into_trait_object(make_sample_graph_undirected().0);
+    let graph = into_trait_object(make_sample_graph_undirected().0);
     let wrong_idx = EdgeIndex::from(42);
     graph.is_directed_edge(wrong_idx);
 }
@@ -202,8 +203,7 @@ fn wrong_edge_index_directed_test() {
 ///
 #[test]
 fn trial_and_error() {
-    let graph =
-        into_trait_object(make_sample_graph_variant());
+    let graph = into_trait_object(make_sample_graph_variant());
     assert_eq!(graph.nodes().count(), 4);
     assert_eq!(graph.edges().count(), 4);
 

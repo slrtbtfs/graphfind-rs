@@ -38,26 +38,16 @@ pub fn into_trait_object<N, E, D: EdgeType>(
 ///
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub enum Person {
-    Student {
-        name: String,
-        age: u32,
-        matrical_number: u32,
-    },
-    Professor {
-        name: String,
-        age: u32,
-        faculty: String,
-    },
+pub struct Person {
+    pub name: String,
+    pub age: u32,
+    pub role: Role,
 }
 
-impl Person {
-    pub fn name(&self) -> &String {
-        match self {
-            Person::Student { name, .. } => name,
-            Person::Professor { name, .. } => name,
-        }
-    }
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum Role {
+    Professor { faculty: String },
+    Student { matrical_number: u32 },
 }
 
 /**
@@ -77,18 +67,20 @@ impl FriendOf {
 
 // Factory Methods
 pub fn new_student(name: &str, age: u32, matrical_number: u32) -> Person {
-    Person::Student {
+    Person {
         name: String::from(name),
         age,
-        matrical_number,
+        role: Role::Student { matrical_number },
     }
 }
 
 pub fn new_professor(name: &str, age: u32, faculty: &str) -> Person {
-    Person::Professor {
+    Person {
         name: String::from(name),
         age,
-        faculty: String::from(faculty),
+        role: Role::Professor {
+            faculty: String::from(faculty),
+        },
     }
 }
 
