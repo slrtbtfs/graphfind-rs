@@ -1,2 +1,2 @@
-mod filter_map;
+pub mod filter_map;
 mod petgraph;
