@@ -1,7 +1,8 @@
 use rustgql::print::VizDotGraph;
 use test_dir::{DirBuilder, TestDir};
 
-pub mod person_graph_types;
+mod common;
+use common::*;
 
 ///
 /// Test Case for Printing to GraphViz dot format:
@@ -9,7 +10,7 @@ pub mod person_graph_types;
 ///
 #[test]
 fn test_petgraph_print() {
-    let graph = person_graph_types::make_sample_graph_variant();
+    let graph = make_sample_graph_variant();
     // Printed String we get
     let dot_print = r#graph.print();
     // Result String we expect
@@ -33,7 +34,7 @@ fn test_petgraph_print() {
 #[test]
 fn test_petgraph_svg_print() {
     let dir = TestDir::temp();
-    let graph = person_graph_types::make_sample_graph_variant();
+    let graph = make_sample_graph_variant();
     let graph_svg_test_res = graph.print_to_svg(dir.path("persons").to_str().unwrap());
     assert!(graph_svg_test_res.is_ok());
 }

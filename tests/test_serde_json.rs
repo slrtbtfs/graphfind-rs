@@ -1,4 +1,4 @@
-use crate::person_graph_types::{FriendOf, Person};
+use crate::{FriendOf, Person};
 use petgraph::{
     graph::Graph,
     visit::{EdgeRef, IntoNodeReferences},
@@ -6,7 +6,8 @@ use petgraph::{
 use rustgql::{file_io::GraphReadWriter, file_io_backends};
 use test_dir::{DirBuilder, TestDir};
 
-mod person_graph_types;
+mod common;
+use common::*;
 
 /// File names
 const NAME_TO_READ_AND_WRITE: &str = "path.json";
@@ -19,7 +20,7 @@ fn test_serde_json_graph_read_write() {
     let dir = TestDir::current_rnd();
 
     let read_writer = file_io_backends::petgraph::JsonGraphReadWriter::default();
-    let graph_back = person_graph_types::make_sample_graph_variant();
+    let graph_back = make_sample_graph_variant();
 
     // Serialize graph.
     read_writer

@@ -7,7 +7,9 @@ use petgraph::{
 };
 use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMap};
 
-pub mod person_graph_types;
+mod common;
+use common::*;
+
 
 ///
 /// Function Tests for filter_map
@@ -110,7 +112,7 @@ fn test_weight_node_only() {
 ///
 #[test]
 fn test_edge_node_projection() {
-    let graph = person_graph_types::make_sample_graph_variant();
+    let graph = make_sample_graph_variant();
     let result = FilterMap::weight_filter_map(
         &graph,
         |p| Some(p.name()),
@@ -151,7 +153,7 @@ fn test_edge_node_projection() {
 ///
 #[test]
 fn test_filter_map_directly() {
-    let graph = person_graph_types::make_sample_graph_undirected().0;
+    let graph = make_sample_graph_undirected().0;
     let result = FilterMap::general_filter_map(
         &graph,
         |g, n| {
@@ -187,7 +189,7 @@ fn test_filter_map_directly() {
 ///
 #[test]
 fn test_map_only() {
-    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph = into_trait_object(make_sample_graph_mass_filter_map());
     let temp_1 = FilterMap::weight_map(&graph, |n| n * n, |e| e * e);
     let result = FilterMap::weight_map(&temp_1, |n| n * n, |e| e * e);
 
@@ -234,7 +236,7 @@ fn test_map_only() {
 #[test]
 #[should_panic]
 fn test_wrong_node_index() {
-    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph = into_trait_object(make_sample_graph_mass_filter_map());
     let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
     assert_eq!(*graph.node_weight(NodeIndex::from(0)), 0);
     let _invalid_weight = result.node_weight(NodeIndex::from(0));
@@ -246,7 +248,7 @@ fn test_wrong_node_index() {
 #[test]
 #[should_panic]
 fn test_wrong_node_adjacent_edges() {
-    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph = into_trait_object(make_sample_graph_mass_filter_map());
     let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
     assert_eq!(graph.adjacent_edges(NodeIndex::from(0)).count(), 2);
     let _invalid_edge_iter = result.adjacent_edges(NodeIndex::from(0));
@@ -258,7 +260,7 @@ fn test_wrong_node_adjacent_edges() {
 #[test]
 #[should_panic]
 fn test_wrong_node_outgoing_edges() {
-    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph = into_trait_object(make_sample_graph_mass_filter_map());
     let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
     assert_eq!(graph.outgoing_edges(NodeIndex::from(0)).count(), 2);
     let _invalid_edge_iter = result.outgoing_edges(NodeIndex::from(0));
@@ -270,7 +272,7 @@ fn test_wrong_node_outgoing_edges() {
 #[test]
 #[should_panic]
 fn test_wrong_node_incoming_edges() {
-    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph = into_trait_object(make_sample_graph_mass_filter_map());
     let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
     assert_eq!(graph.incoming_edges(NodeIndex::from(0)).count(), 0);
     let _invalid_edge_iter = result.outgoing_edges(NodeIndex::from(0));
@@ -282,7 +284,7 @@ fn test_wrong_node_incoming_edges() {
 #[test]
 #[should_panic]
 fn test_wrong_edge_index() {
-    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph = into_trait_object(make_sample_graph_mass_filter_map());
     let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
     assert_eq!(*graph.edge_weight(EdgeIndex::from(0)), 0);
     let _invalid_weight = result.edge_weight(EdgeIndex::from(0));
@@ -294,7 +296,7 @@ fn test_wrong_edge_index() {
 #[test]
 #[should_panic]
 fn test_wrong_edge_ends() {
-    let graph = person_graph_types::into_trait_object(make_sample_graph_mass_filter_map());
+    let graph = into_trait_object(make_sample_graph_mass_filter_map());
     let result = FilterMap::weight_filter(&graph, |n| n % 3 != 0, |_| true);
     assert_eq!(
         graph.adjacent_nodes(EdgeIndex::from(0)),
