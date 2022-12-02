@@ -1,4 +1,4 @@
-use petgraph::{stable_graph::DefaultIx, Directed, EdgeType, Undirected};
+use petgraph::{stable_graph::DefaultIx, Directed, EdgeType};
 use rustgql::graph::Graph;
 
 extern crate rustgql;
