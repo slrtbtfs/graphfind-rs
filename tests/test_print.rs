@@ -2,7 +2,7 @@ use rustgql::print::VizDotGraph;
 use test_dir::{DirBuilder, TestDir};
 
 mod common;
-use common::*;
+use common::{make_sample_graph_variant};
 
 ///
 /// Test Case for Printing to GraphViz dot format:
