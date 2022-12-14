@@ -191,7 +191,8 @@ impl<'g, NodeWeight, EdgeWeight, Graph: graph::Graph<NodeWeight, EdgeWeight>>
 
 #[macro_export]
 macro_rules! filter_pattern {
-    ($graph:expr, $node_pattern:pat, $edge_pattern:pat) => {
+    // filter by pattern, not altering type
+    ($graph:expr, node_pattern: $node_pattern:pat, edge_pattern: $edge_pattern:pat) => {
         FilterMap::weight_filter_map($graph,
             // Using the if let syntax here is more clumsy
             // than a match statement but avoids compiler
@@ -213,6 +214,12 @@ macro_rules! filter_pattern {
                 None
             },
         )
+    };
+    ($graph:expr, node_pattern: $node_pattern:pat) => {
+        filter_pattern!($graph, node_pattern: $node_pattern, edge_pattern: _)
+    };
+    ($graph:expr, edge_pattern: $edge_pattern:pat) => {
+        filter_pattern!($graph, node_pattern: _, edge_pattern: edge_pattern)
     }
 }
 

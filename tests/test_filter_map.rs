@@ -316,14 +316,17 @@ fn test_filter_pattern() {
     // only consider students aged between 10 and 100
     let students = filter_pattern!(
         &base_graph,
-        Person {
+        node_pattern: Person {
             role: Student { .. },
             age: 10..=100,
             ..
-        },
-        _
+            }
     );
     assert_eq!(students.nodes().count(), 2);
+    
+    // only consider friendships that exist since at least 2015.
+    let old_friends = filter_pattern!(&base_graph, edge_pattern: 0..=2015); 
+    assert_eq!(old_friends.edges().count(), 3);
 }
 
 ///
@@ -338,7 +341,7 @@ fn test_filter_pattern_result() {
     let not_ok = graph.add_node(Err("error"));
     graph.add_edge(ok, not_ok, ());
 
-    let ok_only = filter_pattern!(&graph, Ok(..), _);
+    let ok_only = filter_pattern!(&graph, node_pattern: Ok(..));
 
     assert_eq!(ok_only.nodes().count(), 1);
 }
