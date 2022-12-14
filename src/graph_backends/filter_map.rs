@@ -188,25 +188,32 @@ impl<'g, NodeWeight, EdgeWeight, Graph: graph::Graph<NodeWeight, EdgeWeight>>
 ///
 /// Filters nodes and edges based on the provided patterns.
 ///
-#[macro_export] 
+
+#[macro_export]
 macro_rules! filter_pattern {
     ($graph:expr, $node_pattern:pat, $edge_pattern:pat) => {
         FilterMap::weight_filter_map($graph,
             // Using the if let syntax here is more clumsy
             // than a match statement but avoids compiler
             // errors for some inexplicable reason.
-            |node| if let $node_pattern = node {
-                Some(node)
+            // When trying to build this with a match statement
+            // the compiler for some reason expected an expression
+            // where a pattern should be.
+            // The parentheses around `$node_pattern` only exist
+            // to prevent clippy warnings in case the pattern 
+            // is `_`.
+            |node| if let matched@($node_pattern) = node {
+                Some(matched)
             } else {
                 None
             },
-            |edge| if let $edge_pattern = edge {
-                Some(edge)
+            |edge| if let matched@($edge_pattern) = edge {
+                Some(matched)
             } else {
                 None
             },
         )
-    };
+    }
 }
 
 impl<
