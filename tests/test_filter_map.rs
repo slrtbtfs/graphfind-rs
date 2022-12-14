@@ -9,7 +9,7 @@ use rustgql::{filter_pattern, graph::Graph as RQLGraph, graph_backends::filter_m
 
 pub mod common;
 use common::{
-    into_trait_object, make_sample_graph_undirected, make_sample_graph_variant, Person,
+    into_trait_object, make_sample_graph_undirected, make_sample_graph_variant, FriendOf, Person,
     Role::Student,
 };
 
@@ -320,13 +320,13 @@ fn test_filter_pattern() {
             role: Student { .. },
             age: 10..=100,
             ..
-            }
+        }
     );
     assert_eq!(students.nodes().count(), 2);
-    
+
     // only consider friendships that exist since at least 2015.
-    let old_friends = filter_pattern!(&base_graph, edge_pattern: 0..=2015); 
-    assert_eq!(old_friends.edges().count(), 3);
+    let old_friends = filter_pattern!(&base_graph, edge_pattern: FriendOf{since_year: 0..=2015});
+    assert_eq!(old_friends.edges().count(), 2);
 }
 
 ///
