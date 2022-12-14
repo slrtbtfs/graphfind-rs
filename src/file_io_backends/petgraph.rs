@@ -12,7 +12,7 @@ pub struct JsonGraphReadWriter {}
 /// Implementation of GraphReadWriter trait using serde_json.
 /// Nodes and Edges need to implement Serializable and Deserializable
 /// in order for serde to work.
-///  
+///
 impl<NodeWeight, EdgeWeight> GraphReadWriter<NodeWeight, EdgeWeight> for JsonGraphReadWriter
 where
     NodeWeight: Serialize + DeserializeOwned,
