@@ -10,26 +10,38 @@ use common::{
 };
 use petgraph::graph::{Graph, NodeIndex};
 
-macro_rules! add_person {
-    ($g:expr, $map:expr, $name:expr, $ty:expr) => {
-        let node = common::make_person($name.to_string(), $ty);
-        $map.insert($name, $g.add_node(node));
-    };
+fn add_person<'a>(
+    g: &mut Graph<MovieNode, Relation>,
+    names: &mut HashMap<&'a str, NodeIndex>,
+    name: &'a str,
+    ty: common::ActorType,
+) {
+    let node = common::make_person(name.to_string(), ty);
+    names.insert(name, g.add_node(node));
 }
 
-macro_rules! add_media {
-    ($g:expr, $map:expr, $name:expr, $rat:expr, $year:expr, $ty:expr) => {
-        let node = common::make_movie($name.to_string(), $rat, $year, $ty);
-        $map.insert($name, $g.add_node(node));
-    };
+fn add_media<'a>(
+    g: &mut Graph<MovieNode, Relation>,
+    names: &mut HashMap<&'a str, NodeIndex>,
+    name: &'a str,
+    rat: f64,
+    year: i32,
+    ty: common::MovieType,
+) {
+    let node = common::make_movie(name.to_string(), rat, year, ty);
+    names.insert(name, g.add_node(node));
 }
 
-macro_rules! connect {
-    ($g:expr, $map:expr, $from:expr, $e:expr, $to:expr) => {
-        let node1 = $map[$from];
-        let node2 = $map[$to];
-        $g.add_edge(node1, node2, $e);
-    };
+fn connect<NodeWeight, EdgeWeight>(
+    g: &mut Graph<NodeWeight, EdgeWeight>,
+    map: &HashMap<&str, NodeIndex>,
+    from: &str,
+    e: EdgeWeight,
+    to: &str,
+) {
+    let node1 = map[from];
+    let node2 = map[to];
+    g.add_edge(node1, node2, e);
 }
 
 ///
@@ -41,20 +53,27 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     let mut names: HashMap<&str, NodeIndex> = HashMap::new();
 
     // Stefan, Yves, Fabian
-    add_person!(graph, names, "stefan", Actor);
-    add_person!(graph, names, "yves", Actor);
-    add_person!(graph, names, "fabian", Actor);
+    add_person(&mut graph, &mut names, "stefan", Actor);
+    add_person(&mut graph, &mut names, "yves", Actor);
+    add_person(&mut graph, &mut names, "fabian", Actor);
 
     // Media
-    add_media!(graph, names, "Jurassic Park", 10.0, 1993, Movie);
-    add_media!(graph, names, "Star Wars Holiday Special", -10.0, 1978, Tv);
-    add_media!(
-        graph,
-        names,
+    add_media(&mut graph, &mut names, "Jurassic Park", 10.0, 1993, Movie);
+    add_media(
+        &mut graph,
+        &mut names,
+        "Star Wars Holiday Special",
+        -10.0,
+        1978,
+        Tv,
+    );
+    add_media(
+        &mut graph,
+        &mut names,
         "Attack of the Killer Macros",
         6.9,
         2022,
-        Video
+        Video,
     );
 
     (graph, names)
@@ -68,9 +87,21 @@ fn test_create_match() {
     let (mut graph, nodes) = node_graph();
 
     // Three relations
-    connect!(graph, nodes, "stefan", PlaysIn, "Jurassic Park");
-    connect!(graph, nodes, "yves", PlaysIn, "Attack of the Killer Macros");
-    connect!(graph, nodes, "fabian", PlaysIn, "Star Wars Holiday Special");
+    connect(&mut graph, &nodes, "stefan", PlaysIn, "Jurassic Park");
+    connect(
+        &mut graph,
+        &nodes,
+        "yves",
+        PlaysIn,
+        "Attack of the Killer Macros",
+    );
+    connect(
+        &mut graph,
+        &nodes,
+        "fabian",
+        PlaysIn,
+        "Star Wars Holiday Special",
+    );
 
     //
     // Sketching a possible implementation:
