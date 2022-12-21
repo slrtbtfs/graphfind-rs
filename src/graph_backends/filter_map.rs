@@ -173,19 +173,13 @@ macro_rules! filter_pattern {
             // When trying to build this with a match statement
             // the compiler for some reason expected an expression
             // where a pattern should be.
-            |node| {
-                if let $node_pattern = node {
-                    Some(node)
-                } else {
-                    None
-                }
+            |node| match node {
+                $node_pattern => Some(node),
+                _ => None,
             },
-            |edge| {
-                if let $edge_pattern = edge {
-                    Some(edge)
-                } else {
-                    None
-                }
+            |edge| match edge {
+                $edge_pattern => Some(edge),
+                _ => None,
             },
         )
     };
