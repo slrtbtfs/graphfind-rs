@@ -75,6 +75,23 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
         2022,
         Video,
     );
+    add_media(
+        &mut graph,
+        &mut names,
+        "Let's talk about Fight Club",
+        4.2,
+        2018,
+        Video,
+    );
+    add_media(
+        &mut graph,
+        &mut names,
+        "Star Wars: Rise of the Bechdel Test",
+        2.5,
+        2015,
+        Video,
+    );
+    add_media(&mut graph, &mut names, "Sunday Uke Group", 10., 2018, Tv);
 
     (graph, names)
 }
