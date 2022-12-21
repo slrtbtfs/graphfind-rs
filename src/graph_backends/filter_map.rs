@@ -4,22 +4,22 @@ use crate::graph::{self};
 
 ///
 /// `FilterMap` is a graph representation that is designed to abstractly
-/// implement a wide range of possible Queries to a `Graph` object.
+/// implement a wide range of possible Queries on a `Graph` object.
 ///
 /// Given an underlying base graph object, it can:
 /// * Create a subgraph, filtering out nodes and edges based on a provided
 /// condition. Indices remain stable under those transformations.
 /// * Apply transformations to the node and edge weights. The new weights can
-/// reference the weights of the old graph.
+/// reference the weights of the old graph as rust objects.
 ///
 /// However it is not possible to change the structure beyond that.
 ///
 /// The most general way to create a `FilterMap` graph is to use the
 /// constructor `general_filter_map`, which applies filters and transformations
-/// at the same time. For most use cases the simpler, derived constructors
+/// at the same time, with the possibility to consider the entire graph structure for each individual graph element transformation. For most use cases the simpler, derived constructors
 /// that only do part of that might be more appropriate.
 ///
-/// Note that the base graph must outlive the generated FilerMap Graph, since
+/// Note that the base graph is required to outlive the generated FilerMap Graph, since
 /// the graph structure is borrowed from the base graph.
 ///
 pub struct FilterMap<
@@ -53,7 +53,7 @@ impl<
     /// `edge_fn` works similarly but with edges.
     ///
     /// By also passing a reference to the base graph into these closures this
-    /// allows quite complex graph filtering and mapping. For example the this
+    /// can be used to accomplish quite complex graph filtering and mapping. For example the this
     /// can be used to query the adjacent graph elements of the element
     /// currently considered.
     ///
@@ -125,8 +125,8 @@ impl<
         )
     }
     /// Creates a new graph derived from the case graph, applying the
-    /// respective function to each node and edge weight trough the respective
-    /// function, without removing any graph elements.
+    /// respective transformation to each node and edge weight, without removing any
+    /// graph elements.
     pub fn weight_map<NodeFn, EdgeFn>(
         base_graph: &'g Graph,
         node_fn: NodeFn,
