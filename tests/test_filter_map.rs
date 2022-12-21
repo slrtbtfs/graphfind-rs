@@ -5,10 +5,13 @@ use petgraph::{
     stable_graph::DefaultIx,
     Graph, Undirected,
 };
-use rustgql::{graph::Graph as RQLGraph, graph_backends::filter_map::FilterMap};
+use rustgql::{filter_pattern, graph::Graph as RQLGraph, graph_backends::filter_map::FilterMap};
 
 pub mod common;
-use common::{into_trait_object, make_sample_graph_undirected, make_sample_graph_variant};
+use common::{
+    into_trait_object, make_sample_graph_undirected, make_sample_graph_variant, FriendOf, Person,
+    Role::Student,
+};
 
 ///
 /// Function Tests for filter_map
@@ -302,4 +305,43 @@ fn test_wrong_edge_ends() {
         (NodeIndex::from(0), NodeIndex::from(1))
     );
     let (_s, _e) = result.adjacent_nodes(EdgeIndex::from(0));
+}
+
+///
+/// Test that the filter_pattern macro evaluates to correct code.
+///
+#[test]
+fn test_filter_pattern() {
+    let base_graph = make_sample_graph_variant();
+    // only consider students aged between 10 and 100
+    let students = filter_pattern!(
+        &base_graph,
+        node_pattern: Person {
+            role: Student { .. },
+            age: 10..=100,
+            ..
+        }
+    );
+    assert_eq!(students.nodes().count(), 2);
+
+    // only consider friendships that exist since at least 2015.
+    let old_friends = filter_pattern!(&base_graph, edge_pattern: FriendOf{since_year: 0..=2015});
+    assert_eq!(old_friends.edges().count(), 2);
+}
+
+///
+/// Test that the filter_pattern macro is aware of the type of the matched
+/// pattern.
+///
+#[test]
+fn test_filter_pattern_result() {
+    // generate a graph having Results as values
+    let mut graph = petgraph::Graph::new();
+    let ok = graph.add_node(Ok("ok"));
+    let not_ok = graph.add_node(Err("error"));
+    graph.add_edge(ok, not_ok, ());
+
+    let ok_only = filter_pattern!(&graph, node_pattern: Ok(..));
+
+    assert_eq!(ok_only.nodes().count(), 1);
 }
