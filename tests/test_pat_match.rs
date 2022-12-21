@@ -71,6 +71,26 @@ fn test_create_match() {
     connect!(graph, nodes, "stefan", PlaysIn, "Jurassic Park");
     connect!(graph, nodes, "yves", PlaysIn, "Attack of the Killer Macros");
     connect!(graph, nodes, "fabian", PlaysIn, "Star Wars Holiday Special");
+
+    //
+    // Sketching a possible implementation:
+    //
+    // match! takes a Graph, and a pattern; produces a set of subgraphs.
+    // Match on Person with given properties -> produce Result structure with
+    // access to p and m, just as Cypher.
+    //
+    // let graphs: Vec<_> =
+    // match!(graph, p:MovieNode::Person(..) -- [PlaysIn] m:MovieNode::Movie(..))
+    // .collect();
+    // assert_eq!(graphs.len(), 3);
+    //
+    // Translate that to:
+    // let s = subgraph::match_on_node_pattern(&graph, MovieNode::Person(..));
+    // let s = s::extend_directed(&g, PlaysIn, MovieNode::Movie(..));
+    //
+    // Actually, instead of a pattern, you could give a more general Fn: Node -> Option(Node),
+    // and maintain for each subgraph the last node (index) we've seen.
+    //
 }
 
 ///
@@ -81,6 +101,13 @@ fn test_create_match() {
 fn test_create_negative() {
     // Take Graph without relations
     let (graph, _) = node_graph();
+
+    //
+    // let graphs: Vec<_> =
+    // match!(graph, MovieNode::Person(..) -> PlaysIn -> MovieNode::Movie(..))
+    // .collect();
+    // assert_eq!(graphs.len(), 0);
+    //
 }
 
 ///
