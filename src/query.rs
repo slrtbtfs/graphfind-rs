@@ -20,31 +20,34 @@ pub type Matcher<Weight> = dyn Fn(Weight) -> bool;
 ///
 /// PatternGraph is generic with regards to node and edge weights of the graphs it should match on.
 ///
-pub trait PatternGraph<NodeWeight, EdgeWeight>:
-    Graph<Matcher<NodeWeight>, Matcher<EdgeWeight>>
+pub trait PatternGraph<NodeWeight, EdgeWeight, NodeMatcher, EdgeMatcher>:
+    Graph<NodeMatcher, EdgeMatcher>
+where
+    NodeMatcher: Fn(NodeWeight) -> bool,
+    EdgeMatcher: Fn(EdgeWeight) -> bool,
 {
     ///
     /// Adds the node `name` to the pattern. Any node that matches `name`
     /// must fulfill the `matcher` function.
     ///
-    fn add_node(&mut self, name: &str, matcher: &Matcher<NodeWeight>);
+    fn add_node(&mut self, name: &str, matcher: &NodeMatcher);
 
     ///
     /// Adds the edge `edge` to the pattern.
     /// `edge` runs from a matched node `from` to a second node `to`, and must fulfill the
     /// `matcher` function.
     ///
-    fn add_edge(&mut self, name: &str, from: &str, to: &str, matcher: &Matcher<EdgeWeight>);
+    fn add_edge(&mut self, name: &str, from: &str, to: &str, matcher: &EdgeMatcher);
 }
 
 ///
 /// Type alias for weight iterators in pattern graphs.
 ///
-type MatcherIterator<Weight> = dyn Iterator<Item = Matcher<Weight>>;
+pub type MatcherIterator<Weight> = dyn Iterator<Item = Matcher<Weight>>;
 ///
 /// Type alias for reference iterators in pattern graphs.
 ///
-type ReferenceIterator<'a> = dyn Iterator<Item = &'a str>;
+pub type ReferenceIterator<'a> = dyn Iterator<Item = &'a str>;
 
 ///
 /// The SubgraphAlgorithm trait specifies any algorithm that can solve the subgraph isomorphism problem.
@@ -59,14 +62,16 @@ pub trait SubgraphAlgorithm {
     /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
     ///
     fn find_subgraphs<'a, NodeWeight, EdgeWeight, ERefType, NRefType>(
-        pattern_graph: &dyn PatternGraph<
+        pattern_graph: dyn PatternGraph<
             NodeWeight,
             EdgeWeight,
+            Matcher<NodeWeight>,
+            Matcher<EdgeWeight>,
             NodeRef = &str,
             EdgeRef = &str,
-            AdjacentEdgesIterator<'a> = MatcherIterator<EdgeWeight>,
-            OutgoingEdgesIterator<'a> = MatcherIterator<EdgeWeight>,
-            IncomingEdgesIterator<'a> = MatcherIterator<EdgeWeight>,
+            AdjacentEdgesIterator<'a> = ReferenceIterator,
+            OutgoingEdgesIterator<'a> = ReferenceIterator,
+            IncomingEdgesIterator<'a> = ReferenceIterator,
             NodeWeightsIterator<'a> = MatcherIterator<NodeWeight>,
             EdgeWeightsIterator<'a> = MatcherIterator<EdgeWeight>,
             NodesIterator<'a> = ReferenceIterator,
