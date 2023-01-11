@@ -6,11 +6,11 @@ use petgraph::dot::Dot;
 
 use crate::print::VizDotGraph;
 
-/**
- * Print implementation for petgraph-type graphs.
- *
- * Requires NodeWeight, EdgeWeight to posess the Debug trait.
- */
+///
+/// Print implementation for petgraph-type graphs.
+///
+/// Requires NodeWeight, EdgeWeight to posess the Debug trait.
+///
 impl<NodeWeight, EdgeWeight, IndexType, Direction> VizDotGraph<NodeWeight, EdgeWeight>
     for petgraph::graph::Graph<NodeWeight, EdgeWeight, Direction, IndexType>
 where
