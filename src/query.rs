@@ -27,7 +27,7 @@ where
     EdgeMatcher: Fn(EdgeWeight) -> bool,
 {
     ///
-    /// Adds the node `name` to the pattern. Any node that matches `name`
+    /// Adds the node identified by `name` to the pattern. Any node that matches `name`
     /// must fulfill the `matcher` function.
     ///
     fn add_node(&mut self, name: &str, matcher: &NodeMatcher);
@@ -41,41 +41,44 @@ where
 }
 
 ///
-/// Type alias for weight iterators in pattern graphs.
-///
-pub type MatcherIterator<Weight> = dyn Iterator<Item = Matcher<Weight>>;
-///
-/// Type alias for reference iterators in pattern graphs.
-///
-pub type ReferenceIterator<'a> = dyn Iterator<Item = &'a str>;
-
-///
 /// The SubgraphAlgorithm trait specifies any algorithm that can solve the subgraph isomorphism problem.
 /// Solving this problem lies at the core of graph pattern matching.
 ///
 pub trait SubgraphAlgorithm {
     ///
     /// Finds all subgraphs of `base_graph` that match `pattern_graph`.
-    /// `base_graph` and `pattern_graph` must share both node and edge types.
+    ///
+    /// # Input:
+    /// Two graphs, `base_graph` (any Graph instance), and `pattern_graph` (a PatternGraph instance).
+    /// `base_graph` and `pattern_graph` share both node and edge types (NodeWeight/EdgeWeight),
+    /// and also direction.
+    ///
+    /// # Output:
+    /// A vector of ResultGraph, whose nodes and edges types are shared with `base_graph`,
+    /// and the reference types with `pattern_graph`. We want to access matched elements of
+    /// the base graph by references we set in the pattern graph.
+    ///
+    /// An implementation find_subgraphs should guarantee set semantics, so that every found
+    /// graph pattern occurs only once.
     ///
     /// # Panics:
     /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
     ///
-    fn find_subgraphs<'a, NodeWeight, EdgeWeight, ERefType, NRefType>(
-        pattern_graph: dyn PatternGraph<
-            NodeWeight,
-            EdgeWeight,
-            Matcher<NodeWeight>,
-            Matcher<EdgeWeight>,
-            NodeRef = &str,
-            EdgeRef = &str,
-            AdjacentEdgesIterator<'a> = ReferenceIterator,
-            OutgoingEdgesIterator<'a> = ReferenceIterator,
-            IncomingEdgesIterator<'a> = ReferenceIterator,
-            NodeWeightsIterator<'a> = MatcherIterator<NodeWeight>,
-            EdgeWeightsIterator<'a> = MatcherIterator<EdgeWeight>,
-            NodesIterator<'a> = ReferenceIterator,
-            EdgesIterator<'a> = ReferenceIterator,
-        >, //base_graph: &dyn Graph<NodeWeight, EdgeWeight, NodeRef = NRefType, EdgeRef = ERefType>,
-    );
+    fn find_subgraphs<
+        NodeWeight,
+        EdgeWeight,
+        NodeMatcher,
+        EdgeMatcher,
+        PatternGraphType,
+        BaseGraphType,
+        ResultGraphType,
+    >(
+        pattern_graph: PatternGraphType,
+        base_graph: BaseGraphType,
+    ) -> Vec<ResultGraphType>
+    where
+        NodeMatcher: Fn(NodeWeight) -> bool,
+        EdgeMatcher: Fn(EdgeWeight) -> bool,
+        PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeMatcher, EdgeMatcher>,
+        BaseGraphType: Graph<NodeWeight, EdgeWeight>;
 }
