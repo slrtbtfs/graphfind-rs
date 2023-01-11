@@ -23,9 +23,15 @@ struct VfState<N1RefType, N2RefType> {
     ///
     size: usize,
     ///
-    /// core1 maps a node from the graph G_1 to a matched node in G_2.
+    /// core1 maps a node from the graph G_1 to the matched node in G_2.
+    /// From core1, we can construct a found graph, and find candidates for
+    /// what nodes in the pattern we want to match next.
     ///
     core1: HashMap<N1RefType, N2RefType>,
+    ///
+    /// core2 maps the matched node of G_2 to its counterpart in G_1.
+    ///
+    core2: HashMap<N2RefType, N1RefType>,
 }
 
 ///
@@ -41,7 +47,7 @@ impl<N1Ref, N2Ref> VfState<N1Ref, N2Ref> {
     /// 2. `base_graph`, any Graph with N2FerType node references.
     ///
     /// ## Output:
-    /// A VfState struct with size set, and core1 initialized.
+    /// A VfState struct with size set, and core1 and core2 initialized.
     ///
     fn init<
         NodeWeight,
@@ -66,6 +72,7 @@ impl<N1Ref, N2Ref> VfState<N1Ref, N2Ref> {
         VfState {
             size: pattern_graph.nodes().count(),
             core1: HashMap::new(),
+            core2: HashMap::new(),
         }
     }
 
