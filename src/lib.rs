@@ -2,6 +2,10 @@
 
 // Public Interface defined within the root.
 pub mod file_io;
+
+///
+/// Defines the Graph trait for basic navigation in typed graphs.
+///
 pub mod graph;
 pub mod manifest;
 pub mod print;
@@ -9,5 +13,14 @@ pub mod query;
 
 // Implementations in their own folders.
 pub mod file_io_backends;
+
+///
+/// Contains implementations for the Graph trait.
+///
 pub mod graph_backends;
+///
+/// Contains implementations for query algorithms.
+///
+pub mod query_algorithms;
+
 mod print_backends;

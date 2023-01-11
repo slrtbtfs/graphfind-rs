@@ -73,8 +73,8 @@ pub trait SubgraphAlgorithm {
         BaseGraphType,
         ResultGraphType,
     >(
-        pattern_graph: PatternGraphType,
-        base_graph: BaseGraphType,
+        pattern_graph: &PatternGraphType,
+        base_graph: &BaseGraphType,
     ) -> Vec<ResultGraphType>
     where
         NodeMatcher: Fn(NodeWeight) -> bool,
