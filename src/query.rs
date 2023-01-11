@@ -50,12 +50,14 @@ pub trait SubgraphAlgorithm {
     ///
     /// # Input:
     /// Two graphs, `base_graph` (any Graph instance), and `pattern_graph` (a PatternGraph instance).
-    /// `base_graph` and `pattern_graph` share both node and edge types (NodeWeight/EdgeWeight),
-    /// and also direction.
+    /// `base_graph` and `pattern_graph` share both node and edge types (NodeWeight/EdgeWeight).
+    ///
+    /// `pattern_graph` uses N1RefType and E1RefType for references over nodes and edges.
+    /// `base_graph` uses N2RefType and E2RefType, respectively.
     ///
     /// # Output:
-    /// A vector of ResultGraph, whose nodes and edges types are shared with `base_graph`,
-    /// and the reference types with `pattern_graph`. We want to access matched elements of
+    /// A vector of ResultGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
+    /// and its references N1RefType/N2RefType. We want to access matched elements of
     /// the base graph by references we set in the pattern graph.
     ///
     /// An implementation find_subgraphs should guarantee set semantics, so that every found
@@ -69,6 +71,10 @@ pub trait SubgraphAlgorithm {
         EdgeWeight,
         NodeMatcher,
         EdgeMatcher,
+        N1RefType,
+        N2RefType,
+        E1RefType,
+        E2RefType,
         PatternGraphType,
         BaseGraphType,
         ResultGraphType,
@@ -79,6 +85,14 @@ pub trait SubgraphAlgorithm {
     where
         NodeMatcher: Fn(NodeWeight) -> bool,
         EdgeMatcher: Fn(EdgeWeight) -> bool,
-        PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeMatcher, EdgeMatcher>,
-        BaseGraphType: Graph<NodeWeight, EdgeWeight>;
+        PatternGraphType: PatternGraph<
+            NodeWeight,
+            EdgeWeight,
+            NodeMatcher,
+            EdgeMatcher,
+            NodeRef = N1RefType,
+            EdgeRef = E1RefType,
+        >,
+        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType, EdgeRef = E2RefType>,
+        ResultGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>;
 }
