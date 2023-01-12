@@ -1,5 +1,5 @@
 pub mod common;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use common::{
     ActorType::Actor,
@@ -12,7 +12,10 @@ use petgraph::{
     graph::{Graph, NodeIndex},
     visit::NodeRef,
 };
-use rustgql::{query::SubgraphAlgorithm, query_algorithms::vf_algorithms::VfAlgorithm};
+use rustgql::{
+    query::{PatternGraph, SubgraphAlgorithm},
+    query_algorithms::vf_algorithms::VfAlgorithm,
+};
 
 fn add_person<'a>(
     g: &mut Graph<MovieNode, Relation>,
@@ -113,6 +116,34 @@ fn test_empty_pattern_no_results() {
     let results: Vec<petgraph::graph::DiGraph<_, _, _>> =
         <VfAlgorithm as SubgraphAlgorithm>::find_subgraphs(&empty_pattern, &base_graph);
     assert!(results.is_empty());
+}
+
+///
+/// Given a pattern with a single node to match, assert we get
+/// nine graphs with one node each, and that we find the previous indices.
+///
+#[test]
+fn test_single_node_any_pattern() {
+    let base_graph = node_graph().0;
+    let mut single_pattern = petgraph::graph::Graph::new();
+    single_pattern.add_node_to_match("n", Box::new(|n: MovieNode| true));
+
+    // Explicitly specify result type.
+    let results: Vec<petgraph::graph::DiGraph<_, _, _>> =
+        <VfAlgorithm as SubgraphAlgorithm>::find_subgraphs(&single_pattern, &base_graph);
+
+    // Assert nine results.
+    assert_eq!(9, results.len());
+    let mut found_indices = HashSet::new();
+
+    // Check that node indices are different.
+    for res in results {
+        assert_eq!(1, res.node_count());
+        let indices = res.node_indices().collect::<Vec<_>>();
+        let index = indices.get(0).unwrap().clone();
+        found_indices.insert(index);
+    }
+    assert_eq!(9, found_indices.len());
 }
 
 /*
