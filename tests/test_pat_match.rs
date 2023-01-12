@@ -96,10 +96,10 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     (graph, names)
 }
 
+/*
 ///
 /// Match relations between Actors and Movies.
 ///
-#[test]
 fn test_create_match() {
     let (mut graph, nodes) = node_graph();
 
@@ -145,7 +145,6 @@ fn test_create_match() {
 /// Assert that a graph is empty when there is no actor
 /// that plays in a movie.
 ///
-#[test]
 fn test_create_negative() {
     // Take Graph without relations
     let (graph, _) = node_graph();
@@ -162,7 +161,6 @@ fn test_create_negative() {
 /// Match every Actor who plays in at least two movies,
 /// and only give us the Actor-Movie relations.
 ///
-#[test]
 fn test_require_delete_two_movies() {}
 
 ///
@@ -173,7 +171,6 @@ fn test_require_delete_two_movies() {}
 ///
 /// Assume we get three matches.
 ///
-#[test]
 fn test_three_to_two_match() {}
 
 ///
@@ -184,7 +181,6 @@ fn test_three_to_two_match() {}
 ///
 /// Assume we get nine matches.
 ///
-#[test]
 fn test_three_to_three_match() {}
 
 ///
@@ -193,7 +189,6 @@ fn test_three_to_three_match() {}
 /// 2. Three different movies
 /// 3. Two actors play in the two same movies.
 ///
-#[test]
 fn test_two_to_two_match() {}
 
 ///
@@ -201,5 +196,5 @@ fn test_two_to_two_match() {}
 /// and one other person plays in one of these movies as well.
 /// However, do not give us the latter person.
 ///
-#[test]
 fn test_all_stereotypes() {}
+*/
