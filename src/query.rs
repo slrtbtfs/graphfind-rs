@@ -30,14 +30,25 @@ where
     /// Adds the node identified by `name` to the pattern. Any node that matches `name`
     /// must fulfill the `matcher` function.
     ///
-    fn add_node(&mut self, name: &str, matcher: &NodeMatcher);
+    /// Returns a NodeRef to the added node.
+    ///
+    fn add_node(&mut self, name: &str, matcher: &NodeMatcher) -> Self::NodeRef;
 
     ///
-    /// Adds the edge `edge` to the pattern.
-    /// `edge` runs from a matched node `from` to a second node `to`, and must fulfill the
-    /// `matcher` function.
+    /// Adds the named `edge` to the pattern.
     ///
-    fn add_edge(&mut self, name: &str, from: &str, to: &str, matcher: &EdgeMatcher);
+    /// `edge` is directed, and runs from the node referenced by `from` to the node referenced by `to`.
+    /// The matched edge must then fulfill the `matcher` function.
+    ///
+    /// Returns an `EdgeRef` to the newly added edge.
+    ///
+    fn add_edge(
+        &mut self,
+        name: &str,
+        from: Self::NodeRef,
+        to: Self::NodeRef,
+        matcher: &EdgeMatcher,
+    ) -> Self::EdgeRef;
 }
 
 ///
