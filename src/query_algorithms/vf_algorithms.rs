@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     graph::Graph,
+    graph_backends::adj_graphs::AdjGraph,
     query::{PatternGraph, SubgraphAlgorithm},
 };
 
@@ -34,24 +35,13 @@ impl VfState {
     /// ## Output:
     /// A VfState struct.
     ///
-    fn new<
-        NodeWeight,
-        EdgeWeight,
-        NodeMatcher,
-        EdgeMatcher,
-        N1RefType,
-        N2RefType,
-        PatternGraphType,
-        BaseGraphType,
-    >(
+    fn new<NodeWeight, EdgeWeight, N1RefType, N2RefType, PatternGraphType, BaseGraphType>(
         pattern_graph: &PatternGraphType,
         base_graph: &BaseGraphType,
     ) -> VfState
     where
         PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeRef = N1RefType>,
         BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType>,
-        NodeMatcher: Fn(NodeWeight) -> bool,
-        EdgeMatcher: Fn(EdgeWeight) -> bool,
     {
         VfState {}
     }
@@ -72,22 +62,20 @@ impl SubgraphAlgorithm for VfAlgorithm {
     fn find_subgraphs<
         NodeWeight,
         EdgeWeight,
-        N1RefType,
+        N1RefType: Copy,
         N2RefType,
         E1RefType,
         E2RefType,
         PatternGraphType,
         BaseGraphType,
-        ResultGraphType,
     >(
         pattern_graph: &PatternGraphType,
         base_graph: &BaseGraphType,
-    ) -> Vec<ResultGraphType>
+    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, N1RefType, E1RefType>>
     where
         PatternGraphType:
             PatternGraph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>,
         BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType, EdgeRef = E2RefType>,
-        ResultGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>,
     {
         vec![]
     }

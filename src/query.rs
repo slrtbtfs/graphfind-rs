@@ -1,4 +1,4 @@
-use crate::graph::Graph;
+use crate::{graph::Graph, graph_backends::adj_graphs::AdjGraph};
 
 ///
 /// The Matcher type stands for any function that evaluates, given an element
@@ -76,20 +76,18 @@ pub trait SubgraphAlgorithm {
     fn find_subgraphs<
         NodeWeight,
         EdgeWeight,
-        N1RefType,
+        N1RefType: Copy,
         N2RefType,
         E1RefType,
         E2RefType,
         PatternGraphType,
         BaseGraphType,
-        ResultGraphType,
     >(
         pattern_graph: &PatternGraphType,
         base_graph: &BaseGraphType,
-    ) -> Vec<ResultGraphType>
+    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, N1RefType, E1RefType>>
     where
         PatternGraphType:
             PatternGraph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>,
-        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType, EdgeRef = E2RefType>,
-        ResultGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>;
+        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType, EdgeRef = E2RefType>;
 }

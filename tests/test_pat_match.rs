@@ -13,6 +13,8 @@ use petgraph::{
     visit::NodeRef,
 };
 use rustgql::{
+    graph::Graph as QueryGraph,
+    graph_backends::adj_graphs::AdjGraph,
     query::{PatternGraph, SubgraphAlgorithm},
     query_algorithms::vf_algorithms::VfAlgorithm,
 };
@@ -113,7 +115,7 @@ fn test_empty_pattern_no_results() {
     let empty_pattern = petgraph::graph::Graph::new();
 
     // Explicitly specify result type.
-    let results: Vec<petgraph::graph::DiGraph<_, _, _>> =
+    let results: Vec<_> =
         <VfAlgorithm as SubgraphAlgorithm>::find_subgraphs(&empty_pattern, &base_graph);
     assert!(results.is_empty());
 }
@@ -129,18 +131,19 @@ fn test_single_node_any_pattern() {
     single_pattern.add_node_to_match("n", Box::new(|n: MovieNode| true));
 
     // Explicitly specify result type.
-    let results: Vec<petgraph::graph::DiGraph<_, _, _>> =
+    let results: Vec<_> =
         <VfAlgorithm as SubgraphAlgorithm>::find_subgraphs(&single_pattern, &base_graph);
 
     // Assert nine results.
     assert_eq!(9, results.len());
     let mut found_indices = HashSet::new();
 
-    // Check that node indices are different.
+    // Check that node indices are from the base graph, and different.
     for res in results {
-        assert_eq!(1, res.node_count());
-        let indices = res.node_indices().collect::<Vec<_>>();
-        let index = indices.get(0).unwrap().clone();
+        let indices = res.nodes().collect::<Vec<_>>();
+        assert_eq!(1, indices.len());
+        let index = *indices.get(0).unwrap();
+        assert!(base_graph.node_indices().any(|i| i == index));
         found_indices.insert(index);
     }
     assert_eq!(9, found_indices.len());
