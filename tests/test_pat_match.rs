@@ -8,7 +8,11 @@ use common::{
     Relation,
     Relation::PlaysIn,
 };
-use petgraph::graph::{Graph, NodeIndex};
+use petgraph::{
+    graph::{Graph, NodeIndex},
+    visit::NodeRef,
+};
+use rustgql::{query::SubgraphAlgorithm, query_algorithms::vf_algorithms::VfAlgorithm};
 
 fn add_person<'a>(
     g: &mut Graph<MovieNode, Relation>,
@@ -94,6 +98,21 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     add_media(&mut graph, &mut names, "Sunday Uke Group", 10., 2018, Tv);
 
     (graph, names)
+}
+
+///
+/// Given an empty pattern graph and a non-empty base graph,
+/// assert that we do get an empty result.
+///
+#[test]
+fn test_empty_pattern_no_results() {
+    let base_graph = node_graph().0;
+    let empty_pattern = petgraph::graph::Graph::new();
+
+    // Explicitly specify result type.
+    let results: Vec<petgraph::graph::DiGraph<_, _, _>> =
+        <VfAlgorithm as SubgraphAlgorithm>::find_subgraphs(&empty_pattern, &base_graph);
+    assert!(results.is_empty());
 }
 
 /*

@@ -48,8 +48,7 @@ impl VfState {
         base_graph: &BaseGraphType,
     ) -> VfState
     where
-        PatternGraphType:
-            PatternGraph<NodeWeight, EdgeWeight, NodeMatcher, EdgeMatcher, NodeRef = N1RefType>,
+        PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeRef = N1RefType>,
         BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType>,
         NodeMatcher: Fn(NodeWeight) -> bool,
         EdgeMatcher: Fn(EdgeWeight) -> bool,
@@ -68,13 +67,11 @@ impl SubgraphAlgorithm for VfAlgorithm {
     /// Wrapper for VfState calls. Call this method to find graphs using a _very_ specialized algorithm
     /// that only works on Star Graphs.
     ///
-    /// Currently, returns an empty vector.
+    /// Currently returns an empty vector.
     ///
     fn find_subgraphs<
         NodeWeight,
         EdgeWeight,
-        NodeMatcher,
-        EdgeMatcher,
         N1RefType,
         N2RefType,
         E1RefType,
@@ -87,12 +84,10 @@ impl SubgraphAlgorithm for VfAlgorithm {
         base_graph: &BaseGraphType,
     ) -> Vec<ResultGraphType>
     where
-        NodeMatcher: Fn(NodeWeight) -> bool,
-        EdgeMatcher: Fn(EdgeWeight) -> bool,
         PatternGraphType:
-            PatternGraph<NodeWeight, EdgeWeight, NodeMatcher, EdgeMatcher, NodeRef = N1RefType>,
-        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType>,
-        ResultGraphType: Graph<NodeWeight, EdgeWeight>,
+            PatternGraph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>,
+        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType, EdgeRef = E2RefType>,
+        ResultGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>,
     {
         vec![]
     }

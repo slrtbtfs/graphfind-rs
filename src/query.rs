@@ -12,19 +12,14 @@ pub type Matcher<Weight> = dyn Fn(Weight) -> bool;
 /// Defines a pattern graph, i.e. a specification for subgraphs that we want to find. This trait
 /// extends the Graph trait, to allow for navigation & getting subgraph info.
 ///
-/// A pattern graph uses string slices as node and edge indices, and matcher functions as weights.
-///
-/// With string indices, we may explicitly name the elements to be matched.
+/// A pattern graph uses matcher functions as weights.
 /// With matcher functions, we can test if an element semantically fits to a subgraph to be found,
 /// for example, if it matches a given Rust pattern.
 ///
 /// PatternGraph is generic with regards to node and edge weights of the graphs it should match on.
 ///
-pub trait PatternGraph<NodeWeight, EdgeWeight, NodeMatcher, EdgeMatcher>:
-    Graph<NodeMatcher, EdgeMatcher>
-where
-    NodeMatcher: Fn(NodeWeight) -> bool,
-    EdgeMatcher: Fn(EdgeWeight) -> bool,
+pub trait PatternGraph<NodeWeight, EdgeWeight>:
+    Graph<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>>
 {
     ///
     /// Adds the node identified by `name` to the pattern. Any node that matches `name`
@@ -32,7 +27,7 @@ where
     ///
     /// Returns a NodeRef to the added node.
     ///
-    fn add_node(&mut self, name: &str, matcher: &NodeMatcher) -> Self::NodeRef;
+    fn add_node(&mut self, name: &str, matcher: Box<Matcher<NodeWeight>>) -> Self::NodeRef;
 
     ///
     /// Adds the named `edge` to the pattern.
@@ -47,7 +42,7 @@ where
         name: &str,
         from: Self::NodeRef,
         to: Self::NodeRef,
-        matcher: &EdgeMatcher,
+        matcher: Box<Matcher<EdgeWeight>>,
     ) -> Self::EdgeRef;
 }
 
@@ -80,8 +75,6 @@ pub trait SubgraphAlgorithm {
     fn find_subgraphs<
         NodeWeight,
         EdgeWeight,
-        NodeMatcher,
-        EdgeMatcher,
         N1RefType,
         N2RefType,
         E1RefType,
@@ -94,16 +87,8 @@ pub trait SubgraphAlgorithm {
         base_graph: &BaseGraphType,
     ) -> Vec<ResultGraphType>
     where
-        NodeMatcher: Fn(NodeWeight) -> bool,
-        EdgeMatcher: Fn(EdgeWeight) -> bool,
-        PatternGraphType: PatternGraph<
-            NodeWeight,
-            EdgeWeight,
-            NodeMatcher,
-            EdgeMatcher,
-            NodeRef = N1RefType,
-            EdgeRef = E1RefType,
-        >,
+        PatternGraphType:
+            PatternGraph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>,
         BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType, EdgeRef = E2RefType>,
         ResultGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>;
 }
