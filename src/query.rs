@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use crate::{graph::Graph, graph_backends::adj_graphs::AdjGraph};
 
 ///
@@ -21,6 +23,18 @@ pub type Matcher<Weight> = dyn Fn(Weight) -> bool;
 pub trait PatternGraph<NodeWeight, EdgeWeight>:
     Graph<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>>
 {
+    ///
+    /// Tests if the given graph is empty. Empty pattern graphs require their own treatment.
+    ///
+    fn is_empty_pattern(&self) -> bool {
+        self.count_nodes() == 0
+    }
+
+    ///
+    /// Returns the number of nodes to match in the pattern.
+    ///
+    fn count_nodes(&self) -> usize;
+
     ///
     /// Adds the node identified by `name` to the pattern. Any node that matches `name`
     /// must fulfill the `matcher` function.
@@ -59,16 +73,19 @@ pub trait SubgraphAlgorithm {
     /// Two graphs, `base_graph` (any Graph instance), and `pattern_graph` (a PatternGraph instance).
     /// `base_graph` and `pattern_graph` share both node and edge types (NodeWeight/EdgeWeight).
     ///
-    /// `pattern_graph` uses N1RefType and E1RefType for references over nodes and edges.
-    /// `base_graph` uses N2RefType and E2RefType, respectively.
+    /// `pattern_graph` uses NRef and E1RefType for references over nodes and edges.
+    /// `base_graph` uses N2Ref and E2RefType, respectively.
     ///
     /// # Output:
     /// A vector of ResultGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
-    /// and its references N1RefType/N2RefType. We want to access matched elements of
+    /// and its references N1RefType/N2Ref. We want to access matched elements of
     /// the base graph by references we set in the pattern graph.
     ///
     /// An implementation find_subgraphs should guarantee set semantics, so that every found
     /// graph pattern occurs only once.
+    ///
+    /// If `pattern_graph` is an empty graph without nodes (or edges), or if no subgraph of `base_graph`
+    /// can be matched to it, then we return an empty vector.
     ///
     /// # Panics:
     /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
@@ -76,8 +93,8 @@ pub trait SubgraphAlgorithm {
     fn find_subgraphs<
         NodeWeight,
         EdgeWeight,
-        N1RefType: Copy,
-        N2RefType,
+        NRef,
+        N2Ref,
         E1RefType,
         E2RefType,
         PatternGraphType,
@@ -85,9 +102,10 @@ pub trait SubgraphAlgorithm {
     >(
         pattern_graph: &PatternGraphType,
         base_graph: &BaseGraphType,
-    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, N1RefType, E1RefType>>
+    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, E1RefType>>
     where
-        PatternGraphType:
-            PatternGraph<NodeWeight, EdgeWeight, NodeRef = N1RefType, EdgeRef = E1RefType>,
-        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2RefType, EdgeRef = E2RefType>;
+        NRef: Eq + Hash,
+        N2Ref: Eq + Hash,
+        PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = E1RefType>,
+        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2RefType>;
 }

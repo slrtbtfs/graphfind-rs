@@ -1,7 +1,5 @@
 use std::hash::Hash;
 
-use petgraph::visit::EdgeRef;
-
 use crate::graph::Graph;
 
 ///
