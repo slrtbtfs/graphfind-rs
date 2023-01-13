@@ -19,7 +19,27 @@ pub struct AdjGraph<NWeight, EWeight, NRef, ERef> {
     /// List of Node Weights.
     ///
     weight1: Vec<NWeight>,
+    ///
+    /// List of Edge Weights.
+    ///
     weight2: Vec<EWeight>,
+}
+
+impl<NWeight, EWeight, NRef, ERef> AdjGraph<NWeight, EWeight, NRef, ERef> {
+    ///
+    /// Produces a new AdjGraph.
+    ///
+    /// ## Input:
+    /// nodes, the node references of the graph.
+    ///
+    pub fn new(nodes: Vec<NRef>) -> AdjGraph<NWeight, EWeight, NRef, ERef> {
+        AdjGraph {
+            node_refs: nodes,
+            edges: vec![],
+            weight1: vec![],
+            weight2: vec![],
+        }
+    }
 }
 
 impl<NodeWeight, EdgeWeight, NRef, ERef> Graph<NodeWeight, EdgeWeight>

@@ -57,8 +57,8 @@ struct VfState<
 impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, P, B>
     VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, P, B>
 where
-    NRef: Eq + Hash,
-    N2Ref: Eq + Hash,
+    NRef: Copy + Eq + Hash,
+    N2Ref: Copy + Eq + Hash,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref>,
 {
@@ -94,34 +94,71 @@ where
     /// Returns a tuple (N1, N2) of node references.
     /// N1 contains unmatched nodes within the pattern graph, and N2 unmatched nodes within the base graph.
     ///
-    fn find_unmatched_nodes(
-        &'a self,
-    ) -> (
-        impl Iterator<Item = NRef> + 'a,
-        impl Iterator<Item = N2Ref> + 'a,
-    ) {
-        let n1 = self
+    fn find_unmatched_nodes(&'a self) -> (Vec<NRef>, Vec<N2Ref>) {
+        let n1: Vec<_> = self
             .pattern_graph
             .nodes()
-            .filter(|n| self.core_1.contains_key(n));
-        let n2 = self
+            .filter(|n| !self.core_1.contains_key(n))
+            .collect();
+        let n2: Vec<_> = self
             .base_graph
             .nodes()
-            .filter(|n| self.core_2.contains_key(n));
+            .filter(|n| !self.core_2.contains_key(n))
+            .collect();
 
         (n1, n2)
     }
 
     ///
-    /// Looks up subgraphs and puts them into results.k
+    /// Matches node n to node m, where n is from the pattern,
+    /// and m is from the base graph.
     ///
-    fn find_subgraphs(&self, depth: usize) {
+    fn assign(&mut self, n: NRef, m: N2Ref) {
+        self.core_1.insert(n, m);
+        self.core_2.insert(m, n);
+    }
+
+    ///
+    /// Undoes the matching between nodes n and m.
+    ///
+    fn unassign(&mut self, n: &NRef, m: &N2Ref) {
+        self.core_1.remove(n);
+        self.core_2.remove(m);
+    }
+
+    ///
+    /// Produces a new AdjGraph for the current graph state.
+    ///
+    fn produce_graph(&mut self) {
+        let nodes: Vec<NRef> = self.core_1.keys().cloned().collect();
+        let result: AdjGraph<NodeWeight, EdgeWeight, NRef, ERef> = AdjGraph::new(nodes);
+        self.results.push(result);
+    }
+
+    ///
+    ///
+    ///
+    fn get_results(&self) -> impl Iterator<Item = &AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>> {
+        self.results.iter()
+    }
+
+    ///
+    /// Looks up subgraphs and puts them into results.
+    ///
+    fn find_subgraphs(&mut self, depth: usize) {
         // Full match may now be added.
         if depth == self.pattern_graph.count_nodes() {
+            self.produce_graph();
         } else {
             // Find unmatched nodes.
-            let (n1, n2) = self.find_unmatched_nodes();
-            self.find_subgraphs(depth + 1);
+            let (nodes_1, nodes_2) = self.find_unmatched_nodes();
+            for n in nodes_1 {
+                for m in &nodes_2 {
+                    self.assign(n, *m);
+                    self.find_subgraphs(depth + 1);
+                    self.unassign(&n, m);
+                }
+            }
         }
     }
 }
@@ -134,28 +171,27 @@ pub struct VfAlgorithm {}
 impl SubgraphAlgorithm for VfAlgorithm {
     ///
     /// Wrapper for VfState calls. Call this method to find graphs using a _very_ specialized algorithm
-    /// that only is correct for empty graphs.
+    /// that is only correct for finding single nodes, without types.
     ///
-    /// Currently returns an empty vector.
-    ///
-    fn find_subgraphs<NodeWeight, EdgeWeight, NRef, N2Ref, ERef, E2RefType, P, B>(
-        pattern_graph: &P,
-        base_graph: &B,
-    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>>
+    fn find_subgraphs<'a, NodeWeight, EdgeWeight, NRef, N2Ref, ERef, E2RefType, P, B>(
+        pattern_graph: &'a P,
+        base_graph: &'a B,
+    ) -> Vec<&'a AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>>
     where
-        NRef: Eq + Hash,
-        N2Ref: Eq + Hash,
+        NRef: Copy + Eq + Hash,
+        N2Ref: Copy + Eq + Hash,
         P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
         B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2RefType>,
     {
         if pattern_graph.is_empty_pattern() {
             return vec![];
         }
-        let solver = VfState::<NodeWeight, EdgeWeight, NRef, ERef, N2Ref, P, B>::new(
+        let mut solver = VfState::<NodeWeight, EdgeWeight, NRef, ERef, N2Ref, P, B>::new(
             pattern_graph,
             base_graph,
         );
         solver.find_subgraphs(0);
+        let result_iterator = solver.get_results();
         vec![]
     }
 }

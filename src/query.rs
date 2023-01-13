@@ -76,9 +76,11 @@ pub trait SubgraphAlgorithm {
     /// `pattern_graph` uses NRef and E1RefType for references over nodes and edges.
     /// `base_graph` uses N2Ref and E2RefType, respectively.
     ///
+    /// Both `pattern_graph` and `base_graph` currently have the same lifetime 'a
+    ///
     /// # Output:
-    /// A vector of ResultGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
-    /// and its references N1RefType/N2Ref. We want to access matched elements of
+    /// A vector of AdjGraph references, whose nodes and edges have NodeWeight/EdgeWeight types,
+    /// and its references N1Ref/E1RefType. We want to access matched elements of
     /// the base graph by references we set in the pattern graph.
     ///
     /// An implementation find_subgraphs should guarantee set semantics, so that every found
@@ -91,6 +93,7 @@ pub trait SubgraphAlgorithm {
     /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
     ///
     fn find_subgraphs<
+        'a,
         NodeWeight,
         EdgeWeight,
         NRef,
@@ -100,12 +103,12 @@ pub trait SubgraphAlgorithm {
         PatternGraphType,
         BaseGraphType,
     >(
-        pattern_graph: &PatternGraphType,
-        base_graph: &BaseGraphType,
-    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, E1RefType>>
+        pattern_graph: &'a PatternGraphType,
+        base_graph: &'a BaseGraphType,
+    ) -> Vec<&'a AdjGraph<NodeWeight, EdgeWeight, NRef, E1RefType>>
     where
-        NRef: Eq + Hash,
-        N2Ref: Eq + Hash,
+        NRef: Copy + Eq + Hash,
+        N2Ref: Copy + Eq + Hash,
         PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = E1RefType>,
         BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2RefType>;
 }
