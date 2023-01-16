@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap, hash::Hash, vec};
 
 use crate::{
     graph::Graph,
@@ -39,7 +39,7 @@ pub struct VfState<
     ///
     /// Vec of found graphs we can return.
     ///
-    results: Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>>,
+    results: Vec<AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef>>,
 
     ///
     /// Matching of nodes in `pattern_graph` to suitable nodes in `base_graph`.
@@ -92,6 +92,17 @@ where
     }
 
     ///
+    /// Test whether node n in the pattern may be matched to node m
+    /// in the graph. That means that the matcher function for n
+    /// must return true for the node referred to by m.
+    ///
+    fn is_valid_matching(&self, n: NRef, m: N2Ref) -> bool {
+        let matcher = self.pattern_graph.node_weight(n);
+        let refed_node = self.base_graph.node_weight(m);
+        matcher(refed_node)
+    }
+
+    ///
     /// Undoes the matching between nodes n and m.
     ///
     fn unassign(&mut self, n: &NRef, m: &N2Ref) {
@@ -102,9 +113,18 @@ where
     ///
     /// Produces a new AdjGraph for the current graph state.
     ///
+    /// Copy the keys from pattern_graph along with the weights referred
+    /// to by the values from base_graph.
+    ///
     fn produce_graph(&mut self) {
-        let nodes: Vec<NRef> = self.core_1.keys().copied().collect();
-        let result: AdjGraph<NodeWeight, EdgeWeight, NRef, ERef> = AdjGraph::new(nodes);
+        // let nodes: Vec<NRef> = self.core_1.keys().copied().collect();
+        let node_list: HashMap<NRef, &NodeWeight> = self
+            .core_1
+            .iter()
+            .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
+            .collect();
+
+        let result: AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef> = AdjGraph::new(node_list);
         self.results.push(result);
     }
 
@@ -121,7 +141,10 @@ where
             for n in nodes_1 {
                 for m in &nodes_2 {
                     self.assign(n, *m);
-                    self.find_subgraphs(depth + 1);
+                    // Test compability.
+                    if self.is_valid_matching(n, *m) {
+                        self.find_subgraphs(depth + 1);
+                    }
                     self.unassign(&n, m);
                 }
             }

@@ -129,7 +129,7 @@ fn test_empty_pattern_no_results() {
 fn test_single_node_any_pattern() {
     let base_graph = node_graph().0;
     let mut single_pattern = petgraph::graph::Graph::new();
-    single_pattern.add_node_to_match("n", Box::new(|n: MovieNode| true));
+    single_pattern.add_node_to_match("n", Box::new(|n: &MovieNode| true));
 
     // Explicitly specify result type.
     let mut query = VfState::init(&single_pattern, &base_graph);
@@ -150,6 +150,28 @@ fn test_single_node_any_pattern() {
     }
     assert_eq!(1, found_indices.len());
 }
+
+/*
+#[test]
+fn match_pattern_to_large() {
+    unimplemented!()
+}
+
+#[test]
+fn match_movie_nodes_only() {
+    unimplemented!()
+}
+
+#[test]
+fn match_two_node_pairs() {
+    unimplemented!()
+}
+
+#[test]
+fn match_wrong_matches_only() {
+    unimplemented!()
+}
+*/
 
 /*
 ///

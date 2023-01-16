@@ -1,49 +1,44 @@
-use std::hash::Hash;
+use std::{collections::HashMap, hash::Hash};
 
 use crate::graph::Graph;
 
 ///
 /// AdjGraph defines a custom directed graph based on a adjacency list.
 ///
-pub struct AdjGraph<NWeight, EWeight, NRef, ERef> {
+pub struct AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
     ///
-    /// List of node references.
+    /// Index of node references.
     ///
-    node_refs: Vec<NRef>,
+    node_refs: HashMap<NRef, &'a NWeight>,
     ///
     /// List of edge references.
     ///
     edges: Vec<ERef>,
 
     ///
-    /// List of Node Weights.
-    ///
-    weight1: Vec<NWeight>,
-    ///
     /// List of Edge Weights.
     ///
     weight2: Vec<EWeight>,
 }
 
-impl<NWeight, EWeight, NRef, ERef> AdjGraph<NWeight, EWeight, NRef, ERef> {
+impl<'a, NWeight, EWeight, NRef, ERef> AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
     ///
     /// Produces a new AdjGraph.
     ///
     /// ## Input:
-    /// nodes, the node references of the graph.
+    /// nodes, the node map of the graph.
     ///
-    pub fn new(nodes: Vec<NRef>) -> AdjGraph<NWeight, EWeight, NRef, ERef> {
+    pub fn new(nodes: HashMap<NRef, &NWeight>) -> AdjGraph<NWeight, EWeight, NRef, ERef> {
         AdjGraph {
             node_refs: nodes,
             edges: vec![],
-            weight1: vec![],
             weight2: vec![],
         }
     }
 }
 
-impl<NodeWeight, EdgeWeight, NRef, ERef> Graph<NodeWeight, EdgeWeight>
-    for AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>
+impl<'b, NodeWeight, EdgeWeight, NRef, ERef> Graph<NodeWeight, EdgeWeight>
+    for AdjGraph<'b, NodeWeight, EdgeWeight, NRef, ERef>
 where
     NRef: Copy + Eq + PartialOrd + Hash,
     ERef: Copy + Eq + PartialOrd + Hash,
@@ -92,7 +87,7 @@ where
     }
 
     fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight {
-        todo!()
+        self.node_refs.get(&node).unwrap()
     }
 
     fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight {
@@ -105,7 +100,7 @@ where
         NodeWeight: 'a;
 
     fn node_weights(&self) -> Self::NodeWeightsIterator<'_> {
-        self.weight1.iter()
+        self.node_refs.iter().map(|(_, w)| *w)
     }
 
     type EdgeWeightsIterator<'a> = impl Iterator<Item = &'a EdgeWeight> + 'a
@@ -118,7 +113,7 @@ where
     }
 
     fn nodes(&self) -> Self::NodesIterator<'_> {
-        self.node_refs.iter().copied()
+        self.node_refs.iter().map(|(n, _)| *n)
     }
 
     type EdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a

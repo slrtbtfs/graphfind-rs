@@ -8,7 +8,7 @@ use crate::{graph::Graph, graph_backends::adj_graphs::AdjGraph};
 ///
 /// As an example, we may define a function that tests if a node matches a Rust pattern.
 ///
-pub type Matcher<Weight> = dyn Fn(Weight) -> bool;
+pub type Matcher<Weight> = dyn Fn(&Weight) -> bool;
 
 ///
 /// Defines a pattern graph, i.e. a specification for subgraphs that we want to find. This trait
