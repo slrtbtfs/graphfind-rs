@@ -136,13 +136,6 @@ where
     }
 
     ///
-    ///
-    ///
-    fn get_results(&self) -> impl Iterator<Item = &AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>> {
-        self.results.iter()
-    }
-
-    ///
     /// Looks up subgraphs and puts them into results.
     ///
     fn find_subgraphs(&mut self, depth: usize) {
@@ -161,6 +154,10 @@ where
             }
         }
     }
+
+    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>> {
+        &self.results
+    }
 }
 
 ///
@@ -176,7 +173,7 @@ impl SubgraphAlgorithm for VfAlgorithm {
     fn find_subgraphs<'a, NodeWeight, EdgeWeight, NRef, N2Ref, ERef, E2RefType, P, B>(
         pattern_graph: &'a P,
         base_graph: &'a B,
-    ) -> Vec<&'a AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>>
+    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>>
     where
         NRef: Copy + Eq + Hash,
         N2Ref: Copy + Eq + Hash,
@@ -191,7 +188,6 @@ impl SubgraphAlgorithm for VfAlgorithm {
             base_graph,
         );
         solver.find_subgraphs(0);
-        let result_iterator = solver.get_results();
         vec![]
     }
 }

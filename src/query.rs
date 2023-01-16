@@ -105,7 +105,7 @@ pub trait SubgraphAlgorithm {
     >(
         pattern_graph: &'a PatternGraphType,
         base_graph: &'a BaseGraphType,
-    ) -> Vec<&'a AdjGraph<NodeWeight, EdgeWeight, NRef, E1RefType>>
+    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, E1RefType>>
     where
         NRef: Copy + Eq + Hash,
         N2Ref: Copy + Eq + Hash,
