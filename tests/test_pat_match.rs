@@ -16,7 +16,7 @@ use rustgql::{
     graph::Graph as QueryGraph,
     graph_backends::adj_graphs::AdjGraph,
     query::{PatternGraph, SubgraphAlgorithm},
-    query_algorithms::vf_algorithms::VfAlgorithm,
+    query_algorithms::vf_algorithms::VfState,
 };
 
 fn add_person<'a>(
@@ -115,8 +115,9 @@ fn test_empty_pattern_no_results() {
     let empty_pattern = petgraph::graph::Graph::new();
 
     // Explicitly specify result type.
-    let results: Vec<_> =
-        <VfAlgorithm as SubgraphAlgorithm>::find_subgraphs(&empty_pattern, &base_graph);
+    let mut query = VfState::init(&empty_pattern, &base_graph);
+    query.run_query();
+    let results = query.get_results();
     assert!(results.is_empty());
 }
 
@@ -131,22 +132,23 @@ fn test_single_node_any_pattern() {
     single_pattern.add_node_to_match("n", Box::new(|n: MovieNode| true));
 
     // Explicitly specify result type.
-    let results: Vec<_> =
-        <VfAlgorithm as SubgraphAlgorithm>::find_subgraphs(&single_pattern, &base_graph);
+    let mut query = VfState::init(&single_pattern, &base_graph);
+    query.run_query();
+    let results = query.get_results();
 
     // Assert nine results.
     assert_eq!(9, results.len());
     let mut found_indices = HashSet::new();
 
-    // Check that node indices are from the base graph, and different.
+    // Check that node indices are from the pattern graph.
     for res in results {
         let indices = res.nodes().collect::<Vec<_>>();
         assert_eq!(1, indices.len());
         let index = *indices.get(0).unwrap();
-        assert!(base_graph.node_indices().any(|i| i == index));
+        assert!(single_pattern.node_indices().any(|i| i == index));
         found_indices.insert(index);
     }
-    assert_eq!(9, found_indices.len());
+    assert_eq!(1, found_indices.len());
 }
 
 /*

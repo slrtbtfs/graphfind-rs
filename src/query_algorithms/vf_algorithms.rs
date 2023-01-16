@@ -15,17 +15,18 @@ use crate::{
 
 ///
 /// VfState defines the required data structures as defined in Subsection 2.4
-/// of the 2004 paper.
+/// of the 2004 paper, as well as the algorithms to run them.
 ///
-struct VfState<
+pub struct VfState<
     'a,
     NodeWeight,
     EdgeWeight,
     NRef,
     ERef,
     N2Ref,
+    E2Ref,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
-    B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref>,
+    B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 > {
     ///
     /// Reference to the pattern graph.
@@ -54,42 +55,14 @@ struct VfState<
 ///
 /// Implementation of VfState. This contains the actual parts related to subgraph isomorphism.
 ///
-impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, P, B>
-    VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, P, B>
+impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
+    VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
     NRef: Copy + Eq + Hash,
     N2Ref: Copy + Eq + Hash,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
-    B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref>,
+    B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
-    ///
-    /// Creates a new VfState for the given pattern graph and base graph.
-    /// Initialized for each base_graph instance, to use its specific indices.
-    ///
-    /// ## Input:
-    /// 1. `pattern_graph`, a PatternGraph with NRef node references.
-    /// 2. `base_graph`, any Graph with N2FerType node references.
-    ///
-    /// ## Output:
-    /// A VfState struct.
-    ///
-    fn new<E2RefType, PatternGraphType, BaseGraphType>(
-        pattern_graph: &'a PatternGraphType,
-        base_graph: &'a BaseGraphType,
-    ) -> VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, PatternGraphType, BaseGraphType>
-    where
-        PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
-        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2RefType>,
-    {
-        VfState {
-            pattern_graph,
-            base_graph,
-            results: vec![],
-            core_1: HashMap::new(),
-            core_2: HashMap::new(),
-        }
-    }
-
     ///
     /// Returns a tuple (N1, N2) of node references.
     /// N1 contains unmatched nodes within the pattern graph, and N2 unmatched nodes within the base graph.
@@ -130,7 +103,7 @@ where
     /// Produces a new AdjGraph for the current graph state.
     ///
     fn produce_graph(&mut self) {
-        let nodes: Vec<NRef> = self.core_1.keys().cloned().collect();
+        let nodes: Vec<NRef> = self.core_1.keys().copied().collect();
         let result: AdjGraph<NodeWeight, EdgeWeight, NRef, ERef> = AdjGraph::new(nodes);
         self.results.push(result);
     }
@@ -154,40 +127,56 @@ where
             }
         }
     }
-
-    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>> {
-        &self.results
-    }
 }
 
-///
-/// The VfAlgorithm struct that is accessible to the user.
-///
-pub struct VfAlgorithm {}
-
-impl SubgraphAlgorithm for VfAlgorithm {
+impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
+    SubgraphAlgorithm<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
+    for VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
+where
+    NRef: Copy + Eq + Hash,
+    N2Ref: Copy + Eq + Hash,
+    P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
+    B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
+{
     ///
-    /// Wrapper for VfState calls. Call this method to find graphs using a _very_ specialized algorithm
-    /// that is only correct for finding single nodes, without types.
+    /// Creates a new VfState for the given pattern graph and base graph.
+    /// Initialized for each base_graph instance, to use its specific indices.
     ///
-    fn find_subgraphs<'a, NodeWeight, EdgeWeight, NRef, N2Ref, ERef, E2RefType, P, B>(
+    /// ## Input:
+    /// 1. `pattern_graph`, a PatternGraph with NRef node references.
+    /// 2. `base_graph`, any Graph with N2FerType node references.
+    ///
+    /// ## Output:
+    /// A VfState struct.
+    ///
+    fn init(
         pattern_graph: &'a P,
         base_graph: &'a B,
-    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>>
-    where
-        NRef: Copy + Eq + Hash,
-        N2Ref: Copy + Eq + Hash,
-        P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
-        B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2RefType>,
-    {
-        if pattern_graph.is_empty_pattern() {
-            return vec![];
-        }
-        let mut solver = VfState::<NodeWeight, EdgeWeight, NRef, ERef, N2Ref, P, B>::new(
+    ) -> VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B> {
+        VfState {
             pattern_graph,
             base_graph,
-        );
-        solver.find_subgraphs(0);
-        vec![]
+            results: vec![],
+            core_1: HashMap::new(),
+            core_2: HashMap::new(),
+        }
+    }
+
+    ///
+    /// Handles empty patterns and otherwise calls the
+    /// predefined search function.
+    ///
+    fn run_query(&mut self) {
+        if self.pattern_graph.is_empty_pattern() {
+            return;
+        }
+        self.find_subgraphs(0);
+    }
+
+    ///
+    /// Returns a reference to results.
+    ///
+    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>> {
+        &self.results
     }
 }

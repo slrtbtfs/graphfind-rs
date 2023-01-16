@@ -65,21 +65,53 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
 /// The SubgraphAlgorithm trait specifies any algorithm that can solve the subgraph isomorphism problem.
 /// Solving this problem lies at the core of graph pattern matching.
 ///
-pub trait SubgraphAlgorithm {
+pub trait SubgraphAlgorithm<
+    'a,
+    NodeWeight,
+    EdgeWeight,
+    NRef,
+    ERef,
+    N2Ref,
+    E2Ref,
+    PatternGraphType,
+    BaseGraphType,
+> where
+    NRef: Copy + Eq + Hash,
+    N2Ref: Copy + Eq + Hash,
+    PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
+    BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
+{
     ///
-    /// Finds all subgraphs of `base_graph` that match `pattern_graph`.
+    /// Creates a query to find all subgraphs of `base_graph` that match `pattern_graph`.
     ///
     /// # Input:
     /// Two graphs, `base_graph` (any Graph instance), and `pattern_graph` (a PatternGraph instance).
     /// `base_graph` and `pattern_graph` share both node and edge types (NodeWeight/EdgeWeight).
     ///
-    /// `pattern_graph` uses NRef and E1RefType for references over nodes and edges.
-    /// `base_graph` uses N2Ref and E2RefType, respectively.
+    /// `pattern_graph` uses NRef and ERef for references over nodes and edges.
+    /// `base_graph` uses N2Ref and E2Ref respectively.
     ///
-    /// Both `pattern_graph` and `base_graph` currently have the same lifetime 'a
+    /// Both `pattern_graph` and `base_graph` currently have the same lifetime 'a.
     ///
     /// # Output:
-    /// A vector of AdjGraph references, whose nodes and edges have NodeWeight/EdgeWeight types,
+    /// An SubgraphAlgorithm instance.
+    ///
+    /// # Panics:
+    /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
+    ///
+    fn init(pattern_graph: &'a PatternGraphType, base_graph: &'a BaseGraphType) -> Self;
+
+    ///
+    /// Executes the actual query after initialization. Uses the mutable algorithm instance,
+    /// for example, to change the search state.
+    ///
+    /// Call this method before calling `get_results`.
+    ///
+    fn run_query(&mut self);
+
+    ///
+    /// # Output:
+    /// A reference to a vector of AdjGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
     /// and its references N1Ref/E1RefType. We want to access matched elements of
     /// the base graph by references we set in the pattern graph.
     ///
@@ -89,26 +121,5 @@ pub trait SubgraphAlgorithm {
     /// If `pattern_graph` is an empty graph without nodes (or edges), or if no subgraph of `base_graph`
     /// can be matched to it, then we return an empty vector.
     ///
-    /// # Panics:
-    /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
-    ///
-    fn find_subgraphs<
-        'a,
-        NodeWeight,
-        EdgeWeight,
-        NRef,
-        N2Ref,
-        E1RefType,
-        E2RefType,
-        PatternGraphType,
-        BaseGraphType,
-    >(
-        pattern_graph: &'a PatternGraphType,
-        base_graph: &'a BaseGraphType,
-    ) -> Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, E1RefType>>
-    where
-        NRef: Copy + Eq + Hash,
-        N2Ref: Copy + Eq + Hash,
-        PatternGraphType: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = E1RefType>,
-        BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2RefType>;
+    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>>;
 }
