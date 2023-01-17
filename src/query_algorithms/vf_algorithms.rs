@@ -141,7 +141,7 @@ where
             for n in nodes_1 {
                 for m in &nodes_2 {
                     self.assign(n, *m);
-                    // Test compability.
+                    // Test compatibility.
                     if self.is_valid_matching(n, *m) {
                         self.find_subgraphs(depth + 1);
                     }

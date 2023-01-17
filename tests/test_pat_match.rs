@@ -1,9 +1,12 @@
 pub mod common;
-use std::collections::{HashMap, HashSet};
+use std::{
+    borrow::Borrow,
+    collections::{HashMap, HashSet},
+};
 
 use common::{
     ActorType::Actor,
-    MovieNode,
+    MovieNode, MoviePerson,
     MovieType::{Movie, Tv, Video},
     Relation,
     Relation::PlaysIn,
@@ -16,7 +19,7 @@ use rustgql::{
     graph::Graph as QueryGraph,
     graph_backends::adj_graphs::AdjGraph,
     query::{PatternGraph, SubgraphAlgorithm},
-    query_algorithms::vf_algorithms::VfState,
+    query_algorithms::{pattern_graphs, vf_algorithms::VfState},
 };
 
 fn add_person<'a>(
@@ -151,22 +154,93 @@ fn test_single_node_any_pattern() {
     assert_eq!(1, found_indices.len());
 }
 
-/*
 #[test]
-fn match_pattern_to_large() {
-    unimplemented!()
+///
+/// Given a pattern with two, and a graph with one node, assert that no results can be found.
+///
+fn match_pattern_too_large() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    pattern_graph.add_node_to_match("s1", Box::new(|i: &i32| *i > 0));
+    pattern_graph.add_node_to_match("s2", Box::new(|i: &i32| *i > 0));
+
+    let mut base_graph = petgraph::graph::Graph::new();
+    let index = base_graph.add_node(4);
+    base_graph.add_edge(index, index, "equals");
+
+    let mut query = VfState::init(&pattern_graph, &base_graph);
+    query.run_query();
+    assert_eq!(0, query.get_results().len());
 }
 
+///
+/// Assert that when we query for a person pattern, we only get persons,
+/// and that we get their different names.
+///
 #[test]
 fn match_movie_nodes_only() {
-    unimplemented!()
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let person_index = pattern_graph.add_node_to_match(
+        "p",
+        Box::new(|mn| match *mn {
+            MovieNode::Person(_) => true,
+            _ => false,
+        }),
+    );
+
+    let base_graph = node_graph().0;
+    let mut query = VfState::init(&pattern_graph, &base_graph);
+    query.run_query();
+
+    let names: HashSet<_> = query
+        .get_results()
+        .iter()
+        .map(|r| r.node_weight(person_index))
+        .map(|m| match m {
+            MovieNode::Person(MoviePerson { name, type_of: _ }) => name,
+            _ => "",
+        })
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    assert!(names.contains("stefan"));
+    assert!(names.contains("yves"));
+    assert!(names.contains("fabian"));
+    assert_eq!(3, names.len());
 }
 
+fn is_movie(node: &MovieNode) -> bool {
+    match &node {
+        MovieNode::Movie(_) => true,
+        _ => false,
+    }
+}
+
+fn is_person(node: &MovieNode) -> bool {
+    match &node {
+        MovieNode::Person(_) => true,
+        _ => false,
+    }
+}
+
+///
+/// Given a pattern that matches a movie node and person node, assert that
+/// we find all 6*3 = 18 different node pairs.
+///
 #[test]
 fn match_two_node_pairs() {
-    unimplemented!()
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let m_index = pattern_graph.add_node_to_match("m", Box::new(is_movie));
+    let p_index = pattern_graph.add_node_to_match("p", Box::new(is_person));
+    let base_graph = node_graph().0;
+
+    let mut query = VfState::init(&pattern_graph, &base_graph);
+    query.run_query();
+    let results = query.get_results();
+
+    assert_eq!(6 * 3, results.len());
 }
 
+/*
 #[test]
 fn match_wrong_matches_only() {
     unimplemented!()

@@ -21,6 +21,9 @@ pub struct AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
     weight2: Vec<EWeight>,
 }
 
+///
+/// Graph-specific constructor.
+///
 impl<'a, NWeight, EWeight, NRef, ERef> AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
     ///
     /// Produces a new AdjGraph.
@@ -37,6 +40,9 @@ impl<'a, NWeight, EWeight, NRef, ERef> AdjGraph<'a, NWeight, EWeight, NRef, ERef
     }
 }
 
+///
+/// Implementation of the Graph trait.
+///
 impl<'b, NodeWeight, EdgeWeight, NRef, ERef> Graph<NodeWeight, EdgeWeight>
     for AdjGraph<'b, NodeWeight, EdgeWeight, NRef, ERef>
 where
