@@ -9,8 +9,11 @@ use crate::{
 ///
 /// Implements an subgraph isomorphism algorithm based on the papers
 /// "A (Sub)Graph Isomorphism Algorithm for Matching Large Graphs"
-/// by Cordella, Foggia, Sansone, and Vento, published in 2004.
-/// The paper referenced above calls this algorithm VF2.
+/// by Cordella, Foggia, Sansone, and Vento, published in 2004,
+/// as well as
+/// "Performance Evaluation of the VF Graph Matching Algorithm"
+/// by the same authors in 1999.
+/// The paper referenced above calls this algorithm VF and VF2.
 ///
 
 ///
@@ -58,28 +61,33 @@ pub struct VfState<
 impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
-    NRef: Copy + Eq + Hash,
-    N2Ref: Copy + Eq + Hash,
+    NRef: Copy + Hash + Ord,
+    N2Ref: Copy + Hash + Eq,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
     ///
-    /// Returns a tuple (N1, N2) of node references.
-    /// N1 contains unmatched nodes within the pattern graph, and N2 unmatched nodes within the base graph.
+    /// Returns a tuple (N, N2) of node references.
+    /// N contains the smallest unmatched node within the pattern graph,
+    /// and N2 unmatched nodes within the base graph.
+    /// When matched nodes contain a successor, we use another method.
     ///
-    fn find_unmatched_nodes(&'a self) -> (Vec<NRef>, Vec<N2Ref>) {
-        let n1: Vec<_> = self
+    /// This ordering is described in the 1999 first paper.
+    ///
+    fn find_unmatched_nodes(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
+        let n = self
             .pattern_graph
             .nodes()
             .filter(|n| !self.core_1.contains_key(n))
-            .collect();
-        let n2: Vec<_> = self
+            .min();
+
+        let base_nodes: Vec<_> = self
             .base_graph
             .nodes()
             .filter(|n| !self.core_2.contains_key(n))
             .collect();
 
-        (n1, n2)
+        (n, base_nodes)
     }
 
     ///
@@ -117,7 +125,6 @@ where
     /// to by the values from base_graph.
     ///
     fn produce_graph(&mut self) {
-        // let nodes: Vec<NRef> = self.core_1.keys().copied().collect();
         let node_list: HashMap<NRef, &NodeWeight> = self
             .core_1
             .iter()
@@ -137,16 +144,16 @@ where
             self.produce_graph();
         } else {
             // Find unmatched nodes.
-            let (nodes_1, nodes_2) = self.find_unmatched_nodes();
-            for n in nodes_1 {
-                for m in &nodes_2 {
-                    self.assign(n, *m);
-                    // Test compatibility.
-                    if self.is_valid_matching(n, *m) {
-                        self.find_subgraphs(depth + 1);
-                    }
-                    self.unassign(&n, m);
+            let (pat_node, base_nodes) = self.find_unmatched_nodes();
+            // Assert we always will have a node in the pattern.
+            let n = pat_node.unwrap();
+            for m in base_nodes {
+                self.assign(n, m);
+                // Test compatibility.
+                if self.is_valid_matching(n, m) {
+                    self.find_subgraphs(depth + 1);
                 }
+                self.unassign(&n, &m);
             }
         }
     }
@@ -156,8 +163,8 @@ impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     SubgraphAlgorithm<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     for VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
-    NRef: Copy + Eq + Hash,
-    N2Ref: Copy + Eq + Hash,
+    NRef: Copy + Hash + Ord,
+    N2Ref: Copy + Hash + Eq,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
