@@ -268,6 +268,35 @@ fn match_wrong_matches_only() {
     assert_eq!(0, query.get_results().len());
 }
 
+///
+/// Test in a directed acyclic graph we find all four edges
+/// when we match (n1) --> (..) --> (n2).
+///
+#[test]
+fn match_single_edges() {
+    let mut base_graph = petgraph::graph::Graph::new();
+    let idx_0 = base_graph.add_node(0);
+    let idx_1 = base_graph.add_node(1);
+    let idx_2 = base_graph.add_node(2);
+    let idx_3 = base_graph.add_node(3);
+
+    base_graph.add_edge(idx_0, idx_1, 0);
+    base_graph.add_edge(idx_0, idx_2, 1);
+    base_graph.add_edge(idx_1, idx_3, 2);
+    base_graph.add_edge(idx_2, idx_3, 3);
+
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let idx_4 = pattern_graph.add_node_to_match("n1", Box::new(|_| true));
+    let idx_5 = pattern_graph.add_node_to_match("n2", Box::new(|_| true));
+    pattern_graph.add_edge_to_match("e", idx_4, idx_5, Box::new(|_| true));
+
+    let mut query = VfState::init(&pattern_graph, &base_graph);
+    query.run_query();
+    let results = query.get_results();
+
+    assert_eq!(4, results.len());
+}
+
 /*
 ///
 /// Match relations between Actors and Movies.
