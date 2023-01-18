@@ -1,4 +1,8 @@
-use std::{collections::HashMap, hash::Hash, vec};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::Hash,
+    vec,
+};
 
 use crate::{
     graph::Graph,
@@ -130,21 +134,6 @@ where
     }
 
     ///
-    /// Removes index from map if its insertion depth is equal to
-    /// its insertion depth. Removes thus nodes from the out set.
-    ///
-    fn remove<N>(index: &N, depth: usize, map: &mut HashMap<N, usize>)
-    where
-        N: Eq + Hash,
-    {
-        if let Some(insert_depth) = map.get(index) {
-            if insert_depth == &depth {
-                map.remove(index);
-            }
-        }
-    }
-
-    ///
     /// Matches node n to node m, where n is from the pattern, and m is from the base graph.
     /// Update out_1 and out_2 to hold the insertion depths.
     ///
@@ -152,23 +141,72 @@ where
         // Update core and out sets.
         self.core_1.insert(n, m);
         self.core_2.insert(m, n);
-        (&mut self.out_1).entry(n).or_insert(depth);
-        (&mut self.out_2).entry(m).or_insert(depth);
+        self.out_1.entry(n).or_insert(depth);
+        self.out_2.entry(m).or_insert(depth);
 
         // Iterate over the neighbors of n, and add them to the out_1 set/map.
         self.pattern_graph
             .outgoing_edges(n)
             .map(|e| self.pattern_graph.adjacent_nodes(e).1)
             .for_each(|n_out| {
-                (&mut self.out_1).entry(n_out).or_insert(depth);
+                self.out_1.entry(n_out).or_insert(depth);
             });
         // Repeat the process for the outgoing neighbors of m.
         self.base_graph
             .outgoing_edges(m)
             .map(|m| self.base_graph.adjacent_nodes(m).1)
             .for_each(|m_out| {
-                (&mut self.out_2).entry(m_out).or_insert(depth);
+                self.out_2.entry(m_out).or_insert(depth);
             });
+    }
+
+    ///
+    /// Tests if matching node n to node m is allowed. This is a shorthand for
+    /// these conditions:
+    ///
+    /// ### Syntactic:
+    /// 1. `check_successor_relation`
+    ///
+    /// ### Semantic:
+    /// 1. `check_node_semantics`
+    ///
+    fn is_valid_matching(&self, n: NRef, m: N2Ref) -> bool {
+        self.check_successor_relation(n, m) && self.check_node_semantics(n, m)
+    }
+
+    ///
+    /// Test that assigning n to m leaves the successor relations intact:
+    ///
+    /// 1. We may map any matched successor n' of n in `pattern_graph` to
+    /// another matched node m' that succeeds m in `base_graph`.
+    ///
+    /// 2. We may map any matched successor `m` of m in `base_graph` to
+    /// another matched node n' that succeeds n in `pattern_graph`.
+    ///
+    fn check_successor_relation(&self, n: NRef, m: N2Ref) -> bool {
+        // M_1(s) intersected with Succ(G_1, n)
+        let n_succs: HashSet<_> = self
+            .pattern_graph
+            .outgoing_edges(n)
+            .map(|e| self.pattern_graph.adjacent_nodes(e).1)
+            .filter(|n_succ| self.core_1.contains_key(n_succ))
+            .collect();
+
+        // M_2(s) intersected with Succ(G_2, m).
+        let m_succs: HashSet<_> = self
+            .base_graph
+            .outgoing_edges(m)
+            .map(|e| self.base_graph.adjacent_nodes(e).1)
+            .filter(|m_succ| self.core_2.contains_key(m_succ))
+            .collect();
+
+        // n2 should be mapped to another node m2, and that node is a successor of m.
+        n_succs
+            .iter()
+            .all(|n2| self.core_1.get(n2).is_some_and(|m2| m_succs.contains(m2)))
+            && m_succs
+                .iter()
+                .all(|m2| self.core_2.get(m2).is_some_and(|n2| n_succs.contains(n2)))
     }
 
     ///
@@ -176,7 +214,7 @@ where
     /// in the graph. That means that the matcher function for n
     /// must return true for the node referred to by m.
     ///
-    fn is_valid_matching(&self, n: NRef, m: N2Ref) -> bool {
+    fn check_node_semantics(&self, n: NRef, m: N2Ref) -> bool {
         let matcher = self.pattern_graph.node_weight(n);
         let refed_node = self.base_graph.node_weight(m);
         matcher(refed_node)
@@ -203,6 +241,21 @@ where
             .outgoing_edges(*m)
             .map(|m| self.base_graph.adjacent_nodes(m).1)
             .for_each(|m_out| Self::remove(&m_out, depth, &mut self.out_2));
+    }
+
+    ///
+    /// Removes index from map if its insertion depth is equal to
+    /// its insertion depth. Removes thus nodes from the out set.
+    ///
+    fn remove<N>(index: &N, depth: usize, map: &mut HashMap<N, usize>)
+    where
+        N: Eq + Hash,
+    {
+        if let Some(insert_depth) = map.get(index) {
+            if insert_depth == &depth {
+                map.remove(index);
+            }
+        }
     }
 
     ///
@@ -261,7 +314,7 @@ where
     ///
     /// ## Input:
     /// 1. `pattern_graph`, a PatternGraph with NRef node references.
-    /// 2. `base_graph`, any Graph with N2FerType node references.
+    /// 2. `base_graph`, any Graph with N2Ref node references.
     ///
     /// ## Output:
     /// A VfState struct.

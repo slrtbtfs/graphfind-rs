@@ -1,4 +1,5 @@
 #![feature(type_alias_impl_trait)]
+#![feature(is_some_and)]
 
 // Public Interface defined within the root.
 pub mod file_io;
