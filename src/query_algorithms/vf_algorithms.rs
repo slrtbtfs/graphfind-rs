@@ -130,17 +130,6 @@ where
     }
 
     ///
-    /// Updates index to depth if it does not exist in map.
-    /// Used to update the out set when nodes are added to it.
-    ///
-    fn update<N>(index: N, depth: usize, map: &mut HashMap<N, usize>)
-    where
-        N: Eq + Hash,
-    {
-        map.entry(index).or_insert(depth);
-    }
-
-    ///
     /// Removes index from map if its insertion depth is equal to
     /// its insertion depth. Removes thus nodes from the out set.
     ///
@@ -163,22 +152,22 @@ where
         // Update core and out sets.
         self.core_1.insert(n, m);
         self.core_2.insert(m, n);
-        Self::update(n, depth, &mut self.out_1);
-        Self::update(m, depth, &mut self.out_2);
+        (&mut self.out_1).entry(n).or_insert(depth);
+        (&mut self.out_2).entry(m).or_insert(depth);
 
         // Iterate over the neighbors of n, and add them to the out_1 set/map.
         self.pattern_graph
             .outgoing_edges(n)
             .map(|e| self.pattern_graph.adjacent_nodes(e).1)
             .for_each(|n_out| {
-                Self::update(n_out, depth, &mut self.out_1);
+                (&mut self.out_1).entry(n_out).or_insert(depth);
             });
         // Repeat the process for the outgoing neighbors of m.
         self.base_graph
             .outgoing_edges(m)
             .map(|m| self.base_graph.adjacent_nodes(m).1)
             .for_each(|m_out| {
-                Self::update(m_out, depth, &mut self.out_2);
+                (&mut self.out_2).entry(m_out).or_insert(depth);
             });
     }
 

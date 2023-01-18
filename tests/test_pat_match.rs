@@ -240,12 +240,33 @@ fn match_two_node_pairs() {
     assert_eq!(6 * 3, results.len());
 }
 
-/*
+///
+/// Test that we do not produce graphs where one node can never be matched.
+///
 #[test]
 fn match_wrong_matches_only() {
-    unimplemented!()
+    let base_graph = node_graph().0;
+    let mut two_pattern = petgraph::graph::Graph::new();
+    two_pattern.add_node_to_match(
+        "person",
+        Box::new(|n| match n {
+            MovieNode::Movie(_) => true,
+            _ => false,
+        }),
+    );
+
+    two_pattern.add_node_to_match(
+        "non_existent",
+        Box::new(|n| match n {
+            MovieNode::Movie(common::Movie { year: 32, .. }) => true,
+            _ => false,
+        }),
+    );
+
+    let mut query = VfState::init(&two_pattern, &base_graph);
+    query.run_query();
+    assert_eq!(0, query.get_results().len());
 }
-*/
 
 /*
 ///
