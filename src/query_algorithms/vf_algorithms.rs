@@ -283,8 +283,13 @@ where
         if depth == self.pattern_graph.count_nodes() {
             self.produce_graph();
         } else {
-            // Find unmatched nodes.
-            let (pat_node, base_nodes) = self.find_unmatched_nodes();
+            // Find unmatched nodes that are neighbors of matched nodes.
+            let (mut pat_node, mut base_nodes) = self.find_unmatched_outgoing_neighbors();
+            // Failing that, try unmatched and unconnected nodes.
+            if pat_node.is_none() || base_nodes.is_empty() {
+                (pat_node, base_nodes) = self.find_unmatched_nodes();
+            }
+
             // Assert we always will have a node in the pattern.
             let n = pat_node.unwrap();
             for m in base_nodes {
