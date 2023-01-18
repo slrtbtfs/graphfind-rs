@@ -4,6 +4,8 @@ use std::{
     vec,
 };
 
+use graphviz_rust::attributes::truecolor;
+
 use crate::{
     graph::Graph,
     graph_backends::adj_graphs::AdjGraph,
@@ -165,13 +167,20 @@ where
     /// these conditions:
     ///
     /// ### Syntactic:
-    /// 1. `check_successor_relation`
+    /// 1. `check_predecessor_relation`
+    /// 2. `check_successor_relation`
     ///
     /// ### Semantic:
     /// 1. `check_node_semantics`
     ///
     fn is_valid_matching(&self, n: NRef, m: N2Ref) -> bool {
-        self.check_successor_relation(n, m) && self.check_node_semantics(n, m)
+        self.check_predecessor_relation(n, m)
+            && self.check_successor_relation(n, m)
+            && self.check_node_semantics(n, m)
+    }
+
+    fn check_predecessor_relation(&self, n: NRef, m: N2Ref) -> bool {
+        true
     }
 
     ///
