@@ -48,11 +48,24 @@ pub struct VfState<
     /// Matching of nodes in `pattern_graph` to suitable nodes in `base_graph`.
     /// `core_1[n] = m` says that the node `n` could be matched to node `m`.
     ///
+    /// We use this map to find possible candidates for next nodes, and to
+    /// construct the result graph.
+    ///
     core_1: HashMap<NRef, N2Ref>,
     ///
     /// Reverse matching for core_2.
     ///
     core_2: HashMap<N2Ref, NRef>,
+    ///
+    /// out_1 is a matching between node references from `pattern_graph`,
+    /// and the search depth at which they were inserted. We use this mapping
+    /// to find possible successor nodes to insert into `core_1`.
+    ///
+    out_1: HashMap<NRef, usize>,
+    ///
+    /// Analog matching for outgoing nodes of `base_graph`.
+    ///
+    out_2: HashMap<N2Ref, usize>,
 }
 
 ///
@@ -91,12 +104,82 @@ where
     }
 
     ///
-    /// Matches node n to node m, where n is from the pattern,
-    /// and m is from the base graph.
+    /// Returns a tuple (N, N2) of node references.
+    /// N is the smallest node reference from `pattern_graph` that is yet unmatched,
+    /// and the destination of an outgoing matched node.
     ///
-    fn assign(&mut self, n: NRef, m: N2Ref) {
+    /// N2 is the set of unmatched nodes from `base_graph` that are the destination of a
+    /// previously matched node.
+    ///
+    fn find_unmatched_outgoing_neighbors(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
+        // From out_1, i.e. outgoing neighbors, only select those
+        // where no entry is in core_1.
+        let n = self
+            .out_1
+            .keys()
+            .filter(|n| !self.core_1.contains_key(n))
+            .min()
+            .cloned();
+        let n2: Vec<_> = self
+            .out_2
+            .keys()
+            .filter(|n| !self.core_2.contains_key(n))
+            .cloned()
+            .collect();
+        (n, n2)
+    }
+
+    ///
+    /// Updates index to depth if it does not exist in map.
+    /// Used to update the out set when nodes are added to it.
+    ///
+    fn update<N>(index: N, depth: usize, map: &mut HashMap<N, usize>)
+    where
+        N: Eq + Hash,
+    {
+        map.entry(index).or_insert(depth);
+    }
+
+    ///
+    /// Removes index from map if its insertion depth is equal to
+    /// its insertion depth. Removes thus nodes from the out set.
+    ///
+    fn remove<N>(index: &N, depth: usize, map: &mut HashMap<N, usize>)
+    where
+        N: Eq + Hash,
+    {
+        if let Some(insert_depth) = map.get(index) {
+            if insert_depth == &depth {
+                map.remove(index);
+            }
+        }
+    }
+
+    ///
+    /// Matches node n to node m, where n is from the pattern, and m is from the base graph.
+    /// Update out_1 and out_2 to hold the insertion depths.
+    ///
+    fn assign(&mut self, n: NRef, m: N2Ref, depth: usize) {
+        // Update core and out sets.
         self.core_1.insert(n, m);
         self.core_2.insert(m, n);
+        Self::update(n, depth, &mut self.out_1);
+        Self::update(m, depth, &mut self.out_2);
+
+        // Iterate over the neighbors of n, and add them to the out_1 set/map.
+        self.pattern_graph
+            .outgoing_edges(n)
+            .map(|e| self.pattern_graph.adjacent_nodes(e).1)
+            .for_each(|n_out| {
+                Self::update(n_out, depth, &mut self.out_1);
+            });
+        // Repeat the process for the outgoing neighbors of m.
+        self.base_graph
+            .outgoing_edges(m)
+            .map(|m| self.base_graph.adjacent_nodes(m).1)
+            .for_each(|m_out| {
+                Self::update(m_out, depth, &mut self.out_2);
+            });
     }
 
     ///
@@ -113,16 +196,31 @@ where
     ///
     /// Undoes the matching between nodes n and m.
     ///
-    fn unassign(&mut self, n: &NRef, m: &N2Ref) {
+    fn unassign(&mut self, n: &NRef, m: &N2Ref, depth: usize) {
+        // Remove from core set
         self.core_1.remove(n);
         self.core_2.remove(m);
+        // Remove from out set + neighbors.
+        Self::remove(n, depth, &mut self.out_1);
+        Self::remove(m, depth, &mut self.out_2);
+
+        // out_1/Pattern Graph
+        self.pattern_graph
+            .outgoing_edges(*n)
+            .map(|n| self.pattern_graph.adjacent_nodes(n).1)
+            .for_each(|n_out| Self::remove(&n_out, depth, &mut self.out_1));
+        // out_2/Base Graph
+        self.base_graph
+            .outgoing_edges(*m)
+            .map(|m| self.base_graph.adjacent_nodes(m).1)
+            .for_each(|m_out| Self::remove(&m_out, depth, &mut self.out_2));
     }
 
     ///
     /// Produces a new AdjGraph for the current graph state.
     ///
     /// Copy the keys from pattern_graph along with the weights referred
-    /// to by the values from base_graph.
+    /// to by the depths from base_graph.
     ///
     fn produce_graph(&mut self) {
         let node_list: HashMap<NRef, &NodeWeight> = self
@@ -148,12 +246,12 @@ where
             // Assert we always will have a node in the pattern.
             let n = pat_node.unwrap();
             for m in base_nodes {
-                self.assign(n, m);
+                self.assign(n, m, depth);
                 // Test compatibility.
                 if self.is_valid_matching(n, m) {
                     self.find_subgraphs(depth + 1);
                 }
-                self.unassign(&n, &m);
+                self.unassign(&n, &m, depth);
             }
         }
     }
@@ -189,6 +287,8 @@ where
             results: vec![],
             core_1: HashMap::new(),
             core_2: HashMap::new(),
+            out_1: HashMap::new(),
+            out_2: HashMap::new(),
         }
     }
 

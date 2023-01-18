@@ -106,7 +106,7 @@ where
         NodeWeight: 'a;
 
     fn node_weights(&self) -> Self::NodeWeightsIterator<'_> {
-        self.node_refs.iter().map(|(_, w)| *w)
+        self.node_refs.values().copied()
     }
 
     type EdgeWeightsIterator<'a> = impl Iterator<Item = &'a EdgeWeight> + 'a
@@ -119,7 +119,7 @@ where
     }
 
     fn nodes(&self) -> Self::NodesIterator<'_> {
-        self.node_refs.iter().map(|(n, _)| *n)
+        self.node_refs.keys().copied()
     }
 
     type EdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a
