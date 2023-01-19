@@ -272,6 +272,8 @@ fn match_wrong_matches_only() {
 /// Test in a directed acyclic graph we find all four edges
 /// when we match (n1) --> (..) --> (n2).
 ///
+/// Query its edges, and check its references.
+///
 #[test]
 fn match_single_edges() {
     let mut base_graph = petgraph::graph::Graph::new();
@@ -288,13 +290,23 @@ fn match_single_edges() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     let idx_4 = pattern_graph.add_node_to_match("n1", Box::new(|_| true));
     let idx_5 = pattern_graph.add_node_to_match("n2", Box::new(|_| true));
-    pattern_graph.add_edge_to_match("e", idx_4, idx_5, Box::new(|_| true));
+    let edge = pattern_graph.add_edge_to_match("e", idx_4, idx_5, Box::new(|_| true));
 
     let mut query = VfState::init(&pattern_graph, &base_graph);
     query.run_query();
     let results = query.get_results();
 
+    // Assert four results.
     assert_eq!(4, results.len());
+
+    for matched_graph in results {
+        let edges: Vec<_> = matched_graph.edges().collect();
+        assert_eq!(1, edges.len());
+
+        let (idx_a1, idx_a2) = matched_graph.adjacent_nodes(edges[0]);
+        assert_eq!(idx_4, idx_a1);
+        assert_eq!(idx_5, idx_a2);
+    }
 }
 
 /*

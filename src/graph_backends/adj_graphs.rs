@@ -9,11 +9,11 @@ pub struct AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
     ///
     /// Index of node references.
     ///
-    node_refs: HashMap<NRef, &'a NWeight>,
+    nodes: HashMap<NRef, &'a NWeight>,
     ///
-    /// List of edge references.
+    /// List of edge references, and their associated nodes.
     ///
-    edges: Vec<ERef>,
+    edge_list: HashMap<ERef, (NRef, NRef)>,
 
     ///
     /// List of Edge Weights.
@@ -29,12 +29,16 @@ impl<'a, NWeight, EWeight, NRef, ERef> AdjGraph<'a, NWeight, EWeight, NRef, ERef
     /// Produces a new AdjGraph.
     ///
     /// ## Input:
-    /// nodes, the node map of the graph.
+    /// 1. nodes, the node map of the graph.
+    /// 2. edges, the edge content list (endpoints).
     ///
-    pub fn new(nodes: HashMap<NRef, &NWeight>) -> AdjGraph<NWeight, EWeight, NRef, ERef> {
+    pub fn new(
+        nodes: HashMap<NRef, &NWeight>,
+        edge_list: HashMap<ERef, (NRef, NRef)>,
+    ) -> AdjGraph<NWeight, EWeight, NRef, ERef> {
         AdjGraph {
-            node_refs: nodes,
-            edges: vec![],
+            nodes,
+            edge_list,
             weight2: vec![],
         }
     }
@@ -56,10 +60,16 @@ where
     where
         Self: 'a;
 
+    ///
+    /// All AdjGraphs are directed.
+    ///
     fn is_directed(&self) -> bool {
         true
     }
 
+    ///
+    /// Checks if edge is directed (i.e. belongs to the saved edge references).
+    ///
     fn is_directed_edge(&self, edge: Self::EdgeRef) -> bool {
         todo!()
     }
@@ -69,7 +79,7 @@ where
         Self: 'a;
 
     fn adjacent_edges(&self, node: Self::NodeRef) -> Self::AdjacentEdgesIterator<'_> {
-        self.edges.iter().copied()
+        self.edge_list.keys().copied()
     }
 
     type IncomingEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a
@@ -77,7 +87,7 @@ where
         Self: 'a;
 
     fn incoming_edges(&self, node: Self::NodeRef) -> Self::IncomingEdgesIterator<'_> {
-        self.edges.iter().copied()
+        self.edge_list.keys().copied()
     }
 
     type OutgoingEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a
@@ -85,15 +95,19 @@ where
         Self: 'a;
 
     fn outgoing_edges(&self, node: Self::NodeRef) -> Self::OutgoingEdgesIterator<'_> {
-        self.edges.iter().copied()
+        self.edge_list.keys().copied()
     }
 
+    ///
+    /// Returns the value (node pair) stored for edge in edges.
+    ///
     fn adjacent_nodes(&self, edge: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef) {
-        todo!()
+        // let x = self.ed
+        *self.edge_list.get(&edge).unwrap()
     }
 
     fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight {
-        self.node_refs.get(&node).unwrap()
+        self.nodes.get(&node).unwrap()
     }
 
     fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight {
@@ -105,8 +119,11 @@ where
         Self: 'a,
         NodeWeight: 'a;
 
+    ///
+    /// Returns an iterator over the nodes values, i.e. their keys.
+    ///
     fn node_weights(&self) -> Self::NodeWeightsIterator<'_> {
-        self.node_refs.values().copied()
+        self.nodes.values().copied()
     }
 
     type EdgeWeightsIterator<'a> = impl Iterator<Item = &'a EdgeWeight> + 'a
@@ -118,15 +135,21 @@ where
         self.weight2.iter()
     }
 
+    ///
+    /// Returns an Iterator over the nodes keys.
+    ///
     fn nodes(&self) -> Self::NodesIterator<'_> {
-        self.node_refs.keys().copied()
+        self.nodes.keys().copied()
     }
 
     type EdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a
     where
         Self: 'a;
 
+    ///
+    /// Returns an iterator over the edges keys.
+    ///
     fn edges(&self) -> Self::EdgesIterator<'_> {
-        self.edges.iter().copied()
+        self.edge_list.keys().copied()
     }
 }

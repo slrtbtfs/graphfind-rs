@@ -4,8 +4,6 @@ use std::{
     vec,
 };
 
-use graphviz_rust::attributes::truecolor;
-
 use crate::{
     graph::Graph,
     graph_backends::adj_graphs::AdjGraph,
@@ -92,6 +90,7 @@ impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
     NRef: Copy + Hash + Ord,
     N2Ref: Copy + Hash + Eq,
+    ERef: Copy + Eq + Hash,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
@@ -342,13 +341,21 @@ where
     /// to by the depths from base_graph.
     ///
     fn produce_graph(&mut self) {
+        // Get node references and weights.
         let node_list: HashMap<NRef, &NodeWeight> = self
             .core_1
             .iter()
             .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
             .collect();
+        // Get edge references and connected nodes.
+        let edge_list = self
+            .pattern_graph
+            .edges()
+            .map(|e| (e, self.pattern_graph.adjacent_nodes(e)))
+            .collect();
 
-        let result: AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef> = AdjGraph::new(node_list);
+        let result: AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef> =
+            AdjGraph::new(node_list, edge_list);
         self.results.push(result);
     }
 
@@ -387,6 +394,7 @@ impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
     NRef: Copy + Hash + Ord,
     N2Ref: Copy + Hash + Eq,
+    ERef: Copy + Hash + Eq,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
