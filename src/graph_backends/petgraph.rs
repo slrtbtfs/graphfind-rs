@@ -80,6 +80,24 @@ where
         (0..self.node_count()).map(NodeIndex::new)
     }
 
+    type IncomingNodesIterator<'a> =
+        impl Iterator<Item = Self::NodeRef> + 'a where Self: 'a;
+
+    fn incoming_nodes(&self, node: Self::NodeRef) -> Self::IncomingNodesIterator<'_> {
+        self.incoming_edges(node)
+            .map(|e| self.adjacent_nodes(e))
+            .map(|(n, _)| n)
+    }
+
+    type OutgoingNodesIterator<'a> =
+        impl Iterator<Item = Self::NodeRef> + 'a where Self: 'a;
+
+    fn outgoing_nodes(&self, node: Self::NodeRef) -> Self::OutgoingNodesIterator<'_> {
+        self.outgoing_edges(node)
+            .map(|e| self.adjacent_nodes(e))
+            .map(|(_, n)| n)
+    }
+
     type EdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a where Self: 'a;
     fn edges(&self) -> Self::EdgesIterator<'_> {
         (0..self.edge_count()).map(EdgeIndex::new)

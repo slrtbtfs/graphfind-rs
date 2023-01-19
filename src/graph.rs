@@ -59,6 +59,22 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     ///
     fn adjacent_nodes(&self, edge: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef);
 
+    type OutgoingNodesIterator<'a>: Iterator<Item = Self::NodeRef> + 'a
+    where
+        Self: 'a;
+    ///
+    /// Gets a read-only handle of the nodes of `ǹode` who are its direct successors.
+    ///
+    fn outgoing_nodes(&self, node: Self::NodeRef) -> Self::OutgoingNodesIterator<'_>;
+
+    type IncomingNodesIterator<'a>: Iterator<Item = Self::NodeRef> + 'a
+    where
+        Self: 'a;
+    ///
+    /// Gets a read-only handle of the nodes of `ǹode` who are its direct successors.
+    ///
+    fn incoming_nodes(&self, node: Self::NodeRef) -> Self::IncomingNodesIterator<'_>;
+
     ///
     /// Retrieve weight from a node reference.
     ///
