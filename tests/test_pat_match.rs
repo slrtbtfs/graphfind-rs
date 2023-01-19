@@ -403,6 +403,44 @@ fn match_three_star_in_six_star() {
     }
 }
 
+///
+/// Using the graph from match_three_star_in_six_star, test that
+/// we may filter edges on whether they have an even weight attached to them.
+///
+#[test]
+fn match_three_star_even_weights() {
+    let mut six_star = petgraph::graph::Graph::new();
+    let idx_0 = six_star.add_node(0);
+    let idx_1 = six_star.add_node(1);
+    let idx_2 = six_star.add_node(2);
+    let idx_3 = six_star.add_node(3);
+    let idx_4 = six_star.add_node(4);
+    let idx_5 = six_star.add_node(5);
+    let idx_6 = six_star.add_node(6);
+
+    six_star.add_edge(idx_0, idx_1, 1);
+    six_star.add_edge(idx_0, idx_2, 2);
+    six_star.add_edge(idx_0, idx_3, 3);
+    six_star.add_edge(idx_0, idx_4, 4);
+    six_star.add_edge(idx_0, idx_5, 5);
+    six_star.add_edge(idx_0, idx_6, 6);
+
+    let mut three_star = petgraph::graph::Graph::new();
+    let idx_13 = three_star.add_node_to_match("n3", Box::new(|_| true));
+    let idx_12 = three_star.add_node_to_match("n2", Box::new(|_| true));
+    let idx_11 = three_star.add_node_to_match("n1", Box::new(|_| true));
+    let idx_10 = three_star.add_node_to_match("n0", Box::new(|_| true));
+
+    // e1: single connection of n3 via n0.
+    three_star.add_edge_to_match("e1", idx_10, idx_11, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match("e2", idx_10, idx_12, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match("e3", idx_10, idx_13, Box::new(|x| x % 2 == 0));
+
+    let mut query = VfState::init(&three_star, &six_star);
+    query.run_query();
+    let results = query.get_results();
+    assert_eq!(6, results.len());
+}
 /*
 ///
 /// Match relations between Actors and Movies.

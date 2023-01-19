@@ -91,6 +91,7 @@ where
     NRef: Copy + Hash + Ord,
     N2Ref: Copy + Hash + Eq,
     ERef: Copy + Eq + Hash,
+    E2Ref: Copy,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
@@ -197,11 +198,13 @@ where
     ///
     /// ### Semantic:
     /// 1. `check_node_semantics`
+    /// 2. `check_edge_semantics`
     ///
     fn is_valid_matching(&self, n: NRef, m: N2Ref) -> bool {
         self.check_predecessor_relation(n, m)
             && self.check_successor_relation(n, m)
             && self.check_node_semantics(n, m)
+            && self.check_edge_semantics(n, m)
     }
 
     ///
@@ -211,7 +214,7 @@ where
     /// another matched node m' that precedes m in `base_graph`.
     ///
     /// 2. We may map any matched predecessor `m` of m in `base_graph` to
-    /// another matched node n' that predeces n in `pattern_graph`.
+    /// another matched node n' that precedes n in `pattern_graph`.
     ///
     fn check_predecessor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Pred(G_1, n)
@@ -282,6 +285,58 @@ where
         let matcher = self.pattern_graph.node_weight(n);
         let refed_node = self.base_graph.node_weight(m);
         matcher(refed_node)
+    }
+
+    ///
+    /// Consider all edges e that lead to and from n. Take those edges for
+    /// which we already established a matching to another node m.
+    ///
+    fn check_edge_semantics(&self, n: NRef, m: N2Ref) -> bool {
+        // Take successor edges of n that have been matched.
+        let n_succs_matched = self
+            .pattern_graph
+            .outgoing_edges(n)
+            .map(|e| (self.pattern_graph.adjacent_nodes(e).1, e))
+            .filter(|(n_succ, _)| self.core_1.contains_key(n_succ));
+
+        // Map successor edges of m to their outgoing nodes.
+        let m_succs_matched: HashMap<N2Ref, E2Ref> = self
+            .base_graph
+            .outgoing_edges(m)
+            .map(|e| (self.base_graph.adjacent_nodes(e).1, e))
+            .filter(|(m_succ, _)| self.core_2.contains_key(m_succ))
+            .collect();
+
+        // Map successor edges.
+        let n_m_succ_edges =
+            n_succs_matched.map(|(n_succ, e)| (e, m_succs_matched[&self.core_1[&n_succ]]));
+
+        // Take predecessor edges of n that have been matched.
+        let n_preds_matched = self
+            .pattern_graph
+            .incoming_edges(n)
+            .map(|e| (self.pattern_graph.adjacent_nodes(e).0, e))
+            .filter(|(n_pred, _)| self.core_1.contains_key(n_pred));
+
+        // Map predecessor edges of m to their incoming nodes.
+        let m_preds_matched: HashMap<N2Ref, E2Ref> = self
+            .base_graph
+            .incoming_edges(m)
+            .map(|e| (self.base_graph.adjacent_nodes(e).0, e))
+            .filter(|(m_pred, _)| self.core_2.contains_key(m_pred))
+            .collect();
+
+        // Map predecessor edges.
+        let n_m_pred_edges =
+            n_preds_matched.map(|(n_pred, e)| (e, m_preds_matched[&self.core_1[&n_pred]]));
+
+        // All successor edges in base_graph conform to the specification in pattern_graph,
+        // and so do the predecessors.
+        n_m_pred_edges.chain(n_m_succ_edges).all(|(e, e2)| {
+            let matcher = self.pattern_graph.edge_weight(e);
+            let matched = self.base_graph.edge_weight(e2);
+            matcher(matched)
+        })
     }
 
     ///
@@ -405,6 +460,7 @@ where
     NRef: Copy + Hash + Ord,
     N2Ref: Copy + Hash + Eq,
     ERef: Copy + Hash + Eq,
+    E2Ref: Copy,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
