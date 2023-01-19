@@ -63,15 +63,25 @@ pub struct VfState<
     ///
     core_2: HashMap<N2Ref, NRef>,
     ///
-    /// out_1 is a matching between node references from `pattern_graph`,
+    /// out_1 is a matching between outgoing node references from `pattern_graph`,
     /// and the search depth at which they were inserted. We use this mapping
     /// to find possible successor nodes to insert into `core_1`.
     ///
     out_1: HashMap<NRef, usize>,
     ///
-    /// Analog matching for outgoing nodes of `base_graph`.
+    /// Matching for outgoing nodes of `base_graph`. Analog Definition to `out_1`.
     ///
     out_2: HashMap<N2Ref, usize>,
+    ///
+    /// `in_1` maps nodes from `core_1` and their predecessors to the search depth
+    /// at which they were inserted. We use this mapping to find possible predecessors
+    /// of matched nodes to insert into `core_1`.
+    ///
+    in_1: HashMap<NRef, usize>,
+    ///
+    /// Matching for incoming nodes of `pattern_graph`. Analog Definition to `in_1`.
+    ///
+    in_2: HashMap<N2Ref, usize>,
 }
 
 ///
@@ -137,14 +147,16 @@ where
 
     ///
     /// Matches node n to node m, where n is from the pattern, and m is from the base graph.
-    /// Update out_1 and out_2 to hold the insertion depths.
+    /// Update out_1/out_2/in_1/in_2 to hold the insertion depths.
     ///
     fn assign(&mut self, n: NRef, m: N2Ref, depth: usize) {
-        // Update core and out sets.
+        // Update core/out/in sets.
         self.core_1.insert(n, m);
         self.core_2.insert(m, n);
         self.out_1.entry(n).or_insert(depth);
         self.out_2.entry(m).or_insert(depth);
+        self.in_1.entry(n).or_insert(depth);
+        self.in_2.entry(m).or_insert(depth);
 
         // Iterate over the neighbors of n, and add them to the out_1 set/map.
         self.pattern_graph
@@ -156,9 +168,23 @@ where
         // Repeat the process for the outgoing neighbors of m.
         self.base_graph
             .outgoing_edges(m)
-            .map(|m| self.base_graph.adjacent_nodes(m).1)
+            .map(|e| self.base_graph.adjacent_nodes(e).1)
             .for_each(|m_out| {
                 self.out_2.entry(m_out).or_insert(depth);
+            });
+        // Iterate for the predecessors of n and add them to in_1.
+        self.pattern_graph
+            .incoming_edges(n)
+            .map(|e| self.pattern_graph.adjacent_nodes(e).0)
+            .for_each(|n_in| {
+                self.in_1.entry(n_in).or_insert(depth);
+            });
+        // Repeat for in_2 and predecessors of m.
+        self.base_graph
+            .incoming_edges(m)
+            .map(|e| self.base_graph.adjacent_nodes(e).0)
+            .for_each(|m_in| {
+                self.in_2.entry(m_in).or_insert(depth);
             });
     }
 
@@ -179,8 +205,39 @@ where
             && self.check_node_semantics(n, m)
     }
 
+    ///
+    /// Test that assigning n to m leaves the predecessor relations intact:
+    ///
+    /// 1. We may map any matched predecessor n' of n in `pattern_graph` to
+    /// another matched node m' that precedes m in `base_graph`.
+    ///
+    /// 2. We may map any matched predecessor `m` of m in `base_graph` to
+    /// another matched node n' that predeces n in `pattern_graph`.
+    ///
     fn check_predecessor_relation(&self, n: NRef, m: N2Ref) -> bool {
-        true
+        // M_1(s) intersected with Pred(G_1, n)
+        let n_preds: HashSet<_> = self
+            .pattern_graph
+            .incoming_edges(n)
+            .map(|e| self.pattern_graph.adjacent_nodes(e).0)
+            .filter(|n_pred| self.core_1.contains_key(n_pred))
+            .collect();
+        // M_2(s) intersected with Pred(G_2, m).
+        let m_preds: HashSet<_> = self
+            .base_graph
+            .incoming_edges(m)
+            .map(|e| self.base_graph.adjacent_nodes(e).0)
+            .filter(|m_pred| self.core_2.contains_key(m_pred))
+            .collect();
+
+        // Map every node n2 of n_preds to a predecessor m2 of m.
+        // Also map every node m2 of m_preds to a predecessor n2 of n.
+        n_preds
+            .iter()
+            .all(|n2| self.core_1.get(n2).is_some_and(|m2| m_preds.contains(m2)))
+            && m_preds
+                .iter()
+                .all(|m2| self.core_2.get(m2).is_some_and(|n2| n_preds.contains(n2)))
     }
 
     ///
@@ -200,7 +257,6 @@ where
             .map(|e| self.pattern_graph.adjacent_nodes(e).1)
             .filter(|n_succ| self.core_1.contains_key(n_succ))
             .collect();
-
         // M_2(s) intersected with Succ(G_2, m).
         let m_succs: HashSet<_> = self
             .base_graph
@@ -236,20 +292,32 @@ where
         // Remove from core set
         self.core_1.remove(n);
         self.core_2.remove(m);
-        // Remove from out set + neighbors.
+        // Remove from out/in sets + neighbors.
         Self::remove(n, depth, &mut self.out_1);
         Self::remove(m, depth, &mut self.out_2);
+        Self::remove(n, depth, &mut self.in_1);
+        Self::remove(m, depth, &mut self.in_2);
 
         // out_1/Pattern Graph
         self.pattern_graph
             .outgoing_edges(*n)
-            .map(|n| self.pattern_graph.adjacent_nodes(n).1)
+            .map(|e| self.pattern_graph.adjacent_nodes(e).1)
             .for_each(|n_out| Self::remove(&n_out, depth, &mut self.out_1));
         // out_2/Base Graph
         self.base_graph
             .outgoing_edges(*m)
-            .map(|m| self.base_graph.adjacent_nodes(m).1)
+            .map(|e| self.base_graph.adjacent_nodes(e).1)
             .for_each(|m_out| Self::remove(&m_out, depth, &mut self.out_2));
+        // in_1/Pattern Graph
+        self.pattern_graph
+            .incoming_edges(*n)
+            .map(|e| self.pattern_graph.adjacent_nodes(e).0)
+            .for_each(|n_in| Self::remove(&n_in, depth, &mut self.in_1));
+        // in_2/Base Graph
+        self.base_graph
+            .incoming_edges(*m)
+            .map(|e| self.base_graph.adjacent_nodes(e).0)
+            .for_each(|n_in| Self::remove(&n_in, depth, &mut self.in_2));
     }
 
     ///
@@ -345,6 +413,8 @@ where
             core_2: HashMap::new(),
             out_1: HashMap::new(),
             out_2: HashMap::new(),
+            in_1: HashMap::new(),
+            in_2: HashMap::new(),
         }
     }
 
