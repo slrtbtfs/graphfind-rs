@@ -77,7 +77,8 @@ where
     /// Checks if edge is directed (i.e. belongs to the saved edge references).
     ///
     fn is_directed_edge(&self, edge: Self::EdgeRef) -> bool {
-        todo!()
+        assert!(self.edge_list.contains_key(&edge));
+        true
     }
 
     type AdjacentEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a

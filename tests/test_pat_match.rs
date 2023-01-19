@@ -310,6 +310,44 @@ fn match_single_edges() {
 }
 
 ///
+/// Implement a two-length pattern on the graph from `match_single_edges`.
+/// Assert two results, and nodes 0/3 to be at the start/end,
+/// with its second node to be 1/2.
+///
+#[test]
+fn match_double_edges() {
+    let mut base_graph = petgraph::graph::Graph::new();
+    let idx_0 = base_graph.add_node(0);
+    let idx_1 = base_graph.add_node(1);
+    let idx_2 = base_graph.add_node(2);
+    let idx_3 = base_graph.add_node(3);
+
+    base_graph.add_edge(idx_0, idx_1, 0);
+    base_graph.add_edge(idx_0, idx_2, 1);
+    base_graph.add_edge(idx_1, idx_3, 2);
+    base_graph.add_edge(idx_2, idx_3, 3);
+
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let idx_4 = pattern_graph.add_node_to_match("n0", Box::new(|_| true));
+    let idx_5 = pattern_graph.add_node_to_match("n1", Box::new(|_| true));
+    let idx_6 = pattern_graph.add_node_to_match("n2", Box::new(|_| true));
+    pattern_graph.add_edge_to_match("e", idx_5, idx_6, Box::new(|_| true));
+    pattern_graph.add_edge_to_match("e1", idx_6, idx_4, Box::new(|_| true));
+
+    let mut query = VfState::init(&pattern_graph, &base_graph);
+    query.run_query();
+    let results = query.get_results();
+
+    assert_eq!(2, results.len());
+    for res in results {
+        assert_eq!(&0, res.node_weight(idx_5));
+        assert_eq!(&3, res.node_weight(idx_4));
+        let middle = *res.node_weight(idx_6);
+        assert!(middle == 1 || middle == 2);
+    }
+}
+
+///
 /// Define a six-star as base graph and a three-star as pattern.
 /// Find all 120 = 6!/3! possible results. Assert that the middle is 0,
 /// and we have four nodes + three edges.
@@ -357,6 +395,7 @@ fn match_three_star_in_six_star() {
         let center_weight = res.node_weight(idx_10);
         assert_eq!(0, *center_weight);
 
+        assert!(res.is_directed_edge(e1));
         // Check incoming edges.
         assert_eq!(e1, res.incoming_edges(idx_11).next().unwrap());
         assert_eq!(e2, res.incoming_edges(idx_12).next().unwrap());
@@ -387,26 +426,6 @@ fn test_create_match() {
         PlaysIn,
         "Star Wars Holiday Special",
     );
-
-    //
-    // Sketching a possible implementation:
-    //
-    // match! takes a Graph, and a pattern; produces a set of subgraphs.
-    // Match on Person with given properties -> produce Result structure with
-    // access to p and m, just as Cypher.
-    //
-    // let graphs: Vec<_> =
-    // match!(graph, p:MovieNode::Person(..) -- [PlaysIn] m:MovieNode::Movie(..))
-    // .collect();
-    // assert_eq!(graphs.len(), 3);
-    //
-    // Translate that to:
-    // let s = subgraph::match_on_node_pattern(&graph, MovieNode::Person(..));
-    // let s = s::extend_directed(&g, PlaysIn, MovieNode::Movie(..));
-    //
-    // Actually, instead of a pattern, you could give a more general Fn: Node -> Option(Node),
-    // and maintain for each subgraph the last node (index) we've seen.
-    //
 }
 
 ///
