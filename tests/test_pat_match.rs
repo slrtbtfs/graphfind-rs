@@ -303,9 +303,64 @@ fn match_single_edges() {
         let edges: Vec<_> = matched_graph.edges().collect();
         assert_eq!(1, edges.len());
 
-        let (idx_a1, idx_a2) = matched_graph.adjacent_nodes(edges[0]);
+        let (idx_a1, idx_a2) = matched_graph.adjacent_nodes(edge);
         assert_eq!(idx_4, idx_a1);
         assert_eq!(idx_5, idx_a2);
+    }
+}
+
+///
+/// Define a six-star as base graph and a three-star as pattern.
+/// Find all 120 = 6!/3! possible results. Assert that the middle is 0,
+/// and we have four nodes + three edges.
+///
+/// Check that all incoming edges have 0 as pointer.
+///
+#[test]
+fn match_three_star_in_six_star() {
+    let mut six_star = petgraph::graph::Graph::new();
+    let idx_0 = six_star.add_node(0);
+    let idx_1 = six_star.add_node(1);
+    let idx_2 = six_star.add_node(2);
+    let idx_3 = six_star.add_node(3);
+    let idx_4 = six_star.add_node(4);
+    let idx_5 = six_star.add_node(5);
+    let idx_6 = six_star.add_node(6);
+
+    six_star.add_edge(idx_0, idx_1, 1);
+    six_star.add_edge(idx_0, idx_2, 2);
+    six_star.add_edge(idx_0, idx_3, 3);
+    six_star.add_edge(idx_0, idx_4, 4);
+    six_star.add_edge(idx_0, idx_5, 5);
+    six_star.add_edge(idx_0, idx_6, 6);
+
+    let mut three_star = petgraph::graph::Graph::new();
+    let idx_13 = three_star.add_node_to_match("n3", Box::new(|_| true));
+    let idx_12 = three_star.add_node_to_match("n2", Box::new(|_| true));
+    let idx_11 = three_star.add_node_to_match("n1", Box::new(|_| true));
+    let idx_10 = three_star.add_node_to_match("n0", Box::new(|_| true));
+
+    // e1: single connection of n3 via n0.
+    let e1 = three_star.add_edge_to_match("e1", idx_10, idx_11, Box::new(|_| true));
+    let e2 = three_star.add_edge_to_match("e2", idx_10, idx_12, Box::new(|_| true));
+    let e3 = three_star.add_edge_to_match("e3", idx_10, idx_13, Box::new(|_| true));
+
+    let mut query = VfState::init(&three_star, &six_star);
+    query.run_query();
+    let results = query.get_results();
+    assert_eq!(120, results.len());
+
+    for res in results {
+        assert_eq!(4, res.nodes().count());
+        assert_eq!(3, res.edges().count());
+
+        let center_weight = res.node_weight(idx_10);
+        assert_eq!(0, *center_weight);
+
+        // Check incoming edges.
+        assert_eq!(e1, res.incoming_edges(idx_11).next().unwrap());
+        assert_eq!(e2, res.incoming_edges(idx_12).next().unwrap());
+        assert_eq!(e3, res.incoming_edges(idx_13).next().unwrap());
     }
 }
 

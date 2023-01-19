@@ -7,13 +7,17 @@ use crate::graph::Graph;
 ///
 pub struct AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
     ///
-    /// Index of node references.
+    /// Index of node references and the stored associated nodes.
     ///
     nodes: HashMap<NRef, &'a NWeight>,
     ///
     /// List of edge references, and their associated nodes.
     ///
     edge_list: HashMap<ERef, (NRef, NRef)>,
+    ///
+    /// Maps Nodes to the incoming adjacency lists.
+    ///
+    incoming_adj_list: HashMap<NRef, Vec<ERef>>,
 
     ///
     /// List of Edge Weights.
@@ -34,11 +38,13 @@ impl<'a, NWeight, EWeight, NRef, ERef> AdjGraph<'a, NWeight, EWeight, NRef, ERef
     ///
     pub fn new(
         nodes: HashMap<NRef, &NWeight>,
+        incoming_adj_list: HashMap<NRef, Vec<ERef>>,
         edge_list: HashMap<ERef, (NRef, NRef)>,
     ) -> AdjGraph<NWeight, EWeight, NRef, ERef> {
         AdjGraph {
             nodes,
             edge_list,
+            incoming_adj_list,
             weight2: vec![],
         }
     }
@@ -86,8 +92,11 @@ where
     where
         Self: 'a;
 
+    ///
+    /// Provides an iterator for the edge list of node.
+    ///
     fn incoming_edges(&self, node: Self::NodeRef) -> Self::IncomingEdgesIterator<'_> {
-        self.edge_list.keys().copied()
+        self.incoming_adj_list[&node].iter().copied()
     }
 
     type OutgoingEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a

@@ -342,20 +342,30 @@ where
     ///
     fn produce_graph(&mut self) {
         // Get node references and weights.
-        let node_list: HashMap<NRef, &NodeWeight> = self
+        let node_list = self
             .core_1
             .iter()
             .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
             .collect();
-        // Get edge references and connected nodes.
+
+        // Get edge references and their connected nodes.
         let edge_list = self
             .pattern_graph
             .edges()
             .map(|e| (e, self.pattern_graph.adjacent_nodes(e)))
             .collect();
 
+        // Get all incoming edges per node.
+        // TODO Much copying from the Pattern Graph.
+        // Reuse Structure from the Pattern; only update the weights.
+        let incoming_adj_list = self
+            .pattern_graph
+            .nodes()
+            .map(|n| (n, self.pattern_graph.incoming_edges(n).collect()))
+            .collect();
+
         let result: AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef> =
-            AdjGraph::new(node_list, edge_list);
+            AdjGraph::new(node_list, incoming_adj_list, edge_list);
         self.results.push(result);
     }
 
