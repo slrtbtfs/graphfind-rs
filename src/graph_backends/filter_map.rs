@@ -270,23 +270,6 @@ impl<
             .filter(|e| self.edge_map.contains_key(e))
     }
 
-    type IncomingNodesIterator<'a> = impl Iterator<Item = Self::NodeRef> + 'a where Self: 'a;
-
-    fn incoming_nodes(&self, node: Self::NodeRef) -> Self::IncomingNodesIterator<'_> {
-        self.incoming_edges(node)
-            .map(|e| self.adjacent_nodes(e))
-            .map(|(n, _)| n)
-    }
-
-    type OutgoingNodesIterator<'a> =
-        impl Iterator<Item = Self::NodeRef> + 'a where Self: 'a;
-
-    fn outgoing_nodes(&self, node: Self::NodeRef) -> Self::OutgoingNodesIterator<'_> {
-        self.outgoing_edges(node)
-            .map(|e| self.adjacent_nodes(e))
-            .map(|(_, n)| n)
-    }
-
     fn adjacent_nodes(&self, edge: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef) {
         assert!(self.edge_map.contains_key(&edge));
         let (a, b) = self.base_graph.adjacent_nodes(edge);
