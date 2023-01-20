@@ -440,6 +440,13 @@ fn match_three_star_even_weights() {
     query.run_query();
     let results = query.get_results();
     assert_eq!(6, results.len());
+
+    for res in results {
+        assert_eq!(3, res.edges().count());
+        for edge_ref in res.edges() {
+            assert!(res.edge_weight(edge_ref) % 2 == 0);
+        }
+    }
 }
 
 ///

@@ -3,29 +3,32 @@ use std::{collections::HashMap, hash::Hash};
 use crate::{graph::Graph, query::PatternGraph};
 
 ///
-/// AdjGraph defines a custom directed graph based on a adjacency list.
+/// AdjGraph defines a custom directed graph based on a `PatternGraph` and another `Graph`.
+///
+/// Its graph structure - i.e. node references, edge references, neighbors etc. are taken
+/// from the pattern `P`. However, it also contains two mappings for matched nodes (and edges)
+/// that allow its use as a result type of subgraph search.
 ///
 pub struct AdjGraph<'a, NWeight, EWeight, NRef, ERef, P>
 where
     P: PatternGraph<NWeight, EWeight, NodeRef = NRef, EdgeRef = ERef>,
 {
     ///
-    /// Index of node references and the stored associated nodes.
+    /// Index of node references and the stored associated node weights.
     ///
     nodes: HashMap<NRef, &'a NWeight>,
     ///
-    /// Pattern Graph structure that we reuse.
+    /// Index of Edge references and the stored associated edge weights.
+    ///
+    edges: HashMap<ERef, &'a EWeight>,
+    ///
+    /// The pattern Graph structure that we reuse.
     ///
     pattern: &'a P,
-
-    ///
-    /// List of Edge Weights.
-    ///
-    weight2: Vec<EWeight>,
 }
 
 ///
-/// Graph-specific constructor.
+/// Contains the graph-specific constructor.
 ///
 impl<'a, NWeight, EWeight, NRef, ERef, P> AdjGraph<'a, NWeight, EWeight, NRef, ERef, P>
 where
@@ -36,22 +39,27 @@ where
     ///
     /// ## Input:
     /// 1. nodes, the node map of the graph.
-    /// 2. pattern, the underlying structure of the pattern graph.
+    /// 2. edges, the edge map of the graph.
+    /// 3. pattern, the underlying structure of the pattern graph.
     ///
     pub fn new(
         nodes: HashMap<NRef, &'a NWeight>,
+        edges: HashMap<ERef, &'a EWeight>,
         pattern: &'a P,
     ) -> AdjGraph<'a, NWeight, EWeight, NRef, ERef, P> {
         AdjGraph {
             nodes,
+            edges,
             pattern,
-            weight2: vec![],
         }
     }
 }
 
 ///
-/// Implementation of the Graph trait.
+/// AdjGraph retrieves stored weights within `nodes` and `edges` when calling
+/// `node_weight`/`edge_weights`.
+///
+/// Any other methods call the equivalent methods from `pattern`.
 ///
 impl<'b, NodeWeight, EdgeWeight, NRef, ERef, P> Graph<NodeWeight, EdgeWeight>
     for AdjGraph<'b, NodeWeight, EdgeWeight, NRef, ERef, P>
@@ -116,11 +124,11 @@ where
     }
 
     fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight {
-        self.nodes.get(&node).unwrap()
+        self.nodes[&node]
     }
 
     fn edge_weight(&self, edge: Self::EdgeRef) -> &EdgeWeight {
-        todo!()
+        self.edges[&edge]
     }
 
     type NodeWeightsIterator<'a> = impl Iterator<Item = &'a NodeWeight> + 'a
@@ -141,14 +149,14 @@ where
         EdgeWeight: 'a;
 
     fn edge_weights(&self) -> Self::EdgeWeightsIterator<'_> {
-        self.weight2.iter()
+        self.edges.values().copied()
     }
 
     ///
     /// Returns an Iterator over the nodes keys.
     ///
     fn nodes(&self) -> Self::NodesIterator<'_> {
-        self.nodes.keys().copied()
+        self.pattern.nodes()
     }
 
     type EdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a

@@ -1,7 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
-    vec,
 };
 
 use crate::{
@@ -83,7 +82,8 @@ pub struct VfState<
 }
 
 ///
-/// Implementation of VfState. This contains the actual parts related to subgraph isomorphism.
+/// Implementation of VfState/the VF2 Algorithm.
+/// This contains the actual parts related to subgraph isomorphism.
 ///
 impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
@@ -433,8 +433,31 @@ where
             .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
             .collect();
 
+        // Mutable Edge List.
+        let mut edge_list: HashMap<ERef, &EdgeWeight> = HashMap::new();
+        // Find outgoing nodes (E, E2) of each matching and matched node pair (n, m).
+        // Match each edge e from E to another e2 from E2 based on their matched successors,
+        // then e to the weight associated with e2.
+        for (n, m) in &self.core_1 {
+            let n_succs = self
+                .pattern_graph
+                .outgoing_edges(*n)
+                .map(|e| (self.pattern_graph.adjacent_nodes(e).1, e));
+            let m_succs: HashMap<_, _> = self
+                .base_graph
+                .outgoing_edges(*m)
+                .map(|e2| (self.base_graph.adjacent_nodes(e2).1, e2))
+                .collect();
+            n_succs
+                .map(|(n_succ, e)| (e, m_succs[&self.core_1[&n_succ]]))
+                .map(|(e, e2)| (e, self.base_graph.edge_weight(e2)))
+                .for_each(|(e_ref, e_weight)| {
+                    edge_list.insert(e_ref, e_weight);
+                });
+        }
+
         let result: AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef, P> =
-            AdjGraph::new(node_list, self.pattern_graph);
+            AdjGraph::new(node_list, edge_list, self.pattern_graph);
         self.results.push(result);
     }
 
