@@ -441,6 +441,46 @@ fn match_three_star_even_weights() {
     let results = query.get_results();
     assert_eq!(6, results.len());
 }
+
+///
+/// Using the graph from match_three_star_in_six_star, test that
+/// we find an star with edges leading _to_ the center, not from it.
+///
+#[test]
+fn match_three_star_inverse() {
+    let mut six_star = petgraph::graph::Graph::new();
+    let idx_0 = six_star.add_node(0);
+    let idx_1 = six_star.add_node(1);
+    let idx_2 = six_star.add_node(2);
+    let idx_3 = six_star.add_node(3);
+    let idx_4 = six_star.add_node(4);
+    let idx_5 = six_star.add_node(5);
+    let idx_6 = six_star.add_node(6);
+
+    six_star.add_edge(idx_2, idx_0, 2);
+    six_star.add_edge(idx_1, idx_0, 1);
+    six_star.add_edge(idx_3, idx_0, 3);
+    six_star.add_edge(idx_4, idx_0, 4);
+    six_star.add_edge(idx_5, idx_0, 5);
+    six_star.add_edge(idx_6, idx_0, 6);
+
+    let mut three_star = petgraph::graph::Graph::new();
+    let idx_11 = three_star.add_node_to_match("n1", Box::new(|_| true));
+    let idx_13 = three_star.add_node_to_match("n3", Box::new(|_| true));
+    let idx_10 = three_star.add_node_to_match("n0", Box::new(|_| true));
+    let idx_12 = three_star.add_node_to_match("n2", Box::new(|_| true));
+
+    // e1: single connection of n3 via n0.
+    three_star.add_edge_to_match("e1", idx_13, idx_10, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match("e2", idx_12, idx_10, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match("e3", idx_11, idx_10, Box::new(|x| x % 2 == 0));
+
+    let mut query = VfState::init(&three_star, &six_star);
+    query.run_query();
+    let results = query.get_results();
+    assert_eq!(6, results.len());
+}
+
 /*
 ///
 /// Match relations between Actors and Movies.

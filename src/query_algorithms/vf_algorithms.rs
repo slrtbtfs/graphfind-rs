@@ -103,7 +103,7 @@ where
     ///
     /// This ordering is described in the 1999 first paper.
     ///
-    fn find_unmatched_nodes(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
+    fn find_unmatched_unconnected_nodes(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
         let n = self
             .pattern_graph
             .nodes()
@@ -123,9 +123,10 @@ where
     /// Returns a tuple (N, N2) of node references.
     /// N is the smallest node reference from `pattern_graph` that is yet unmatched,
     /// and the destination of an outgoing matched node.
-    ///
     /// N2 is the set of unmatched nodes from `base_graph` that are the destination of a
     /// previously matched node.
+    ///
+    /// Uses out_1 and out_2.
     ///
     fn find_unmatched_outgoing_neighbors(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
         // From out_1, i.e. outgoing neighbors, only select those
@@ -133,15 +134,44 @@ where
         let n = self
             .out_1
             .keys()
-            .filter(|n| !self.core_1.contains_key(n))
+            .filter(|n_out| !self.core_1.contains_key(n_out))
             .min()
             .cloned();
+
         let n2: Vec<_> = self
             .out_2
             .keys()
-            .filter(|n| !self.core_2.contains_key(n))
+            .filter(|m_out| !self.core_2.contains_key(m_out))
             .cloned()
             .collect();
+        (n, n2)
+    }
+
+    ///
+    /// Returns a tuple (N, N2) of node references.
+    ///
+    /// N is the smallest node reference from `pattern_graph` that is yet unmatched,
+    /// and the destination of an incoming matched node.
+    /// N2 is the set of unmatched nodes from `base_graph` that are the source of a
+    /// previously matched node.
+    ///
+    /// Uses in_1 and in_2.
+    ///
+    fn find_unmatched_incoming_neighbors(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
+        let n = self
+            .in_1
+            .keys()
+            .filter(|n_in| !self.core_1.contains_key(n_in))
+            .min()
+            .cloned();
+
+        let n2: Vec<_> = self
+            .in_2
+            .keys()
+            .filter(|m_in| !self.core_2.contains_key(m_in))
+            .cloned()
+            .collect();
+
         (n, n2)
     }
 
@@ -432,11 +462,15 @@ where
         if depth == self.pattern_graph.count_nodes() {
             self.produce_graph();
         } else {
-            // Find unmatched nodes that are neighbors of matched nodes.
+            // Find unmatched nodes that are outgoing neighbors of matched nodes.
             let (mut pat_node, mut base_nodes) = self.find_unmatched_outgoing_neighbors();
-            // Failing that, try unmatched and unconnected nodes.
+            // Failing that, try incoming neighbors.
             if pat_node.is_none() || base_nodes.is_empty() {
-                (pat_node, base_nodes) = self.find_unmatched_nodes();
+                (pat_node, base_nodes) = self.find_unmatched_incoming_neighbors();
+            }
+            // Failing that also, try unmatched and unconnected nodes.
+            if pat_node.is_none() || base_nodes.is_empty() {
+                (pat_node, base_nodes) = self.find_unmatched_unconnected_nodes();
             }
 
             // Assert we always will have a node in the pattern.
