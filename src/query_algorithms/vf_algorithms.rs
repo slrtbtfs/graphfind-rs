@@ -46,7 +46,7 @@ pub struct VfState<
     ///
     /// Vec of found graphs we can return.
     ///
-    results: Vec<AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef>>,
+    results: Vec<AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef, P>>,
 
     ///
     /// Matching of nodes in `pattern_graph` to suitable nodes in `base_graph`.
@@ -433,24 +433,8 @@ where
             .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
             .collect();
 
-        // Get edge references and their connected nodes.
-        let edge_list = self
-            .pattern_graph
-            .edges()
-            .map(|e| (e, self.pattern_graph.adjacent_nodes(e)))
-            .collect();
-
-        // Get all incoming edges per node.
-        // TODO Much copying from the Pattern Graph.
-        // Reuse Structure from the Pattern; only update the weights.
-        let incoming_adj_list = self
-            .pattern_graph
-            .nodes()
-            .map(|n| (n, self.pattern_graph.incoming_edges(n).collect()))
-            .collect();
-
-        let result: AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef> =
-            AdjGraph::new(node_list, incoming_adj_list, edge_list);
+        let result: AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef, P> =
+            AdjGraph::new(node_list, self.pattern_graph);
         self.results.push(result);
     }
 
@@ -540,7 +524,7 @@ where
     ///
     /// Returns a reference to results.
     ///
-    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>> {
+    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef, P>> {
         &self.results
     }
 }

@@ -121,5 +121,5 @@ pub trait SubgraphAlgorithm<
     /// If `pattern_graph` is an empty graph without nodes (or edges), or if no subgraph of `base_graph`
     /// can be matched to it, then we return an empty vector.
     ///
-    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef>>;
+    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef, PatternGraphType>>;
 }

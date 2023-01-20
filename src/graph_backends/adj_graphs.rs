@@ -1,23 +1,22 @@
 use std::{collections::HashMap, hash::Hash};
 
-use crate::graph::Graph;
+use crate::{graph::Graph, query::PatternGraph};
 
 ///
 /// AdjGraph defines a custom directed graph based on a adjacency list.
 ///
-pub struct AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
+pub struct AdjGraph<'a, NWeight, EWeight, NRef, ERef, P>
+where
+    P: PatternGraph<NWeight, EWeight, NodeRef = NRef, EdgeRef = ERef>,
+{
     ///
     /// Index of node references and the stored associated nodes.
     ///
     nodes: HashMap<NRef, &'a NWeight>,
     ///
-    /// List of edge references, and their associated nodes.
+    /// Pattern Graph structure that we reuse.
     ///
-    edge_list: HashMap<ERef, (NRef, NRef)>,
-    ///
-    /// Maps Nodes to the incoming adjacency lists.
-    ///
-    incoming_adj_list: HashMap<NRef, Vec<ERef>>,
+    pattern: &'a P,
 
     ///
     /// List of Edge Weights.
@@ -28,23 +27,24 @@ pub struct AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
 ///
 /// Graph-specific constructor.
 ///
-impl<'a, NWeight, EWeight, NRef, ERef> AdjGraph<'a, NWeight, EWeight, NRef, ERef> {
+impl<'a, NWeight, EWeight, NRef, ERef, P> AdjGraph<'a, NWeight, EWeight, NRef, ERef, P>
+where
+    P: PatternGraph<NWeight, EWeight, NodeRef = NRef, EdgeRef = ERef>,
+{
     ///
     /// Produces a new AdjGraph.
     ///
     /// ## Input:
     /// 1. nodes, the node map of the graph.
-    /// 2. edges, the edge content list (endpoints).
+    /// 2. pattern, the underlying structure of the pattern graph.
     ///
     pub fn new(
-        nodes: HashMap<NRef, &NWeight>,
-        incoming_adj_list: HashMap<NRef, Vec<ERef>>,
-        edge_list: HashMap<ERef, (NRef, NRef)>,
-    ) -> AdjGraph<NWeight, EWeight, NRef, ERef> {
+        nodes: HashMap<NRef, &'a NWeight>,
+        pattern: &'a P,
+    ) -> AdjGraph<'a, NWeight, EWeight, NRef, ERef, P> {
         AdjGraph {
             nodes,
-            edge_list,
-            incoming_adj_list,
+            pattern,
             weight2: vec![],
         }
     }
@@ -53,11 +53,12 @@ impl<'a, NWeight, EWeight, NRef, ERef> AdjGraph<'a, NWeight, EWeight, NRef, ERef
 ///
 /// Implementation of the Graph trait.
 ///
-impl<'b, NodeWeight, EdgeWeight, NRef, ERef> Graph<NodeWeight, EdgeWeight>
-    for AdjGraph<'b, NodeWeight, EdgeWeight, NRef, ERef>
+impl<'b, NodeWeight, EdgeWeight, NRef, ERef, P> Graph<NodeWeight, EdgeWeight>
+    for AdjGraph<'b, NodeWeight, EdgeWeight, NRef, ERef, P>
 where
     NRef: Copy + Eq + PartialOrd + Hash,
     ERef: Copy + Eq + PartialOrd + Hash,
+    P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
 {
     type NodeRef = NRef;
     type EdgeRef = ERef;
@@ -77,8 +78,7 @@ where
     /// Checks if edge is directed (i.e. belongs to the saved edge references).
     ///
     fn is_directed_edge(&self, edge: Self::EdgeRef) -> bool {
-        assert!(self.edge_list.contains_key(&edge));
-        true
+        self.pattern.is_directed_edge(edge)
     }
 
     type AdjacentEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a
@@ -86,7 +86,7 @@ where
         Self: 'a;
 
     fn adjacent_edges(&self, node: Self::NodeRef) -> Self::AdjacentEdgesIterator<'_> {
-        self.edge_list.keys().copied()
+        self.pattern.adjacent_edges(node)
     }
 
     type IncomingEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a
@@ -97,7 +97,7 @@ where
     /// Provides an iterator for the edge list of node.
     ///
     fn incoming_edges(&self, node: Self::NodeRef) -> Self::IncomingEdgesIterator<'_> {
-        self.incoming_adj_list[&node].iter().copied()
+        self.pattern.incoming_edges(node)
     }
 
     type OutgoingEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a
@@ -105,15 +105,14 @@ where
         Self: 'a;
 
     fn outgoing_edges(&self, node: Self::NodeRef) -> Self::OutgoingEdgesIterator<'_> {
-        self.edge_list.keys().copied()
+        self.pattern.outgoing_edges(node)
     }
 
     ///
     /// Returns the value (node pair) stored for edge in edges.
     ///
     fn adjacent_nodes(&self, edge: Self::EdgeRef) -> (Self::NodeRef, Self::NodeRef) {
-        // let x = self.ed
-        *self.edge_list.get(&edge).unwrap()
+        self.pattern.adjacent_nodes(edge)
     }
 
     fn node_weight(&self, node: Self::NodeRef) -> &NodeWeight {
@@ -160,6 +159,6 @@ where
     /// Returns an iterator over the edges keys.
     ///
     fn edges(&self) -> Self::EdgesIterator<'_> {
-        self.edge_list.keys().copied()
+        self.pattern.edges()
     }
 }
