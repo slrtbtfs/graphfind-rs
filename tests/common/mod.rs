@@ -50,22 +50,26 @@ pub enum Role {
     Student { matrical_number: u32 },
 }
 
-/**
- * FriendOf Struct
- */
+///
+/// FriendOf Struct
+///
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq)]
 pub struct FriendOf {
     pub since_year: i32,
 }
 
-// Implementation of Edge Type
+///
+/// Implementation of Edge Type.
+///
 impl FriendOf {
     pub fn new(year: i32) -> FriendOf {
         FriendOf { since_year: year }
     }
 }
 
-// Factory Methods
+///
+/// Factory Method for Student.
+///
 pub fn new_student(name: &str, age: u32, matrical_number: u32) -> Person {
     Person {
         name: String::from(name),
@@ -74,6 +78,9 @@ pub fn new_student(name: &str, age: u32, matrical_number: u32) -> Person {
     }
 }
 
+///
+/// Factory Method for Professor.
+///
 pub fn new_professor(name: &str, age: u32, faculty: &str) -> Person {
     Person {
         name: String::from(name),
@@ -249,4 +256,91 @@ pub fn make_sample_graph_undirected<'a>() -> (
     routes.insert(ei_söi, (ei, söi, 8));
 
     (g, stations, routes)
+}
+
+///
+/// This part defines the movie meta-model for graph queries.
+///
+
+///
+/// Movie type.
+///
+#[derive(Debug)]
+pub enum MovieType {
+    Movie,
+    Tv,
+    Video,
+    VideoGame,
+}
+
+///
+/// Movie (name, type, rating, year).
+///
+#[derive(Debug)]
+pub struct Movie {
+    pub title: String,
+    pub rating: f64,
+    pub year: i32,
+    pub type_of: MovieType,
+}
+
+///
+/// Actor type.
+///
+#[derive(Debug)]
+pub enum ActorType {
+    Actor,
+    Actress,
+}
+
+///
+/// MoviePerson (Name, Type).
+///
+#[derive(Debug)]
+pub struct MoviePerson {
+    pub name: String,
+    pub type_of: ActorType,
+}
+
+///
+/// Creates a new Person that plays in movies
+///
+pub fn make_person(name: String, type_of: ActorType) -> MovieNode {
+    MovieNode::Person(MoviePerson { name, type_of })
+}
+
+///
+/// Creates a new Movie.
+///
+pub fn make_movie(title: String, rating: f64, year: i32, type_of: MovieType) -> MovieNode {
+    MovieNode::Movie({
+        Movie {
+            title,
+            rating,
+            year,
+            type_of,
+        }
+    })
+}
+
+///
+/// Possible Movie objects.
+///
+#[derive(Debug)]
+pub enum MovieNode {
+    Movie(Movie),
+    Person(MoviePerson),
+}
+
+///
+/// Relations between Movie graph objects.
+///
+#[derive(Debug)]
+pub enum Relation {
+    /// Couple (MoviePerson - MoviePerson, undirected)
+    Couple,
+    /// PlaysIn (MoviePerson -> Movie, directed)
+    PlaysIn,
+    /// Successor (Movie -> Movie, directed)
+    Successor,
 }
