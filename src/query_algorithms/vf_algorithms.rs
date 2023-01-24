@@ -118,58 +118,31 @@ where
     }
 
     ///
-    /// Returns a tuple (N, N2) of node references.
-    /// N is the smallest node reference from `pattern_graph` that is yet unmatched,
-    /// and the destination of an outgoing matched node.
-    /// N2 is the set of unmatched nodes from `base_graph` that are the destination of a
-    /// previously matched node.
+    /// General implementation of the unmatched neighbors methods.
+    /// `pattern_map` and `base_map` contain the in/out sets of matched nodes,
+    /// and their forward/backward neighbors.
     ///
-    /// Uses out_1 and out_2.
+    /// The result, (N, N2), is the smallest unmatched neighbor node reference in `pattern_graph`,
+    /// if it exists, and the unmatched neighbor node references in `base_graph`.
     ///
-    fn find_unmatched_outgoing_neighbors(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
-        // From out_1, i.e. outgoing neighbors, only select those
-        // where no entry is in core.
-        let n = self
-            .out_1
+    fn find_unmatched_neighbors(
+        &'a self,
+        pattern_map: &HashMap<NRef, usize>,
+        base_map: &HashMap<N2Ref, usize>,
+    ) -> (Option<NRef>, Vec<N2Ref>) {
+        // From pattern_map, i.e. neighbors of matched nodes in pattern_graph,
+        //only select those where no entry is in core.
+        let n = pattern_map
             .keys()
             .filter(|n_out| !self.core.contains_left(n_out))
             .min()
             .cloned();
 
-        let n2: Vec<_> = self
-            .out_2
+        let n2: Vec<_> = base_map
             .keys()
             .filter(|m_out| !self.core.contains_right(m_out))
             .cloned()
             .collect();
-        (n, n2)
-    }
-
-    ///
-    /// Returns a tuple (N, N2) of node references.
-    ///
-    /// N is the smallest node reference from `pattern_graph` that is yet unmatched,
-    /// and the destination of an incoming matched node.
-    /// N2 is the set of unmatched nodes from `base_graph` that are the source of a
-    /// previously matched node.
-    ///
-    /// Uses in_1 and in_2.
-    ///
-    fn find_unmatched_incoming_neighbors(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
-        let n = self
-            .in_1
-            .keys()
-            .filter(|n_in| !self.core.contains_left(n_in))
-            .min()
-            .cloned();
-
-        let n2: Vec<_> = self
-            .in_2
-            .keys()
-            .filter(|m_in| !self.core.contains_right(m_in))
-            .cloned()
-            .collect();
-
         (n, n2)
     }
 
@@ -440,10 +413,11 @@ where
             self.produce_graph();
         } else {
             // Find unmatched nodes that are outgoing neighbors of matched nodes.
-            let (mut pat_node, mut base_nodes) = self.find_unmatched_outgoing_neighbors();
+            let (mut pat_node, mut base_nodes) =
+                self.find_unmatched_neighbors(&self.out_1, &self.out_2);
             // Failing that, try incoming neighbors.
             if pat_node.is_none() || base_nodes.is_empty() {
-                (pat_node, base_nodes) = self.find_unmatched_incoming_neighbors();
+                (pat_node, base_nodes) = self.find_unmatched_neighbors(&self.in_1, &self.in_2);
             }
             // Failing that also, try unmatched and unconnected nodes.
             if pat_node.is_none() || base_nodes.is_empty() {
