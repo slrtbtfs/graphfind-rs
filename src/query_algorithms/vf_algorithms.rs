@@ -3,6 +3,8 @@ use std::{
     hash::Hash,
 };
 
+use bimap::BiHashMap;
+
 use crate::{
     graph::Graph,
     graph_backends::{adj_graphs::AdjGraph, graph_helpers},
@@ -12,11 +14,11 @@ use crate::{
 ///
 /// Implements an subgraph isomorphism algorithm based on the papers
 /// "A (Sub)Graph Isomorphism Algorithm for Matching Large Graphs"
-/// by Cordella, Foggia, Sansone, and Vento, published in 2004,
-/// as well as
+/// by Cordella, Foggia, Sansone, and Vento, published in 2004
+/// (doi 10.1109/TPAMI.2004.75) as well as
 /// "Performance Evaluation of the VF Graph Matching Algorithm"
-/// by the same authors in 1999.
-/// The paper referenced above calls this algorithm VF and VF2.
+/// by the same authors in 1999 (doi 10.1109/ICIAP.1999.797762).
+/// The paper referenced above call this algorithm VF2 respectively VF.
 ///
 
 ///
@@ -49,16 +51,12 @@ pub struct VfState<
 
     ///
     /// Matching of nodes in `pattern_graph` to suitable nodes in `base_graph`.
-    /// `core_1[n] = m` says that the node `n` could be matched to node `m`.
+    /// `core[n] = m` says that the node `n` can be matched to node `m`.
     ///
     /// We use this map to find possible candidates for next nodes, and to
     /// construct the result graph.
     ///
-    core_1: HashMap<NRef, N2Ref>,
-    ///
-    /// Reverse matching for core_2.
-    ///
-    core_2: HashMap<N2Ref, NRef>,
+    core: BiHashMap<NRef, N2Ref>,
     ///
     /// out_1 is a matching between outgoing node references from `pattern_graph`,
     /// and the search depth at which they were inserted. We use this mapping
@@ -107,13 +105,13 @@ where
         let n = self
             .pattern_graph
             .nodes()
-            .filter(|n| !self.core_1.contains_key(n))
+            .filter(|n| !self.core.contains_left(n))
             .min();
 
         let base_nodes: Vec<_> = self
             .base_graph
             .nodes()
-            .filter(|n| !self.core_2.contains_key(n))
+            .filter(|n| !self.core.contains_right(n))
             .collect();
 
         (n, base_nodes)
@@ -130,18 +128,18 @@ where
     ///
     fn find_unmatched_outgoing_neighbors(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
         // From out_1, i.e. outgoing neighbors, only select those
-        // where no entry is in core_1.
+        // where no entry is in core.
         let n = self
             .out_1
             .keys()
-            .filter(|n_out| !self.core_1.contains_key(n_out))
+            .filter(|n_out| !self.core.contains_left(n_out))
             .min()
             .cloned();
 
         let n2: Vec<_> = self
             .out_2
             .keys()
-            .filter(|m_out| !self.core_2.contains_key(m_out))
+            .filter(|m_out| !self.core.contains_right(m_out))
             .cloned()
             .collect();
         (n, n2)
@@ -161,14 +159,14 @@ where
         let n = self
             .in_1
             .keys()
-            .filter(|n_in| !self.core_1.contains_key(n_in))
+            .filter(|n_in| !self.core.contains_left(n_in))
             .min()
             .cloned();
 
         let n2: Vec<_> = self
             .in_2
             .keys()
-            .filter(|m_in| !self.core_2.contains_key(m_in))
+            .filter(|m_in| !self.core.contains_right(m_in))
             .cloned()
             .collect();
 
@@ -181,8 +179,7 @@ where
     ///
     fn assign(&mut self, n: NRef, m: N2Ref, depth: usize) {
         // Update core/out/in sets.
-        self.core_1.insert(n, m);
-        self.core_2.insert(m, n);
+        self.core.insert(n, m);
         self.out_1.entry(n).or_insert(depth);
         self.out_2.entry(m).or_insert(depth);
         self.in_1.entry(n).or_insert(depth);
@@ -237,21 +234,24 @@ where
     fn check_predecessor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Pred(G_1, n)
         let n_preds: HashSet<_> = graph_helpers::incoming_nodes(self.pattern_graph, n)
-            .filter(|n_pred| self.core_1.contains_key(n_pred))
+            .filter(|n_pred| self.core.contains_left(n_pred))
             .collect();
         // M_2(s) intersected with Pred(G_2, m).
         let m_preds: HashSet<_> = graph_helpers::incoming_nodes(self.base_graph, m)
-            .filter(|m_pred| self.core_2.contains_key(m_pred))
+            .filter(|m_pred| self.core.contains_right(m_pred))
             .collect();
 
         // Map every node n2 of n_preds to a predecessor m2 of m.
         // Also map every node m2 of m_preds to a predecessor n2 of n.
-        n_preds
-            .iter()
-            .all(|n2| self.core_1.get(n2).is_some_and(|m2| m_preds.contains(m2)))
-            && m_preds
-                .iter()
-                .all(|m2| self.core_2.get(m2).is_some_and(|n2| n_preds.contains(n2)))
+        n_preds.iter().all(|n2| {
+            self.core
+                .get_by_left(n2)
+                .is_some_and(|m2| m_preds.contains(m2))
+        }) && m_preds.iter().all(|m2| {
+            self.core
+                .get_by_right(m2)
+                .is_some_and(|n2| n_preds.contains(n2))
+        })
     }
 
     ///
@@ -266,20 +266,23 @@ where
     fn check_successor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Succ(G_1, n)
         let n_succs: HashSet<_> = graph_helpers::outgoing_nodes(self.pattern_graph, n)
-            .filter(|n_succ| self.core_1.contains_key(n_succ))
+            .filter(|n_succ| self.core.contains_left(n_succ))
             .collect();
         // M_2(s) intersected with Succ(G_2, m).
         let m_succs: HashSet<_> = graph_helpers::outgoing_nodes(self.base_graph, m)
-            .filter(|m_succ| self.core_2.contains_key(m_succ))
+            .filter(|m_succ| self.core.contains_right(m_succ))
             .collect();
 
         // n2 should be mapped to another node m2, and that node is a successor of m.
-        n_succs
-            .iter()
-            .all(|n2| self.core_1.get(n2).is_some_and(|m2| m_succs.contains(m2)))
-            && m_succs
-                .iter()
-                .all(|m2| self.core_2.get(m2).is_some_and(|n2| n_succs.contains(n2)))
+        n_succs.iter().all(|n2| {
+            self.core
+                .get_by_left(n2)
+                .is_some_and(|m2| m_succs.contains(m2))
+        }) && m_succs.iter().all(|m2| {
+            self.core
+                .get_by_right(m2)
+                .is_some_and(|n2| n_succs.contains(n2))
+        })
     }
 
     ///
@@ -303,38 +306,38 @@ where
             .pattern_graph
             .outgoing_edges(n)
             .map(|e| (self.pattern_graph.adjacent_nodes(e).1, e))
-            .filter(|(n_succ, _)| self.core_1.contains_key(n_succ));
+            .filter(|(n_succ, _)| self.core.contains_left(n_succ));
 
         // Map successor edges of m to their outgoing nodes.
         let m_succs_matched: HashMap<N2Ref, E2Ref> = self
             .base_graph
             .outgoing_edges(m)
             .map(|e| (self.base_graph.adjacent_nodes(e).1, e))
-            .filter(|(m_succ, _)| self.core_2.contains_key(m_succ))
+            .filter(|(m_succ, _)| self.core.contains_right(m_succ))
             .collect();
 
         // Map successor edges.
-        let n_m_succ_edges =
-            n_succs_matched.map(|(n_succ, e)| (e, m_succs_matched[&self.core_1[&n_succ]]));
+        let n_m_succ_edges = n_succs_matched
+            .map(|(n_succ, e)| (e, m_succs_matched[self.core.get_by_left(&n_succ).unwrap()]));
 
         // Take predecessor edges of n that have been matched.
         let n_preds_matched = self
             .pattern_graph
             .incoming_edges(n)
             .map(|e| (self.pattern_graph.adjacent_nodes(e).0, e))
-            .filter(|(n_pred, _)| self.core_1.contains_key(n_pred));
+            .filter(|(n_pred, _)| self.core.contains_left(n_pred));
 
         // Map predecessor edges of m to their incoming nodes.
         let m_preds_matched: HashMap<N2Ref, E2Ref> = self
             .base_graph
             .incoming_edges(m)
             .map(|e| (self.base_graph.adjacent_nodes(e).0, e))
-            .filter(|(m_pred, _)| self.core_2.contains_key(m_pred))
+            .filter(|(m_pred, _)| self.core.contains_right(m_pred))
             .collect();
 
         // Map predecessor edges.
-        let n_m_pred_edges =
-            n_preds_matched.map(|(n_pred, e)| (e, m_preds_matched[&self.core_1[&n_pred]]));
+        let n_m_pred_edges = n_preds_matched
+            .map(|(n_pred, e)| (e, m_preds_matched[self.core.get_by_left(&n_pred).unwrap()]));
 
         // All successor edges in base_graph conform to the specification in pattern_graph,
         // and so do the predecessors.
@@ -350,8 +353,7 @@ where
     ///
     fn unassign(&mut self, n: &NRef, m: &N2Ref, depth: usize) {
         // Remove from core set
-        self.core_1.remove(n);
-        self.core_2.remove(m);
+        self.core.remove_by_left(n);
         // Remove from out/in sets + neighbors.
         Self::remove(n, depth, &mut self.out_1);
         Self::remove(m, depth, &mut self.out_2);
@@ -396,7 +398,7 @@ where
     fn produce_graph(&mut self) {
         // Get node references and weights.
         let node_list = self
-            .core_1
+            .core
             .iter()
             .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
             .collect();
@@ -406,7 +408,7 @@ where
         // Find outgoing nodes (E, E2) of each matching and matched node pair (n, m).
         // Match each edge e from E to another e2 from E2 based on their matched successors,
         // then e to the weight associated with e2.
-        for (n, m) in &self.core_1 {
+        for (n, m) in &self.core {
             let n_succs = self
                 .pattern_graph
                 .outgoing_edges(*n)
@@ -417,7 +419,7 @@ where
                 .map(|e2| (self.base_graph.adjacent_nodes(e2).1, e2))
                 .collect();
             n_succs
-                .map(|(n_succ, e)| (e, m_succs[&self.core_1[&n_succ]]))
+                .map(|(n_succ, e)| (e, m_succs[self.core.get_by_left(&n_succ).unwrap()]))
                 .map(|(e, e2)| (e, self.base_graph.edge_weight(e2)))
                 .for_each(|(e_ref, e_weight)| {
                     edge_list.insert(e_ref, e_weight);
@@ -492,8 +494,7 @@ where
             pattern_graph,
             base_graph,
             results: vec![],
-            core_1: HashMap::new(),
-            core_2: HashMap::new(),
+            core: BiHashMap::new(),
             out_1: HashMap::new(),
             out_2: HashMap::new(),
             in_1: HashMap::new(),
