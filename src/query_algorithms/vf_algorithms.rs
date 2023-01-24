@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     graph::Graph,
-    graph_backends::adj_graphs::AdjGraph,
+    graph_backends::{adj_graphs::AdjGraph, graph_helpers},
     query::{PatternGraph, SubgraphAlgorithm},
 };
 
@@ -189,33 +189,21 @@ where
         self.in_2.entry(m).or_insert(depth);
 
         // Iterate over the neighbors of n, and add them to the out_1 set/map.
-        self.pattern_graph
-            .outgoing_edges(n)
-            .map(|e| self.pattern_graph.adjacent_nodes(e).1)
-            .for_each(|n_out| {
-                self.out_1.entry(n_out).or_insert(depth);
-            });
+        graph_helpers::outgoing_nodes(self.pattern_graph, n).for_each(|n_out| {
+            self.out_1.entry(n_out).or_insert(depth);
+        });
         // Repeat the process for the outgoing neighbors of m.
-        self.base_graph
-            .outgoing_edges(m)
-            .map(|e| self.base_graph.adjacent_nodes(e).1)
-            .for_each(|m_out| {
-                self.out_2.entry(m_out).or_insert(depth);
-            });
+        graph_helpers::outgoing_nodes(self.base_graph, m).for_each(|m_out| {
+            self.out_2.entry(m_out).or_insert(depth);
+        });
         // Iterate for the predecessors of n and add them to in_1.
-        self.pattern_graph
-            .incoming_edges(n)
-            .map(|e| self.pattern_graph.adjacent_nodes(e).0)
-            .for_each(|n_in| {
-                self.in_1.entry(n_in).or_insert(depth);
-            });
+        graph_helpers::incoming_nodes(self.pattern_graph, n).for_each(|n_in| {
+            self.in_1.entry(n_in).or_insert(depth);
+        });
         // Repeat for in_2 and predecessors of m.
-        self.base_graph
-            .incoming_edges(m)
-            .map(|e| self.base_graph.adjacent_nodes(e).0)
-            .for_each(|m_in| {
-                self.in_2.entry(m_in).or_insert(depth);
-            });
+        graph_helpers::incoming_nodes(self.base_graph, m).for_each(|m_in| {
+            self.in_2.entry(m_in).or_insert(depth);
+        });
     }
 
     ///
@@ -248,17 +236,11 @@ where
     ///
     fn check_predecessor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Pred(G_1, n)
-        let n_preds: HashSet<_> = self
-            .pattern_graph
-            .incoming_edges(n)
-            .map(|e| self.pattern_graph.adjacent_nodes(e).0)
+        let n_preds: HashSet<_> = graph_helpers::incoming_nodes(self.pattern_graph, n)
             .filter(|n_pred| self.core_1.contains_key(n_pred))
             .collect();
         // M_2(s) intersected with Pred(G_2, m).
-        let m_preds: HashSet<_> = self
-            .base_graph
-            .incoming_edges(m)
-            .map(|e| self.base_graph.adjacent_nodes(e).0)
+        let m_preds: HashSet<_> = graph_helpers::incoming_nodes(self.base_graph, m)
             .filter(|m_pred| self.core_2.contains_key(m_pred))
             .collect();
 
@@ -283,17 +265,11 @@ where
     ///
     fn check_successor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Succ(G_1, n)
-        let n_succs: HashSet<_> = self
-            .pattern_graph
-            .outgoing_edges(n)
-            .map(|e| self.pattern_graph.adjacent_nodes(e).1)
+        let n_succs: HashSet<_> = graph_helpers::outgoing_nodes(self.pattern_graph, n)
             .filter(|n_succ| self.core_1.contains_key(n_succ))
             .collect();
         // M_2(s) intersected with Succ(G_2, m).
-        let m_succs: HashSet<_> = self
-            .base_graph
-            .outgoing_edges(m)
-            .map(|e| self.base_graph.adjacent_nodes(e).1)
+        let m_succs: HashSet<_> = graph_helpers::outgoing_nodes(self.base_graph, m)
             .filter(|m_succ| self.core_2.contains_key(m_succ))
             .collect();
 
@@ -383,24 +359,16 @@ where
         Self::remove(m, depth, &mut self.in_2);
 
         // out_1/Pattern Graph
-        self.pattern_graph
-            .outgoing_edges(*n)
-            .map(|e| self.pattern_graph.adjacent_nodes(e).1)
+        graph_helpers::outgoing_nodes(self.pattern_graph, *n)
             .for_each(|n_out| Self::remove(&n_out, depth, &mut self.out_1));
         // out_2/Base Graph
-        self.base_graph
-            .outgoing_edges(*m)
-            .map(|e| self.base_graph.adjacent_nodes(e).1)
+        graph_helpers::outgoing_nodes(self.base_graph, *m)
             .for_each(|m_out| Self::remove(&m_out, depth, &mut self.out_2));
         // in_1/Pattern Graph
-        self.pattern_graph
-            .incoming_edges(*n)
-            .map(|e| self.pattern_graph.adjacent_nodes(e).0)
+        graph_helpers::incoming_nodes(self.pattern_graph, *n)
             .for_each(|n_in| Self::remove(&n_in, depth, &mut self.in_1));
         // in_2/Base Graph
-        self.base_graph
-            .incoming_edges(*m)
-            .map(|e| self.base_graph.adjacent_nodes(e).0)
+        graph_helpers::incoming_nodes(self.base_graph, *m)
             .for_each(|n_in| Self::remove(&n_in, depth, &mut self.in_2));
     }
 
