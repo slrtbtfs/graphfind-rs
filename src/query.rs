@@ -41,8 +41,7 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ///
     /// Returns a NodeRef to the added node.
     ///
-    fn add_node_to_match(&mut self, name: &str, matcher: Box<Matcher<NodeWeight>>)
-        -> Self::NodeRef;
+    fn add_node_to_match(&mut self, matcher: Box<Matcher<NodeWeight>>) -> Self::NodeRef;
 
     ///
     /// Adds the named `edge` to the pattern.
@@ -54,7 +53,6 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ///
     fn add_edge_to_match(
         &mut self,
-        name: &str,
         from: Self::NodeRef,
         to: Self::NodeRef,
         matcher: Box<Matcher<EdgeWeight>>,

@@ -132,7 +132,7 @@ fn test_empty_pattern_no_results() {
 fn test_single_node_any_pattern() {
     let base_graph = node_graph().0;
     let mut single_pattern = petgraph::graph::Graph::new();
-    single_pattern.add_node_to_match("n", Box::new(|n: &MovieNode| true));
+    single_pattern.add_node_to_match(Box::new(|n: &MovieNode| true));
 
     // Explicitly specify result type.
     let mut query = VfState::init(&single_pattern, &base_graph);
@@ -160,8 +160,8 @@ fn test_single_node_any_pattern() {
 ///
 fn match_pattern_too_large() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    pattern_graph.add_node_to_match("s1", Box::new(|i: &i32| *i > 0));
-    pattern_graph.add_node_to_match("s2", Box::new(|i: &i32| *i > 0));
+    pattern_graph.add_node_to_match(Box::new(|i: &i32| *i > 0));
+    pattern_graph.add_node_to_match(Box::new(|i: &i32| *i > 0));
 
     let mut base_graph = petgraph::graph::Graph::new();
     let index = base_graph.add_node(4);
@@ -179,13 +179,10 @@ fn match_pattern_too_large() {
 #[test]
 fn match_movie_nodes_only() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let person_index = pattern_graph.add_node_to_match(
-        "p",
-        Box::new(|mn| match *mn {
-            MovieNode::Person(_) => true,
-            _ => false,
-        }),
-    );
+    let person_index = pattern_graph.add_node_to_match(Box::new(|mn| match *mn {
+        MovieNode::Person(_) => true,
+        _ => false,
+    }));
 
     let base_graph = node_graph().0;
     let mut query = VfState::init(&pattern_graph, &base_graph);
@@ -229,8 +226,8 @@ fn is_person(node: &MovieNode) -> bool {
 #[test]
 fn match_two_node_pairs() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let m_index = pattern_graph.add_node_to_match("m", Box::new(is_movie));
-    let p_index = pattern_graph.add_node_to_match("p", Box::new(is_person));
+    let m_index = pattern_graph.add_node_to_match(Box::new(is_movie));
+    let p_index = pattern_graph.add_node_to_match(Box::new(is_person));
     let base_graph = node_graph().0;
 
     let mut query = VfState::init(&pattern_graph, &base_graph);
@@ -247,21 +244,15 @@ fn match_two_node_pairs() {
 fn match_wrong_matches_only() {
     let base_graph = node_graph().0;
     let mut two_pattern = petgraph::graph::Graph::new();
-    two_pattern.add_node_to_match(
-        "person",
-        Box::new(|n| match n {
-            MovieNode::Movie(_) => true,
-            _ => false,
-        }),
-    );
+    two_pattern.add_node_to_match(Box::new(|n| match n {
+        MovieNode::Movie(_) => true,
+        _ => false,
+    }));
 
-    two_pattern.add_node_to_match(
-        "non_existent",
-        Box::new(|n| match n {
-            MovieNode::Movie(common::Movie { year: 32, .. }) => true,
-            _ => false,
-        }),
-    );
+    two_pattern.add_node_to_match(Box::new(|n| match n {
+        MovieNode::Movie(common::Movie { year: 32, .. }) => true,
+        _ => false,
+    }));
 
     let mut query = VfState::init(&two_pattern, &base_graph);
     query.run_query();
@@ -288,9 +279,9 @@ fn match_single_edges() {
     base_graph.add_edge(idx_2, idx_3, 3);
 
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let idx_4 = pattern_graph.add_node_to_match("n1", Box::new(|_| true));
-    let idx_5 = pattern_graph.add_node_to_match("n2", Box::new(|_| true));
-    let edge = pattern_graph.add_edge_to_match("e", idx_4, idx_5, Box::new(|_| true));
+    let idx_4 = pattern_graph.add_node_to_match(Box::new(|_| true));
+    let idx_5 = pattern_graph.add_node_to_match(Box::new(|_| true));
+    let edge = pattern_graph.add_edge_to_match(idx_4, idx_5, Box::new(|_| true));
 
     let mut query = VfState::init(&pattern_graph, &base_graph);
     query.run_query();
@@ -328,11 +319,11 @@ fn match_double_edges() {
     base_graph.add_edge(idx_2, idx_3, 3);
 
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let idx_4 = pattern_graph.add_node_to_match("n0", Box::new(|_| true));
-    let idx_5 = pattern_graph.add_node_to_match("n1", Box::new(|_| true));
-    let idx_6 = pattern_graph.add_node_to_match("n2", Box::new(|_| true));
-    pattern_graph.add_edge_to_match("e", idx_5, idx_6, Box::new(|_| true));
-    pattern_graph.add_edge_to_match("e1", idx_6, idx_4, Box::new(|_| true));
+    let idx_4 = pattern_graph.add_node_to_match(Box::new(|_| true));
+    let idx_5 = pattern_graph.add_node_to_match(Box::new(|_| true));
+    let idx_6 = pattern_graph.add_node_to_match(Box::new(|_| true));
+    pattern_graph.add_edge_to_match(idx_5, idx_6, Box::new(|_| true));
+    pattern_graph.add_edge_to_match(idx_6, idx_4, Box::new(|_| true));
 
     let mut query = VfState::init(&pattern_graph, &base_graph);
     query.run_query();
@@ -373,15 +364,15 @@ fn match_three_star_in_six_star() {
     six_star.add_edge(idx_0, idx_6, 6);
 
     let mut three_star = petgraph::graph::Graph::new();
-    let idx_13 = three_star.add_node_to_match("n3", Box::new(|_| true));
-    let idx_12 = three_star.add_node_to_match("n2", Box::new(|_| true));
-    let idx_11 = three_star.add_node_to_match("n1", Box::new(|_| true));
-    let idx_10 = three_star.add_node_to_match("n0", Box::new(|_| true));
+    let idx_13 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_12 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_11 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_10 = three_star.add_node_to_match(Box::new(|_| true));
 
     // e1: single connection of n3 via n0.
-    let e1 = three_star.add_edge_to_match("e1", idx_10, idx_11, Box::new(|_| true));
-    let e2 = three_star.add_edge_to_match("e2", idx_10, idx_12, Box::new(|_| true));
-    let e3 = three_star.add_edge_to_match("e3", idx_10, idx_13, Box::new(|_| true));
+    let e1 = three_star.add_edge_to_match(idx_10, idx_11, Box::new(|_| true));
+    let e2 = three_star.add_edge_to_match(idx_10, idx_12, Box::new(|_| true));
+    let e3 = three_star.add_edge_to_match(idx_10, idx_13, Box::new(|_| true));
 
     let mut query = VfState::init(&three_star, &six_star);
     query.run_query();
@@ -426,15 +417,15 @@ fn match_three_star_even_weights() {
     six_star.add_edge(idx_0, idx_6, 6);
 
     let mut three_star = petgraph::graph::Graph::new();
-    let idx_13 = three_star.add_node_to_match("n3", Box::new(|_| true));
-    let idx_12 = three_star.add_node_to_match("n2", Box::new(|_| true));
-    let idx_11 = three_star.add_node_to_match("n1", Box::new(|_| true));
-    let idx_10 = three_star.add_node_to_match("n0", Box::new(|_| true));
+    let idx_13 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_12 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_11 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_10 = three_star.add_node_to_match(Box::new(|_| true));
 
     // e1: single connection of n3 via n0.
-    three_star.add_edge_to_match("e1", idx_10, idx_11, Box::new(|x| x % 2 == 0));
-    three_star.add_edge_to_match("e2", idx_10, idx_12, Box::new(|x| x % 2 == 0));
-    three_star.add_edge_to_match("e3", idx_10, idx_13, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match(idx_10, idx_11, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match(idx_10, idx_12, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match(idx_10, idx_13, Box::new(|x| x % 2 == 0));
 
     let mut query = VfState::init(&three_star, &six_star);
     query.run_query();
@@ -472,15 +463,15 @@ fn match_three_star_inverse() {
     six_star.add_edge(idx_6, idx_0, 6);
 
     let mut three_star = petgraph::graph::Graph::new();
-    let idx_11 = three_star.add_node_to_match("n1", Box::new(|_| true));
-    let idx_13 = three_star.add_node_to_match("n3", Box::new(|_| true));
-    let idx_10 = three_star.add_node_to_match("n0", Box::new(|_| true));
-    let idx_12 = three_star.add_node_to_match("n2", Box::new(|_| true));
+    let idx_11 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_13 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_10 = three_star.add_node_to_match(Box::new(|_| true));
+    let idx_12 = three_star.add_node_to_match(Box::new(|_| true));
 
     // e1: single connection of n3 via n0.
-    three_star.add_edge_to_match("e1", idx_13, idx_10, Box::new(|x| x % 2 == 0));
-    three_star.add_edge_to_match("e2", idx_12, idx_10, Box::new(|x| x % 2 == 0));
-    three_star.add_edge_to_match("e3", idx_11, idx_10, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match(idx_13, idx_10, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match(idx_12, idx_10, Box::new(|x| x % 2 == 0));
+    three_star.add_edge_to_match(idx_11, idx_10, Box::new(|x| x % 2 == 0));
 
     let mut query = VfState::init(&three_star, &six_star);
     query.run_query();
