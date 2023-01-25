@@ -10,20 +10,23 @@ use common::{
 ///
 /// Assert Node indices from 0 to 3. Petgraph should
 /// guarantee these indices in a graph without deletion.
+/// Also assert we have four nodes.
 ///
 #[test]
 fn query_node_indices() {
     let graph = make_sample_graph().0;
+    assert_eq!(4, graph.node_count());
     let node_indices: Vec<_> = graph.node_indices().map(|n| n.index()).collect();
     assert_eq!(node_indices, vec![0, 1, 2, 3]);
 }
 
 ///
-/// Assert Edge indices from 0 to 4.
+/// Assert 5 Edge indices; from 0 to 4.
 ///
 #[test]
 fn query_edge_indices() {
     let graph = make_sample_graph().0;
+    assert_eq!(5, graph.edge_count());
     let edge_indices: Vec<_> = graph.edge_indices().map(|e| e.index()).collect();
     assert_eq!(edge_indices, vec![0, 1, 2, 3, 4]);
 }

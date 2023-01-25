@@ -481,7 +481,10 @@ where
     /// predefined search function.
     ///
     fn run_query(&mut self) {
-        if self.pattern_graph.is_empty_pattern() {
+        // Check in advance that our pattern fits in the base graph.
+        if self.pattern_graph.count_nodes() > self.base_graph.count_nodes()
+            || self.pattern_graph.count_edges() > self.base_graph.count_edges()
+        {
             return;
         }
         self.find_subgraphs(0);

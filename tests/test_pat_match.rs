@@ -116,6 +116,7 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
 fn test_empty_pattern_no_results() {
     let base_graph = node_graph().0;
     let empty_pattern = petgraph::graph::Graph::new();
+    assert!(empty_pattern.is_empty_graph());
 
     // Explicitly specify result type.
     let mut query = VfState::init(&empty_pattern, &base_graph);
