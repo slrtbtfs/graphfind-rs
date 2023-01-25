@@ -1,25 +1,17 @@
 pub mod common;
-use std::{
-    borrow::Borrow,
-    collections::{HashMap, HashSet},
-};
+use std::collections::{HashMap, HashSet};
 
 use common::{
     ActorType::Actor,
     MovieNode, MoviePerson,
     MovieType::{Movie, Tv, Video},
     Relation,
-    Relation::PlaysIn,
 };
-use petgraph::{
-    graph::{Graph, NodeIndex},
-    visit::NodeRef,
-};
+use petgraph::graph::{Graph, NodeIndex};
 use rustgql::{
     graph::Graph as QueryGraph,
-    graph_backends::adj_graphs::AdjGraph,
     query::{PatternGraph, SubgraphAlgorithm},
-    query_algorithms::{pattern_graphs, vf_algorithms::VfState},
+    query_algorithms::vf_algorithms::VfState,
 };
 
 fn add_person<'a>(
@@ -180,10 +172,8 @@ fn match_pattern_too_large() {
 #[test]
 fn match_movie_nodes_only() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let person_index = pattern_graph.add_node_to_match(Box::new(|mn| match *mn {
-        MovieNode::Person(_) => true,
-        _ => false,
-    }));
+    let person_index =
+        pattern_graph.add_node_to_match(Box::new(|mn| matches!(*mn, MovieNode::Person(_))));
 
     let base_graph = node_graph().0;
     let mut query = VfState::init(&pattern_graph, &base_graph);
@@ -207,17 +197,11 @@ fn match_movie_nodes_only() {
 }
 
 fn is_movie(node: &MovieNode) -> bool {
-    match &node {
-        MovieNode::Movie(_) => true,
-        _ => false,
-    }
+    matches!(node, MovieNode::Movie(_))
 }
 
 fn is_person(node: &MovieNode) -> bool {
-    match &node {
-        MovieNode::Person(_) => true,
-        _ => false,
-    }
+    matches!(node, MovieNode::Person(_))
 }
 
 ///
@@ -227,8 +211,8 @@ fn is_person(node: &MovieNode) -> bool {
 #[test]
 fn match_two_node_pairs() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let m_index = pattern_graph.add_node_to_match(Box::new(is_movie));
-    let p_index = pattern_graph.add_node_to_match(Box::new(is_person));
+    pattern_graph.add_node_to_match(Box::new(is_movie));
+    pattern_graph.add_node_to_match(Box::new(is_person));
     let base_graph = node_graph().0;
 
     let mut query = VfState::init(&pattern_graph, &base_graph);
@@ -245,14 +229,10 @@ fn match_two_node_pairs() {
 fn match_wrong_matches_only() {
     let base_graph = node_graph().0;
     let mut two_pattern = petgraph::graph::Graph::new();
-    two_pattern.add_node_to_match(Box::new(|n| match n {
-        MovieNode::Movie(_) => true,
-        _ => false,
-    }));
+    two_pattern.add_node_to_match(Box::new(|n| matches!(n, MovieNode::Movie(_))));
 
-    two_pattern.add_node_to_match(Box::new(|n| match n {
-        MovieNode::Movie(common::Movie { year: 32, .. }) => true,
-        _ => false,
+    two_pattern.add_node_to_match(Box::new(|n| {
+        matches!(n, MovieNode::Movie(common::Movie { year: 32, .. }))
     }));
 
     let mut query = VfState::init(&two_pattern, &base_graph);
@@ -478,6 +458,52 @@ fn match_three_star_inverse() {
     query.run_query();
     let results = query.get_results();
     assert_eq!(6, results.len());
+}
+
+///
+/// Given the star graph match_three_star_in_six_star as base graph,
+/// and a clique with 4 members + 12 edges, assert we do not find a result.
+///
+#[test]
+fn test_node_edge_counts_terminate_early() {
+    let mut six_star = petgraph::graph::Graph::new();
+    let idx_0 = six_star.add_node(0);
+    let idx_1 = six_star.add_node(1);
+    let idx_2 = six_star.add_node(2);
+    let idx_3 = six_star.add_node(3);
+    let idx_4 = six_star.add_node(4);
+    let idx_5 = six_star.add_node(5);
+    let idx_6 = six_star.add_node(6);
+
+    six_star.add_edge(idx_2, idx_0, 2);
+    six_star.add_edge(idx_1, idx_0, 1);
+    six_star.add_edge(idx_3, idx_0, 3);
+    six_star.add_edge(idx_4, idx_0, 4);
+    six_star.add_edge(idx_5, idx_0, 5);
+    six_star.add_edge(idx_6, idx_0, 6);
+
+    let mut four_clique = petgraph::graph::Graph::new();
+    let idx_11 = four_clique.add_node_to_match(Box::new(|_| true));
+    let idx_13 = four_clique.add_node_to_match(Box::new(|_| true));
+    let idx_10 = four_clique.add_node_to_match(Box::new(|_| true));
+    let idx_12 = four_clique.add_node_to_match(Box::new(|_| true));
+
+    four_clique.add_edge_to_match(idx_10, idx_11, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_10, idx_12, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_10, idx_13, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_11, idx_10, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_11, idx_12, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_11, idx_13, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_12, idx_10, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_12, idx_11, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_12, idx_13, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_13, idx_10, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_13, idx_11, Box::new(|_| true));
+    four_clique.add_edge_to_match(idx_13, idx_12, Box::new(|_| true));
+
+    let mut query = VfState::init(&four_clique, &six_star);
+    query.run_query();
+    assert_eq!(0, query.get_results().len());
 }
 
 /*

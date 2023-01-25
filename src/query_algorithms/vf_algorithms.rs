@@ -482,7 +482,8 @@ where
     ///
     fn run_query(&mut self) {
         // Check in advance that our pattern fits in the base graph.
-        if self.pattern_graph.count_nodes() > self.base_graph.count_nodes()
+        if self.pattern_graph.is_empty_graph()
+            || self.pattern_graph.count_nodes() > self.base_graph.count_nodes()
             || self.pattern_graph.count_edges() > self.base_graph.count_edges()
         {
             return;
