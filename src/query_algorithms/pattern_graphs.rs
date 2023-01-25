@@ -7,10 +7,6 @@ use crate::query::{Matcher, PatternGraph};
 impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     for petgraph::graph::Graph<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>>
 {
-    fn count_nodes(&self) -> usize {
-        self.node_count()
-    }
-
     ///
     /// Adds the node to match, and returns the reference.
     ///

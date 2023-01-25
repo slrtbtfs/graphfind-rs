@@ -49,6 +49,8 @@ fn test_filter_only() {
     // Check nodes.
     let nodes: Vec<NodeIndex<DefaultIx>> = result.nodes().collect();
     assert_eq!(nodes.len(), 2000);
+    assert_eq!(result.count_nodes(), 2000);
+
     for n in nodes {
         let idx = n.index();
         assert!(idx % 3 != 2 && idx <= 3000);
@@ -69,6 +71,8 @@ fn test_filter_only() {
     // Check edges.
     let edges: Vec<EdgeIndex<DefaultIx>> = result.edges().collect();
     assert_eq!(edges.len(), 1000);
+    assert_eq!(result.count_edges(), 1000);
+
     for e in edges {
         let idx = e.index();
         assert!(idx % 2 != 1 && idx <= 2000);

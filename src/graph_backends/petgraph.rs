@@ -31,6 +31,7 @@ where
         // petgraph doesn't support mixing directed and undirected edges.
         self.is_directed()
     }
+
     type AdjacentEdgesIterator<'a> = impl Iterator<Item = Self::EdgeRef> + 'a where Self: 'a;
     fn adjacent_edges(&self, node: Self::NodeRef) -> Self::AdjacentEdgesIterator<'_> {
         self.edges_directed(node, Incoming)
@@ -90,4 +91,12 @@ where
 
     type EdgeWeightsIterator<'a>
      = impl Iterator<Item = &'a EdgeWeight> + 'a where Self: 'a, Self: 'a, EdgeWeight: 'a;
+
+    fn count_edges(&self) -> usize {
+        self.edge_count()
+    }
+
+    fn count_nodes(&self) -> usize {
+        self.node_count()
+    }
 }
