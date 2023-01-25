@@ -7,8 +7,8 @@ use bimap::BiHashMap;
 
 use crate::{
     graph::Graph,
-    graph_backends::{adj_graphs::AdjGraph, graph_helpers},
-    query::{PatternGraph, SubgraphAlgorithm},
+    graph_backends::{adj_graphs::AdjGraph, filter_map::FilterMap, graph_helpers},
+    query::{Matcher, PatternGraph, SubgraphAlgorithm},
 };
 
 ///
@@ -18,7 +18,7 @@ use crate::{
 /// (doi 10.1109/TPAMI.2004.75) as well as
 /// "Performance Evaluation of the VF Graph Matching Algorithm"
 /// by the same authors in 1999 (doi 10.1109/ICIAP.1999.797762).
-/// The paper referenced above call this algorithm VF2 respectively VF.
+/// The papers referenced above call this algorithm VF2 respectively VF.
 ///
 
 ///
@@ -45,9 +45,18 @@ pub struct VfState<
     ///
     base_graph: &'a B,
     ///
-    /// Vec of found graphs we can return.
+    /// Vec of found graphs that we return.
     ///
-    results: Vec<AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef, P>>,
+    results: Vec<
+        FilterMap<
+            'a,
+            Box<Matcher<NodeWeight>>,
+            Box<Matcher<EdgeWeight>>,
+            &'a NodeWeight,
+            &'a EdgeWeight,
+            P,
+        >,
+    >,
 
     ///
     /// Matching of nodes in `pattern_graph` to suitable nodes in `base_graph`.
@@ -369,15 +378,8 @@ where
     /// to by the depths from base_graph.
     ///
     fn produce_graph(&mut self) {
-        // Get node references and weights.
-        let node_list = self
-            .core
-            .iter()
-            .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
-            .collect();
-
-        // Mutable Edge List.
-        let mut edge_list: HashMap<ERef, &EdgeWeight> = HashMap::new();
+        // Mutable Edge List that associates edges in pattern_graph and base_graph.
+        let mut edge_list: HashMap<ERef, E2Ref> = HashMap::new();
         // Find outgoing nodes (E, E2) of each matching and matched node pair (n, m).
         // Match each edge e from E to another e2 from E2 based on their matched successors,
         // then e to the weight associated with e2.
@@ -393,14 +395,21 @@ where
                 .collect();
             n_succs
                 .map(|(n_succ, e)| (e, m_succs[self.core.get_by_left(&n_succ).unwrap()]))
-                .map(|(e, e2)| (e, self.base_graph.edge_weight(e2)))
                 .for_each(|(e_ref, e_weight)| {
                     edge_list.insert(e_ref, e_weight);
                 });
         }
 
-        let result: AdjGraph<'a, NodeWeight, EdgeWeight, NRef, ERef, P> =
-            AdjGraph::new(node_list, edge_list, self.pattern_graph);
+        let result = FilterMap::general_filter_map(
+            self.pattern_graph,
+            |_, n| {
+                Some(
+                    self.base_graph
+                        .node_weight(*self.core.get_by_left(&n).unwrap()),
+                )
+            },
+            |_, e| Some(self.base_graph.edge_weight(edge_list[&e])),
+        );
         self.results.push(result);
     }
 
@@ -490,7 +499,11 @@ where
     ///
     /// Returns a reference to results.
     ///
-    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef, P>> {
+    fn get_results(
+        &self,
+    ) -> &Vec<
+        FilterMap<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>, &NodeWeight, &EdgeWeight, P>,
+    > {
         &self.results
     }
 }

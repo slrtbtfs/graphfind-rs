@@ -20,7 +20,7 @@ use crate::graph::{self};
 /// that only do part of that might be more appropriate.
 ///
 /// Note that the base graph is required to outlive the generated FilerMap Graph, since
-/// the graph structure is borrowed from the base graph.
+/// it borrows its graph structure.
 ///
 pub struct FilterMap<
     'g,

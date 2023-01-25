@@ -1,6 +1,9 @@
 use std::hash::Hash;
 
-use crate::{graph::Graph, graph_backends::adj_graphs::AdjGraph};
+use crate::{
+    graph::Graph,
+    graph_backends::{adj_graphs::AdjGraph, filter_map::FilterMap},
+};
 
 ///
 /// The Matcher type stands for any function that evaluates, given an element
@@ -109,7 +112,7 @@ pub trait SubgraphAlgorithm<
 
     ///
     /// # Output:
-    /// A reference to a vector of AdjGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
+    /// A reference to a vector of FilterMap graphs, whose nodes and edges have NodeWeight/EdgeWeight types,
     /// and its references N1Ref/E1RefType. We want to access matched elements of
     /// the base graph by references we set in the pattern graph.
     ///
@@ -119,5 +122,15 @@ pub trait SubgraphAlgorithm<
     /// If `pattern_graph` is an empty graph without nodes (or edges), or if no subgraph of `base_graph`
     /// can be matched to it, then we return an empty vector.
     ///
-    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef, PatternGraphType>>;
+    fn get_results(
+        &self,
+    ) -> &Vec<
+        FilterMap<
+            Box<Matcher<NodeWeight>>,
+            Box<Matcher<EdgeWeight>>,
+            &NodeWeight,
+            &EdgeWeight,
+            PatternGraphType,
+        >,
+    >;
 }
