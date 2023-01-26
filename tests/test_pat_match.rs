@@ -6,6 +6,7 @@ use common::{
     MovieNode, MoviePerson,
     MovieType::{Movie, Tv, Video},
     Relation,
+    Relation::{Knows, PlaysIn},
 };
 use petgraph::graph::{Graph, NodeIndex};
 use rustgql::{
@@ -506,6 +507,129 @@ fn test_node_edge_counts_terminate_early() {
     assert_eq!(0, query.get_results().len());
 }
 
+///
+/// Match a given graph on:
+/// 1. Three different actors.
+/// 2. Three different movies.
+/// 3. Next to other relations, we have three persons who know each other.
+///
+/// Assert 3 matches.
+///
+#[test]
+fn cycle_in_knows_match() {
+    let (mut data_graph, node_names) = node_graph();
+    connect(
+        &mut data_graph,
+        &node_names,
+        "stefan",
+        Knows,
+        "Star Wars Holiday Special",
+    );
+    connect(
+        &mut data_graph,
+        &node_names,
+        "yves",
+        PlaysIn,
+        "Star Wars Holiday Special",
+    );
+    connect(
+        &mut data_graph,
+        &node_names,
+        "fabian",
+        PlaysIn,
+        "Star Wars Holiday Special",
+    );
+
+    connect(
+        &mut data_graph,
+        &node_names,
+        "stefan",
+        PlaysIn,
+        "Attack of the Killer Macros",
+    );
+    connect(
+        &mut data_graph,
+        &node_names,
+        "yves",
+        PlaysIn,
+        "Attack of the Killer Macros",
+    );
+    connect(
+        &mut data_graph,
+        &node_names,
+        "fabian",
+        PlaysIn,
+        "Attack of the Killer Macros",
+    );
+
+    connect(
+        &mut data_graph,
+        &node_names,
+        "stefan",
+        PlaysIn,
+        "Star Wars: Rise of the Bechdel Test",
+    );
+    connect(
+        &mut data_graph,
+        &node_names,
+        "yves",
+        PlaysIn,
+        "Star Wars: Rise of the Bechdel Test",
+    );
+    connect(
+        &mut data_graph,
+        &node_names,
+        "fabian",
+        PlaysIn,
+        "Star Wars: Rise of the Bechdel Test",
+    );
+
+    connect(&mut data_graph, &node_names, "stefan", Knows, "yves");
+    connect(&mut data_graph, &node_names, "yves", Knows, "fabian");
+    connect(&mut data_graph, &node_names, "fabian", Knows, "stefan");
+
+    // Pattern
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let p1 = pattern_graph.add_node_to_match(Box::new(|m| matches!(m, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match(Box::new(|m| matches!(m, MovieNode::Person(_))));
+    let p3 = pattern_graph.add_node_to_match(Box::new(|m| matches!(m, MovieNode::Person(_))));
+    pattern_graph.add_edge_to_match(p1, p2, Box::new(|m| matches!(m, Knows)));
+    pattern_graph.add_edge_to_match(p2, p3, Box::new(|m| matches!(m, Knows)));
+    pattern_graph.add_edge_to_match(p3, p1, Box::new(|m| matches!(m, Knows)));
+
+    // Algorithm
+    let mut vf2_query = VfState::init(&pattern_graph, &data_graph);
+    vf2_query.run_query();
+    let results = vf2_query.get_results();
+
+    // Check results
+    assert_eq!(3, results.len());
+    // Each graph with 3 nodes + edges
+    for matched_graph in results {
+        assert_eq!(3, matched_graph.count_nodes());
+        assert_eq!(3, matched_graph.count_edges());
+
+        // Check Node types.
+        assert!(matches!(
+            matched_graph.node_weight(p1),
+            MovieNode::Person(_)
+        ));
+        assert!(matches!(
+            matched_graph.node_weight(p2),
+            MovieNode::Person(_)
+        ));
+        assert!(matches!(
+            matched_graph.node_weight(p3),
+            MovieNode::Person(_)
+        ));
+
+        // Check edge types.
+        for edge in matched_graph.edge_weights() {
+            assert!(matches!(edge, Knows));
+        }
+    }
+}
+
 /*
 ///
 /// Match relations between Actors and Movies.
@@ -559,7 +683,7 @@ fn test_require_delete_two_movies() {}
 /// 2. Three different movies
 /// 3. Two actors play in all three movies.
 ///
-/// Assume we get three matches.
+/// Assume we get 6
 ///
 fn test_three_to_two_match() {}
 
@@ -569,17 +693,11 @@ fn test_three_to_two_match() {}
 /// 2. Three different movies
 /// 3. Each actor plays in all three movies.
 ///
-/// Assume we get nine matches.
-///
-fn test_three_to_three_match() {}
+/// Assume we get 6 = 3! matches.
+#[test]
+fn test_three_to_three_match() {
 
-///
-/// Match a given graph on:
-/// 1. Three different actors
-/// 2. Three different movies
-/// 3. Two actors play in the two same movies.
-///
-fn test_two_to_two_match() {}
+}
 
 ///
 /// Find all persons who play in at least three movies,

@@ -337,6 +337,8 @@ pub enum MovieNode {
 ///
 #[derive(Debug)]
 pub enum Relation {
+    /// Knows (MoviePerson -> MoviePerson)
+    Knows,
     /// Couple (MoviePerson - MoviePerson, undirected)
     Couple,
     /// PlaysIn (MoviePerson -> Movie, directed)
