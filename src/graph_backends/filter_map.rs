@@ -323,4 +323,12 @@ impl<
     fn edges(&self) -> Self::EdgesIterator<'_> {
         self.edge_map.keys().copied()
     }
+
+    fn count_edges(&self) -> usize {
+        self.edge_map.len()
+    }
+
+    fn count_nodes(&self) -> usize {
+        self.node_map.len()
+    }
 }

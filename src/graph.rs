@@ -103,4 +103,20 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     /// Returns an Iterator over all edges by their references.
     ///
     fn edges(&self) -> Self::EdgesIterator<'_>;
+
+    ///
+    /// Tests if the given graph is empty.
+    ///
+    fn is_empty_graph(&self) -> bool {
+        self.count_nodes() == 0
+    }
+
+    ///
+    /// Returns the number of nodes in this graph.
+    ///
+    fn count_nodes(&self) -> usize;
+    ///
+    /// Returns the number of edges in this graph.
+    ///
+    fn count_edges(&self) -> usize;
 }

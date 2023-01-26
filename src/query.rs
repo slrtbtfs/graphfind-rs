@@ -24,18 +24,6 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     Graph<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>>
 {
     ///
-    /// Tests if the given graph is empty. Empty pattern graphs require their own treatment.
-    ///
-    fn is_empty_pattern(&self) -> bool {
-        self.count_nodes() == 0
-    }
-
-    ///
-    /// Returns the number of nodes to match in the pattern.
-    ///
-    fn count_nodes(&self) -> usize;
-
-    ///
     /// Adds the node identified by `name` to the pattern. Any node that matches `name`
     /// must fulfill the `matcher` function.
     ///

@@ -169,4 +169,12 @@ where
     fn edges(&self) -> Self::EdgesIterator<'_> {
         self.pattern.edges()
     }
+
+    fn count_edges(&self) -> usize {
+        self.pattern.count_edges()
+    }
+
+    fn count_nodes(&self) -> usize {
+        self.pattern.count_nodes()
+    }
 }
