@@ -126,7 +126,7 @@ fn test_empty_pattern_no_results() {
 fn test_single_node_any_pattern() {
     let base_graph = node_graph().0;
     let mut single_pattern = petgraph::graph::Graph::new();
-    single_pattern.add_node_to_match(Box::new(|n: &MovieNode| true));
+    single_pattern.add_node_to_match(Box::new(|_n: &MovieNode| true));
 
     // Explicitly specify result type.
     let mut query = VfState::init(&single_pattern, &base_graph);

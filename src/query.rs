@@ -1,4 +1,4 @@
-use std::{hash::Hash, iter::Filter};
+use std::{hash::Hash};
 
 use crate::{graph::Graph, graph_backends::filter_map::FilterMap};
 

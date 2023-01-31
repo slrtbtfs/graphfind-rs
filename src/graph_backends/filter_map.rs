@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::graph::{self, Graph};
+use crate::graph::{self};
 
 ///
 /// `FilterMap` is a graph representation that is designed to abstractly
