@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::graph::{self};
+use crate::graph::{self, Graph};
 
 ///
 /// `FilterMap` is a graph representation that is designed to abstractly
@@ -44,6 +44,27 @@ impl<
         Graph: graph::Graph<BaseNodeWeight, BaseEdgeWeight>,
     > FilterMap<'g, BaseNodeWeight, BaseEdgeWeight, NodeWeight, EdgeWeight, Graph>
 {
+    /// Creates a new FilterMap Graph directly from the corresponding node
+    /// and edge maps provided as HashMaps.
+    /// It is the responsibility of the callee to ensure that provided edges only
+    /// point to valid node indices that haven't been removed.
+    pub fn new(
+        base_graph: &'g Graph,
+        node_map: HashMap<Graph::NodeRef, NodeWeight>,
+        edge_map: HashMap<Graph::EdgeRef, EdgeWeight>,
+    ) -> Self {
+        // Check that there are no dangling references
+        assert!(edge_map.keys().all(|edge| {
+            let (a, b) = base_graph.adjacent_nodes(*edge);
+            node_map.contains_key(&a) && node_map.contains_key(&b)
+        }));
+
+        Self {
+            base_graph,
+            node_map,
+            edge_map,
+        }
+    }
     /// Creates a new Graph derived from the base graph, both filtering nodes
     /// and edges and mapping their weights to new values.
     ///

@@ -313,10 +313,10 @@ fn match_double_edges() {
 
     assert_eq!(2, results.len());
     for res in results {
-        assert_eq!(&0, res.node_weight(idx_5));
-        assert_eq!(&3, res.node_weight(idx_4));
+        assert_eq!(&&0, res.node_weight(idx_5));
+        assert_eq!(&&3, res.node_weight(idx_4));
         let middle = *res.node_weight(idx_6);
-        assert!(middle == 1 || middle == 2);
+        assert!(middle == &1 || middle == &2);
     }
 }
 
@@ -366,7 +366,7 @@ fn match_three_star_in_six_star() {
         assert_eq!(3, res.edges().count());
 
         let center_weight = res.node_weight(idx_10);
-        assert_eq!(0, *center_weight);
+        assert_eq!(&0, *center_weight);
 
         assert!(res.is_directed_edge(e1));
         // Check incoming edges.
@@ -417,7 +417,7 @@ fn match_three_star_even_weights() {
     for res in results {
         assert_eq!(3, res.edges().count());
         for edge_ref in res.edges() {
-            assert!(res.edge_weight(edge_ref) % 2 == 0);
+            assert!(*res.edge_weight(edge_ref) % 2 == 0);
         }
     }
 }

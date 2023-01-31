@@ -1,6 +1,6 @@
-use std::hash::Hash;
+use std::{hash::Hash, iter::Filter};
 
-use crate::{graph::Graph, graph_backends::adj_graphs::AdjGraph};
+use crate::{graph::Graph, graph_backends::filter_map::FilterMap};
 
 ///
 /// The Matcher type stands for any function that evaluates, given an element
@@ -107,5 +107,5 @@ pub trait SubgraphAlgorithm<
     /// If `pattern_graph` is an empty graph without nodes (or edges), or if no subgraph of `base_graph`
     /// can be matched to it, then we return an empty vector.
     ///
-    fn get_results(&self) -> &Vec<AdjGraph<NodeWeight, EdgeWeight, NRef, ERef, PatternGraphType>>;
+    fn get_results(&self) -> &Vec<FilterMap<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>, &'a NodeWeight, &'a EdgeWeight, PatternGraphType>>;
 }
