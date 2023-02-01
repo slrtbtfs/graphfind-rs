@@ -8,7 +8,7 @@ use bimap::BiHashMap;
 use crate::{
     graph::Graph,
     graph_backends::{filter_map::FilterMap, graph_helpers},
-    query::{Matcher, PatternGraph, SubgraphAlgorithm},
+    query::{Matcher, PatternGraph, SubgraphAlgorithm, MatchedGraph},
 };
 
 ///
@@ -48,14 +48,7 @@ pub struct VfState<
     /// Vec of found graphs we can return.
     ///
     results: Vec<
-        FilterMap<
-            'a,
-            Box<Matcher<NodeWeight>>,
-            Box<Matcher<EdgeWeight>>,
-            &'a NodeWeight,
-            &'a EdgeWeight,
-            P,
-        >,
+        MatchedGraph<'a, NodeWeight,EdgeWeight,P>
     >,
 
     ///

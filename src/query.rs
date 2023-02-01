@@ -1,4 +1,4 @@
-use std::{hash::Hash};
+use std::hash::Hash;
 
 use crate::{graph::Graph, graph_backends::filter_map::FilterMap};
 
@@ -97,14 +97,7 @@ pub trait SubgraphAlgorithm<
     fn eval(
         pattern_graph: &'a PatternGraphType,
         base_graph: &'a BaseGraphType,
-    ) -> Vec<
-        FilterMap<
-            'a,
-            Box<Matcher<NodeWeight>>,
-            Box<Matcher<EdgeWeight>>,
-            &'a NodeWeight,
-            &'a EdgeWeight,
-            PatternGraphType,
-        >,
-    > ;
+    ) -> Vec<MatchedGraph<'a,NodeWeight, EdgeWeight, PatternGraphType>>;
 }
+
+pub type MatchedGraph<'a, N, E, P> = FilterMap<'a, Box<Matcher<N>>, Box<Matcher<E>>, &'a N, &'a E, P>;
