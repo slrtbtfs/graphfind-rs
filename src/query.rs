@@ -68,7 +68,7 @@ pub trait SubgraphAlgorithm<
     BaseGraphType: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
     ///
-    /// Creates a query to find all subgraphs of `base_graph` that match `pattern_graph`.
+    /// Creates and evaluates a query to find all subgraphs of `base_graph` that match `pattern_graph`.
     ///
     /// # Input:
     /// Two graphs, `base_graph` (any Graph instance), and `pattern_graph` (a PatternGraph instance).
@@ -78,23 +78,6 @@ pub trait SubgraphAlgorithm<
     /// `base_graph` uses N2Ref and E2Ref respectively.
     ///
     /// Both `pattern_graph` and `base_graph` currently have the same lifetime 'a.
-    ///
-    /// # Output:
-    /// An SubgraphAlgorithm instance.
-    ///
-    /// # Panics:
-    /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
-    ///
-    fn init(pattern_graph: &'a PatternGraphType, base_graph: &'a BaseGraphType) -> Self;
-
-    ///
-    /// Executes the actual query after initialization. Uses the mutable algorithm instance,
-    /// for example, to change the search state.
-    ///
-    /// Call this method before calling `get_results`.
-    ///
-    fn run_query(&mut self);
-
     ///
     /// # Output:
     /// A reference to a vector of AdjGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
@@ -107,7 +90,10 @@ pub trait SubgraphAlgorithm<
     /// If `pattern_graph` is an empty graph without nodes (or edges), or if no subgraph of `base_graph`
     /// can be matched to it, then we return an empty vector.
     ///
-    fn get_results(&self) -> &Vec<FilterMap<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>, &'a NodeWeight, &'a EdgeWeight, PatternGraphType>>;
+    ///
+    /// # Panics:
+    /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
+    ///
     fn eval(
         pattern_graph: &'a PatternGraphType,
         base_graph: &'a BaseGraphType,
