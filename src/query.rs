@@ -97,7 +97,8 @@ pub trait SubgraphAlgorithm<
     fn eval(
         pattern_graph: &'a PatternGraphType,
         base_graph: &'a BaseGraphType,
-    ) -> Vec<MatchedGraph<'a,NodeWeight, EdgeWeight, PatternGraphType>>;
+    ) -> Vec<MatchedGraph<'a, NodeWeight, EdgeWeight, PatternGraphType>>;
 }
 
-pub type MatchedGraph<'a, N, E, P> = FilterMap<'a, Box<Matcher<N>>, Box<Matcher<E>>, &'a N, &'a E, P>;
+pub type MatchedGraph<'a, N, E, P> =
+    FilterMap<'a, Box<Matcher<N>>, Box<Matcher<E>>, &'a N, &'a E, P>;
