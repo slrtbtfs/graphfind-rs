@@ -1,14 +1,14 @@
 use std::{
     collections::{HashMap, HashSet},
-    hash::Hash,
+    hash::Hash, mem,
 };
 
 use bimap::BiHashMap;
 
 use crate::{
     graph::Graph,
-    graph_backends::{ graph_helpers, filter_map::FilterMap},
-    query::{PatternGraph, SubgraphAlgorithm, Matcher},
+    graph_backends::{filter_map::FilterMap, graph_helpers},
+    query::{Matcher, PatternGraph, SubgraphAlgorithm},
 };
 
 ///
@@ -47,7 +47,16 @@ pub struct VfState<
     ///
     /// Vec of found graphs we can return.
     ///
-    results: Vec<FilterMap<'a, Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>, &'a NodeWeight, &'a EdgeWeight, P>>,
+    results: Vec<
+        FilterMap<
+            'a,
+            Box<Matcher<NodeWeight>>,
+            Box<Matcher<EdgeWeight>>,
+            &'a NodeWeight,
+            &'a EdgeWeight,
+            P,
+        >,
+    >,
 
     ///
     /// Matching of nodes in `pattern_graph` to suitable nodes in `base_graph`.
@@ -399,8 +408,7 @@ where
                 });
         }
 
-        let result  =
-            FilterMap::new(self.pattern_graph,node_list, edge_list);
+        let result = FilterMap::new(self.pattern_graph, node_list, edge_list);
         self.results.push(result);
     }
 
@@ -494,7 +502,38 @@ where
     ///
     /// Returns a reference to results.
     ///
-    fn get_results(&self) -> &Vec<FilterMap<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>, &'a NodeWeight, &'a EdgeWeight, P>> {
+    fn get_results(
+        &self,
+    ) -> &Vec<
+        FilterMap<
+            Box<Matcher<NodeWeight>>,
+            Box<Matcher<EdgeWeight>>,
+            &'a NodeWeight,
+            &'a EdgeWeight,
+            P,
+        >,
+    > {
         &self.results
+    }
+
+    fn eval(
+        pattern_graph: &'a P,
+        base_graph: &'a B,
+    ) -> Vec<
+        FilterMap<
+            'a,
+            Box<Matcher<NodeWeight>>,
+            Box<Matcher<EdgeWeight>>,
+            &'a NodeWeight,
+            &'a EdgeWeight,
+            P,
+        >,
+    > {
+        let mut vfstate = VfState::init
+        (pattern_graph, base_graph);
+        vfstate.run_query();
+
+        // Move results out of vstate struct before dropping it.
+        mem::replace(&mut vfstate.results, vec![])
     }
 }

@@ -108,4 +108,17 @@ pub trait SubgraphAlgorithm<
     /// can be matched to it, then we return an empty vector.
     ///
     fn get_results(&self) -> &Vec<FilterMap<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>, &'a NodeWeight, &'a EdgeWeight, PatternGraphType>>;
+    fn eval(
+        pattern_graph: &'a PatternGraphType,
+        base_graph: &'a BaseGraphType,
+    ) -> Vec<
+        FilterMap<
+            'a,
+            Box<Matcher<NodeWeight>>,
+            Box<Matcher<EdgeWeight>>,
+            &'a NodeWeight,
+            &'a EdgeWeight,
+            PatternGraphType,
+        >,
+    > ;
 }
