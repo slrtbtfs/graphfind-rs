@@ -1,7 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
-    mem,
 };
 
 use bimap::BiHashMap;

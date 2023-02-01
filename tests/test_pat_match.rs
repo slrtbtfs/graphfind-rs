@@ -112,7 +112,7 @@ fn test_empty_pattern_no_results() {
     assert!(empty_pattern.is_empty_graph());
 
     // Explicitly specify result type.
-    let mut results = VfState::eval(&empty_pattern, &base_graph);
+    let results = VfState::eval(&empty_pattern, &base_graph);
     assert!(results.is_empty());
 }
 
@@ -172,7 +172,7 @@ fn match_movie_nodes_only() {
         pattern_graph.add_node_to_match(Box::new(|mn| matches!(*mn, MovieNode::Person(_))));
 
     let base_graph = node_graph().0;
-    let mut results = VfState::eval(&pattern_graph, &base_graph);
+    let results = VfState::eval(&pattern_graph, &base_graph);
 
     let names: HashSet<_> = results
         .iter()
@@ -209,7 +209,7 @@ fn match_two_node_pairs() {
     pattern_graph.add_node_to_match(Box::new(is_person));
     let base_graph = node_graph().0;
 
-    let mut results = VfState::eval(&pattern_graph, &base_graph);
+    let results = VfState::eval(&pattern_graph, &base_graph);
 
     assert_eq!(6 * 3, results.len());
 }
@@ -227,7 +227,7 @@ fn match_wrong_matches_only() {
         matches!(n, MovieNode::Movie(common::Movie { year: 32, .. }))
     }));
 
-    let mut results = VfState::eval(&two_pattern, &base_graph);
+    let results = VfState::eval(&two_pattern, &base_graph);
     assert_eq!(0, results.len());
 }
 
@@ -255,7 +255,7 @@ fn match_single_edges() {
     let idx_5 = pattern_graph.add_node_to_match(Box::new(|_| true));
     let edge = pattern_graph.add_edge_to_match(idx_4, idx_5, Box::new(|_| true));
 
-    let mut results = VfState::eval(&pattern_graph, &base_graph);
+    let results = VfState::eval(&pattern_graph, &base_graph);
 
     // Assert four results.
     assert_eq!(4, results.len());
@@ -295,7 +295,7 @@ fn match_double_edges() {
     pattern_graph.add_edge_to_match(idx_5, idx_6, Box::new(|_| true));
     pattern_graph.add_edge_to_match(idx_6, idx_4, Box::new(|_| true));
 
-    let mut results = VfState::eval(&pattern_graph, &base_graph);
+    let results = VfState::eval(&pattern_graph, &base_graph);
 
     assert_eq!(2, results.len());
     for res in results {
@@ -342,7 +342,7 @@ fn match_three_star_in_six_star() {
     let e2 = three_star.add_edge_to_match(idx_10, idx_12, Box::new(|_| true));
     let e3 = three_star.add_edge_to_match(idx_10, idx_13, Box::new(|_| true));
 
-    let mut results = VfState::eval(&three_star, &six_star);
+    let results = VfState::eval(&three_star, &six_star);
     assert_eq!(120, results.len());
 
     for res in results {
@@ -393,7 +393,7 @@ fn match_three_star_even_weights() {
     three_star.add_edge_to_match(idx_10, idx_12, Box::new(|x| x % 2 == 0));
     three_star.add_edge_to_match(idx_10, idx_13, Box::new(|x| x % 2 == 0));
 
-    let mut results = VfState::eval(&three_star, &six_star);
+    let results = VfState::eval(&three_star, &six_star);
     assert_eq!(6, results.len());
 
     for res in results {
@@ -437,7 +437,7 @@ fn match_three_star_inverse() {
     three_star.add_edge_to_match(idx_12, idx_10, Box::new(|x| x % 2 == 0));
     three_star.add_edge_to_match(idx_11, idx_10, Box::new(|x| x % 2 == 0));
 
-    let mut results = VfState::eval(&three_star, &six_star);
+    let results = VfState::eval(&three_star, &six_star);
     assert_eq!(6, results.len());
 }
 
@@ -482,7 +482,7 @@ fn test_node_edge_counts_terminate_early() {
     four_clique.add_edge_to_match(idx_13, idx_11, Box::new(|_| true));
     four_clique.add_edge_to_match(idx_13, idx_12, Box::new(|_| true));
 
-    let mut results = VfState::eval(&four_clique, &six_star);
+    let results = VfState::eval(&four_clique, &six_star);
     assert_eq!(0, results.len());
 }
 
@@ -577,7 +577,7 @@ fn cycle_in_knows_match() {
     pattern_graph.add_edge_to_match(p3, p1, Box::new(|m| matches!(m, Knows)));
 
     // Algorithm
-    let mut results = VfState::eval(&pattern_graph, &data_graph);
+    let results = VfState::eval(&pattern_graph, &data_graph);
 
     // Check results
     assert_eq!(3, results.len());
