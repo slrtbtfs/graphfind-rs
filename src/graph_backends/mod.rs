@@ -1,14 +1,12 @@
 ///
-/// Custom implementation for directed adjacency graphs.
+/// Implementation of filter + map graph transformations of node/edge weights.
 ///
-pub mod adj_graphs;
 pub mod filter_map;
-///
-/// Implementation of Graph on petgraph graphs.
-///
-mod petgraph;
-
 ///
 /// Contains auxiliary methods independent on specific Graph implementations.
 ///
 pub mod graph_helpers;
+///
+/// Implementation of Graph on petgraph graphs.
+///
+mod petgraph;
