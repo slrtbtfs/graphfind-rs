@@ -585,7 +585,7 @@ fn test_node_edge_counts_terminate_early() {
 /// Assert 3 matches.
 ///
 #[test]
-fn reflexive_optimization() {
+fn optimization_test() {
     let data_graph = full_graph().0;
 
     // Pattern
@@ -763,6 +763,63 @@ fn reflexive_optimization2() {
         assert!(matches!(res_graph.edge_weight(e3), Knows));
         assert!(res_graph.adjacent_nodes(e4) == (p3, p3));
         assert!(matches!(res_graph.edge_weight(e4), Knows));
+    }
+}
+
+///
+/// Find a sequence of four persons, starting with stefan or yves
+/// in the graph. All persons know themselves.
+///
+#[test]
+fn reflexive_optimization() {
+    let data_graph = full_graph().0;
+
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Five persons
+    let p0 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p1 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p3 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    // Sequence: p0 -> p1 -> ... -> p3
+    let e0 = pattern_graph.add_edge_to_match(p0, p1, Box::new(|e| matches!(e, Knows)));
+    let e1 = pattern_graph.add_edge_to_match(p1, p2, Box::new(|e| matches!(e, Knows)));
+    let e2 = pattern_graph.add_edge_to_match(p2, p3, Box::new(|e| matches!(e, Knows)));
+    // Self References
+    let e3 = pattern_graph.add_edge_to_match(p0, p0, Box::new(|e| matches!(e, Knows)));
+    let e4 = pattern_graph.add_edge_to_match(p3, p3, Box::new(|e| matches!(e, Knows)));
+    let e5 = pattern_graph.add_edge_to_match(p1, p1, Box::new(|e| matches!(e, Knows)));
+    let e6 = pattern_graph.add_edge_to_match(p2, p2, Box::new(|e| matches!(e, Knows)));
+
+    // Query
+    let query_results = VfState::eval(&pattern_graph, &data_graph);
+    assert_eq!(2, query_results.len());
+
+    // Persons are stefan, yves, fabian, benedikt, tobias
+    for res_graph in query_results {
+        assert_eq!(4, res_graph.count_nodes());
+        assert_eq!(7, res_graph.count_edges());
+        // Check asserts
+        assert!(
+            check_for_actor(res_graph.node_weight(p0), "stefan")
+                || check_for_actor(res_graph.node_weight(p0), "yves")
+        );
+        assert!(matches!(res_graph.node_weight(p1), MovieNode::Person(_)));
+        assert!(matches!(res_graph.node_weight(p2), MovieNode::Person(_)));
+        assert!(matches!(res_graph.node_weight(p3), MovieNode::Person(_)));
+
+        // Edges
+        assert!(res_graph.adjacent_nodes(e0) == (p0, p1));
+        assert!(res_graph.adjacent_nodes(e1) == (p1, p2));
+        assert!(res_graph.adjacent_nodes(e2) == (p2, p3));
+        // Find Self Loops
+        assert!(res_graph.adjacent_nodes(e3) == (p0, p0));
+        assert!(matches!(res_graph.edge_weight(e3), Knows));
+        assert!(res_graph.adjacent_nodes(e4) == (p3, p3));
+        assert!(matches!(res_graph.edge_weight(e4), Knows));
+        assert!(res_graph.adjacent_nodes(e5) == (p1, p1));
+        assert!(matches!(res_graph.edge_weight(e5), Knows));
+        assert!(res_graph.adjacent_nodes(e6) == (p2, p2));
+        assert!(matches!(res_graph.edge_weight(e6), Knows));
     }
 }
 
