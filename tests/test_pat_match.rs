@@ -716,6 +716,56 @@ fn sequence_optimization() {
     assert!(res_graph.adjacent_nodes(e3) == (p3, p4));
 }
 
+///
+/// Find a sequence of four persons, starting with stefan or yves
+/// in the graph. The first and last person know themselves.
+///
+#[test]
+fn reflexive_optimization2() {
+    let data_graph = full_graph().0;
+
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Five persons
+    let p0 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p1 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p3 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    // Sequence: p0 -> p1 -> ... -> p3
+    let e0 = pattern_graph.add_edge_to_match(p0, p1, Box::new(|e| matches!(e, Knows)));
+    let e1 = pattern_graph.add_edge_to_match(p1, p2, Box::new(|e| matches!(e, Knows)));
+    let e2 = pattern_graph.add_edge_to_match(p2, p3, Box::new(|e| matches!(e, Knows)));
+    let e3 = pattern_graph.add_edge_to_match(p0, p0, Box::new(|e| matches!(e, Knows)));
+    let e4 = pattern_graph.add_edge_to_match(p3, p3, Box::new(|e| matches!(e, Knows)));
+
+    // Query
+    let query_results = VfState::eval(&pattern_graph, &data_graph);
+    assert_eq!(2, query_results.len());
+
+    // Persons are stefan, yves, fabian, benedikt, tobias
+    for res_graph in query_results {
+        assert_eq!(4, res_graph.count_nodes());
+        assert_eq!(5, res_graph.count_edges());
+        // Check asserts
+        assert!(
+            check_for_actor(res_graph.node_weight(p0), "stefan")
+                || check_for_actor(res_graph.node_weight(p0), "yves")
+        );
+        assert!(matches!(res_graph.node_weight(p1), MovieNode::Person(_)));
+        assert!(matches!(res_graph.node_weight(p2), MovieNode::Person(_)));
+        assert!(matches!(res_graph.node_weight(p3), MovieNode::Person(_)));
+
+        // Edges
+        assert!(res_graph.adjacent_nodes(e0) == (p0, p1));
+        assert!(res_graph.adjacent_nodes(e1) == (p1, p2));
+        assert!(res_graph.adjacent_nodes(e2) == (p2, p3));
+        // Find Self Loops
+        assert!(res_graph.adjacent_nodes(e3) == (p0, p0));
+        assert!(matches!(res_graph.edge_weight(e3), Knows));
+        assert!(res_graph.adjacent_nodes(e4) == (p3, p3));
+        assert!(matches!(res_graph.edge_weight(e4), Knows));
+    }
+}
+
 fn check_for_actor(x: &MovieNode, given_name: &str) -> bool {
     match x {
         MovieNode::Person(y) => {
@@ -858,7 +908,7 @@ fn three_to_two() {
     }
 }
 
-//
+///
 /// Two actors (stefan, yves) all
 /// play in two different movies.
 ///
@@ -895,6 +945,52 @@ fn two_to_two() {
         // and our playsIn relations
         assert_eq!(4, graph.count_edges());
         assert!(graph.edge_weights().all(|e| matches!(e, PlaysIn)));
+    }
+}
+
+///
+/// Stefan plays in the Star Wars Movies.
+///
+#[test]
+fn attributes_with_parameters() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Actors
+    let s = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "stefan")));
+    // Movies
+    let m1 = pattern_graph.add_node_to_match(Box::new(|m| {
+        check_movie(m, "Star Wars Holiday Special", 1978)
+    }));
+    let m2 = pattern_graph.add_node_to_match(Box::new(|m| {
+        check_movie(m, "Star Wars: Rise of the Bechdel Test", 2015)
+    }));
+    // Lots of connections
+    pattern_graph.add_edge_to_match(s, m1, Box::new(|e| matches!(e, PlaysIn)));
+    pattern_graph.add_edge_to_match(s, m2, Box::new(|e| matches!(e, PlaysIn)));
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    // One result
+    assert_eq!(1, results.len());
+
+    // Checks
+    for graph in results {
+        // Find our actors
+        assert_eq!(3, graph.count_nodes());
+        assert!(check_for_actor(graph.node_weight(s), "stefan"));
+        // and our movies
+        assert!(matches!(graph.node_weight(m1), MovieNode::Movie(_)));
+        assert!(matches!(graph.node_weight(m2), MovieNode::Movie(_)));
+        // and our playsIn relations
+        assert_eq!(2, graph.count_edges());
+        assert!(graph.edge_weights().all(|e| matches!(e, PlaysIn)));
+    }
+}
+
+fn check_movie(element: &MovieNode, title1: &str, year1: i32) -> bool {
+    match element {
+        MovieNode::Movie(common::Movie { title, year, .. }) => title.eq(title1) && year == &year1,
+        _ => false,
     }
 }
 
