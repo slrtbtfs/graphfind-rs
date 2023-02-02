@@ -8,7 +8,7 @@ use common::{
     Relation,
     Relation::{Knows, PlaysIn},
 };
-use petgraph::graph::{Graph, NodeIndex};
+use petgraph::graph::{Graph, NodeIndex, EdgeIndex};
 use rustgql::{
     graph::Graph as QueryGraph,
     query::{PatternGraph, SubgraphAlgorithm},
@@ -57,10 +57,12 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     let mut graph: petgraph::Graph<MovieNode, Relation> = Graph::new();
     let mut names: HashMap<&str, NodeIndex> = HashMap::new();
 
-    // Stefan, Yves, Fabian
+    // 5 Actors
     add_person(&mut graph, &mut names, "stefan", Actor);
     add_person(&mut graph, &mut names, "yves", Actor);
     add_person(&mut graph, &mut names, "fabian", Actor);
+    add_person(&mut graph, &mut names, "tobias", Actor);
+    add_person(&mut graph, &mut names, "benedikt", Actor);
 
     // Media
     add_media(&mut graph, &mut names, "Jurassic Park", 10.0, 1993, Movie);
@@ -102,6 +104,28 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
 }
 
 ///
+/// Produces the full graph to use for query tests. See
+/// https://gitlab.informatik.uni-ulm.de/se/graphquery/rustgql/-/issues/36
+/// for the structure.
+/// 
+fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>, HashMap<&'a str, EdgeIndex>) {
+    let (mut graph, nodes) = node_graph();
+    let mut edges = HashMap::new();
+    // PlaysIn Relations
+    connect(&mut graph, &nodes, "stefan", PlaysIn, "Jurassic Park");
+    connect(&mut graph, &nodes, "stefan", PlaysIn, "Star Wars Holiday Special");
+    connect(&mut graph, &nodes, "stefan", PlaysIn, "Star Wars: Rise of the Bechdel Test");
+    connect(&mut graph, &nodes, "yves", PlaysIn, "Jurassic Park");
+    connect(&mut graph, &nodes, "yves", PlaysIn, "Star Wars Holiday Special");
+    connect(&mut graph, &nodes, "yves", PlaysIn, "Star Wars: Rise of the Bechdel Test");
+    connect(&mut graph, &nodes, "fabian", PlaysIn, "Jurassic Park");
+    connect(&mut graph, &nodes, "fabian", PlaysIn, "Star Wars Holiday Special");
+    connect(&mut graph, &nodes, "fabian", PlaysIn, "Star Wars: Rise of the Bechdel Test");
+
+    (graph, nodes, edges)
+}
+
+///
 /// Given an empty pattern graph and a non-empty base graph,
 /// assert that we do get an empty result.
 ///
@@ -118,7 +142,7 @@ fn test_empty_pattern_no_results() {
 
 ///
 /// Given a pattern with a single node to match, assert we get
-/// nine graphs with one node each, and that we find the previous indices.
+/// eleven graphs with one node each, and that we find the previous indices.
 ///
 #[test]
 fn test_single_node_any_pattern() {
@@ -129,8 +153,8 @@ fn test_single_node_any_pattern() {
     // Explicitly specify result type.
     let results = VfState::eval(&single_pattern, &base_graph);
 
-    // Assert nine results.
-    assert_eq!(9, results.len());
+    // Assert eleven results.
+    assert_eq!(11, results.len());
     let mut found_indices = HashSet::new();
 
     // Check that node indices are from the pattern graph.
@@ -166,7 +190,7 @@ fn match_pattern_too_large() {
 /// and that we get their different names.
 ///
 #[test]
-fn match_movie_nodes_only() {
+fn match_person_nodes_only() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     let person_index =
         pattern_graph.add_node_to_match(Box::new(|mn| matches!(*mn, MovieNode::Person(_))));
@@ -187,7 +211,9 @@ fn match_movie_nodes_only() {
     assert!(names.contains("stefan"));
     assert!(names.contains("yves"));
     assert!(names.contains("fabian"));
-    assert_eq!(3, names.len());
+    assert!(names.contains("tobias"));
+    assert!(names.contains("benedikt"));
+    assert_eq!(5, names.len());
 }
 
 fn is_movie(node: &MovieNode) -> bool {
@@ -200,7 +226,7 @@ fn is_person(node: &MovieNode) -> bool {
 
 ///
 /// Given a pattern that matches a movie node and person node, assert that
-/// we find all 6*3 = 18 different node pairs.
+/// we find all 6*5 = 30 different node pairs.
 ///
 #[test]
 fn match_two_node_pairs() {
@@ -211,7 +237,7 @@ fn match_two_node_pairs() {
 
     let results = VfState::eval(&pattern_graph, &base_graph);
 
-    assert_eq!(6 * 3, results.len());
+    assert_eq!(6 * 5, results.len());
 }
 
 ///
@@ -606,80 +632,3 @@ fn cycle_in_knows_match() {
         }
     }
 }
-
-/*
-///
-/// Match relations between Actors and Movies.
-///
-fn test_create_match() {
-    let (mut graph, nodes) = node_graph();
-
-    // Three relations
-    connect(&mut graph, &nodes, "stefan", PlaysIn, "Jurassic Park");
-    connect(
-        &mut graph,
-        &nodes,
-        "yves",
-        PlaysIn,
-        "Attack of the Killer Macros",
-    );
-    connect(
-        &mut graph,
-        &nodes,
-        "fabian",
-        PlaysIn,
-        "Star Wars Holiday Special",
-    );
-}
-
-///
-/// Assert that a graph is empty when there is no actor
-/// that plays in a movie.
-///
-fn test_create_negative() {
-    // Take Graph without relations
-    let (graph, _) = node_graph();
-
-    //
-    // let graphs: Vec<_> =
-    // match!(graph, MovieNode::Person(..) -> PlaysIn -> MovieNode::Movie(..))
-    // .collect();
-    // assert_eq!(graphs.len(), 0);
-    //
-}
-
-///
-/// Match every Actor who plays in at least two movies,
-/// and only give us the Actor-Movie relations.
-///
-fn test_require_delete_two_movies() {}
-
-///
-/// Match a given subgraph with:
-/// 1. Three different actors
-/// 2. Three different movies
-/// 3. Two actors play in all three movies.
-///
-/// Assume we get 6
-///
-fn test_three_to_two_match() {}
-
-///
-/// Match a given subgraph with:
-/// 1. Three different actors
-/// 2. Three different movies
-/// 3. Each actor plays in all three movies.
-///
-/// Assume we get 6 = 3! matches.
-#[test]
-fn test_three_to_three_match() {
-
-}
-
-///
-/// Find all persons who play in at least three movies,
-/// and one other person plays in one of these movies as well.
-/// However, do not give us the latter person.
-///
-fn test_all_stereotypes() {}
-*/
