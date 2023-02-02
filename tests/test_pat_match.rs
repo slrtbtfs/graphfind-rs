@@ -15,6 +15,8 @@ use rustgql::{
     query_algorithms::vf_algorithms::VfState,
 };
 
+use crate::common::ActorType;
+
 fn add_person<'a>(
     g: &mut Graph<MovieNode, Relation>,
     names: &mut HashMap<&'a str, NodeIndex>,
@@ -584,6 +586,53 @@ fn test_node_edge_counts_terminate_early() {
 /// Match a given graph on:
 /// 1. Three different actors.
 /// 2. Three different movies.
+/// 3. Next to other relations, we have three persons who know each other,
+/// and also themselves.
+///
+/// Assert 3 matches.
+///
+#[test]
+fn optimization_test() {
+    let data_graph = full_graph().0;
+
+    // Pattern
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let p1 = pattern_graph.add_node_to_match(Box::new(|m| matches!(m, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match(Box::new(|m| matches!(m, MovieNode::Person(_))));
+    let p3 = pattern_graph.add_node_to_match(Box::new(|m| matches!(m, MovieNode::Person(_))));
+    pattern_graph.add_edge_to_match(p1, p2, Box::new(|m| matches!(m, Knows)));
+    pattern_graph.add_edge_to_match(p2, p3, Box::new(|m| matches!(m, Knows)));
+    pattern_graph.add_edge_to_match(p3, p1, Box::new(|m| matches!(m, Knows)));
+    pattern_graph.add_edge_to_match(p1, p1, Box::new(|m| matches!(m, Knows)));
+    pattern_graph.add_edge_to_match(p2, p2, Box::new(|m| matches!(m, Knows)));
+    pattern_graph.add_edge_to_match(p3, p3, Box::new(|m| matches!(m, Knows)));
+
+    // Algorithm
+    let results = VfState::eval(&pattern_graph, &data_graph);
+
+    // Check results
+    assert_eq!(3, results.len());
+    // Each graph with 3 nodes + edges
+    for matched_graph in results {
+        assert_eq!(3, matched_graph.count_nodes());
+        assert_eq!(6, matched_graph.count_edges());
+
+        // Check Node types.
+        for p in matched_graph.node_weights() {
+            assert!(matches!(p, MovieNode::Person(_)));
+        }
+
+        // Check edge types.
+        for edge in matched_graph.edge_weights() {
+            assert!(matches!(edge, Knows));
+        }
+    }
+}
+
+///
+/// Match a given graph on:
+/// 1. Three different actors.
+/// 2. Three different movies.
 /// 3. Next to other relations, we have three persons who know each other.
 ///
 /// Assert 3 matches.
@@ -630,4 +679,41 @@ fn cycle_in_knows_match() {
             assert!(matches!(edge, Knows));
         }
     }
+}
+
+///
+/// Find a sequence of five persons, starting with stefan,
+/// in the graph.
+///
+#[test]
+fn sequence_optimization() {
+    let data_graph = full_graph().0;
+
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Five persons
+    let p0 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p1 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p3 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    let p4 = pattern_graph.add_node_to_match(Box::new(|p| matches!(p, MovieNode::Person(_))));
+    // Sequence: p0 -> p1 -> ... -> p4
+    pattern_graph.add_edge_to_match(p0, p1, Box::new(|e| matches!(e, Knows)));
+    pattern_graph.add_edge_to_match(p1, p2, Box::new(|e| matches!(e, Knows)));
+    pattern_graph.add_edge_to_match(p2, p3, Box::new(|e| matches!(e, Knows)));
+    pattern_graph.add_edge_to_match(p3, p4, Box::new(|e| matches!(e, Knows)));
+
+    // Query
+    let query_results = VfState::eval(&pattern_graph, &data_graph);
+    assert_eq!(1, query_results.len());
+
+    // Persons are stefan, yves, fabian, benedikt, tobias
+    let res_graph = &query_results[0];
+    assert_eq!(5, res_graph.count_nodes());
+    assert_eq!(4, res_graph.count_edges());
+    // Check asserts
+    assert!(matches!(res_graph.node_weight(p0), MovieNode::Person(_)));
+    assert!(matches!(res_graph.node_weight(p1), MovieNode::Person(_)));
+    assert!(matches!(res_graph.node_weight(p2), MovieNode::Person(_)));
+    assert!(matches!(res_graph.node_weight(p3), MovieNode::Person(_)));
+    assert!(matches!(res_graph.node_weight(p4), MovieNode::Person(_)));
 }
