@@ -197,12 +197,8 @@ where
 
     ///
     /// Test that assigning n to m leaves the predecessor relations intact:
-    ///
-    /// 1. We may map any matched predecessor n' of n in `pattern_graph` to
+    /// We may map any matched predecessor n' of n in `pattern_graph` to
     /// another matched node m' that precedes m in `base_graph`.
-    ///
-    /// 2. We may map any matched predecessor `m` of m in `base_graph` to
-    /// another matched node n' that precedes n in `pattern_graph`.
     ///
     fn check_predecessor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Pred(G_1, n)
@@ -220,21 +216,13 @@ where
             self.core
                 .get_by_left(n2)
                 .is_some_and(|m2| m_preds.contains(m2))
-        }) && m_preds.iter().all(|m2| {
-            self.core
-                .get_by_right(m2)
-                .is_some_and(|n2| n_preds.contains(n2))
         })
     }
 
     ///
     /// Test that assigning n to m leaves the successor relations intact:
-    ///
-    /// 1. We may map any matched successor n' of n in `pattern_graph` to
+    /// We may map any matched successor n' of n in `pattern_graph` to
     /// another matched node m' that succeeds m in `base_graph`.
-    ///
-    /// 2. We may map any matched successor `m` of m in `base_graph` to
-    /// another matched node n' that succeeds n in `pattern_graph`.
     ///
     fn check_successor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Succ(G_1, n)
@@ -251,10 +239,6 @@ where
             self.core
                 .get_by_left(n2)
                 .is_some_and(|m2| m_succs.contains(m2))
-        }) && m_succs.iter().all(|m2| {
-            self.core
-                .get_by_right(m2)
-                .is_some_and(|n2| n_succs.contains(n2))
         })
     }
 
