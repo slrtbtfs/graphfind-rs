@@ -189,9 +189,9 @@ where
     /// 2. `check_edge_semantics`
     ///
     fn is_valid_matching(&self, n: NRef, m: N2Ref) -> bool {
-        self.check_predecessor_relation(n, m)
+        self.check_node_semantics(n, m)
+            && self.check_predecessor_relation(n, m)
             && self.check_successor_relation(n, m)
-            && self.check_node_semantics(n, m)
             && self.check_edge_semantics(n, m)
     }
 

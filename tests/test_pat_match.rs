@@ -6,9 +6,9 @@ use common::{
     MovieNode, MoviePerson,
     MovieType::{Movie, Tv, Video},
     Relation,
-    Relation::{Knows, PlaysIn},
+    Relation::{Knows, PlaysIn, Successor},
 };
-use petgraph::graph::{Graph, NodeIndex, EdgeIndex};
+use petgraph::graph::{EdgeIndex, Graph, NodeIndex};
 use rustgql::{
     graph::Graph as QueryGraph,
     query::{PatternGraph, SubgraphAlgorithm},
@@ -107,20 +107,88 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
 /// Produces the full graph to use for query tests. See
 /// https://gitlab.informatik.uni-ulm.de/se/graphquery/rustgql/-/issues/36
 /// for the structure.
-/// 
-fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>, HashMap<&'a str, EdgeIndex>) {
+///
+fn full_graph<'a>() -> (
+    Graph<MovieNode, Relation>,
+    HashMap<&'a str, NodeIndex>,
+    HashMap<&'a str, EdgeIndex>,
+) {
     let (mut graph, nodes) = node_graph();
     let mut edges = HashMap::new();
     // PlaysIn Relations
     connect(&mut graph, &nodes, "stefan", PlaysIn, "Jurassic Park");
-    connect(&mut graph, &nodes, "stefan", PlaysIn, "Star Wars Holiday Special");
-    connect(&mut graph, &nodes, "stefan", PlaysIn, "Star Wars: Rise of the Bechdel Test");
+    connect(
+        &mut graph,
+        &nodes,
+        "stefan",
+        PlaysIn,
+        "Star Wars Holiday Special",
+    );
+    connect(
+        &mut graph,
+        &nodes,
+        "stefan",
+        PlaysIn,
+        "Star Wars: Rise of the Bechdel Test",
+    );
     connect(&mut graph, &nodes, "yves", PlaysIn, "Jurassic Park");
-    connect(&mut graph, &nodes, "yves", PlaysIn, "Star Wars Holiday Special");
-    connect(&mut graph, &nodes, "yves", PlaysIn, "Star Wars: Rise of the Bechdel Test");
+    connect(
+        &mut graph,
+        &nodes,
+        "yves",
+        PlaysIn,
+        "Star Wars Holiday Special",
+    );
+    connect(
+        &mut graph,
+        &nodes,
+        "yves",
+        PlaysIn,
+        "Star Wars: Rise of the Bechdel Test",
+    );
     connect(&mut graph, &nodes, "fabian", PlaysIn, "Jurassic Park");
-    connect(&mut graph, &nodes, "fabian", PlaysIn, "Star Wars Holiday Special");
-    connect(&mut graph, &nodes, "fabian", PlaysIn, "Star Wars: Rise of the Bechdel Test");
+    connect(
+        &mut graph,
+        &nodes,
+        "fabian",
+        PlaysIn,
+        "Star Wars Holiday Special",
+    );
+    connect(
+        &mut graph,
+        &nodes,
+        "fabian",
+        PlaysIn,
+        "Star Wars: Rise of the Bechdel Test",
+    );
+
+    // Knows Relations
+    connect(&mut graph, &nodes, "stefan", Knows, "stefan");
+    connect(&mut graph, &nodes, "stefan", Knows, "yves");
+    connect(&mut graph, &nodes, "yves", Knows, "yves");
+    connect(&mut graph, &nodes, "yves", Knows, "fabian");
+    connect(&mut graph, &nodes, "fabian", Knows, "fabian");
+    connect(&mut graph, &nodes, "fabian", Knows, "benedikt");
+    connect(&mut graph, &nodes, "benedikt", Knows, "benedikt");
+    connect(&mut graph, &nodes, "benedikt", Knows, "tobias");
+    connect(&mut graph, &nodes, "tobias", Knows, "tobias");
+    connect(&mut graph, &nodes, "tobias", Knows, "fabian");
+
+    // Successor Relations
+    connect(
+        &mut graph,
+        &nodes,
+        "Jurassic Park",
+        Successor,
+        "Star Wars Holiday Special",
+    );
+    connect(
+        &mut graph,
+        &nodes,
+        "Star Wars Holiday Special",
+        Successor,
+        "Star Wars: Rise of the Bechdel Test",
+    );
 
     (graph, nodes, edges)
 }
@@ -522,76 +590,7 @@ fn test_node_edge_counts_terminate_early() {
 ///
 #[test]
 fn cycle_in_knows_match() {
-    let (mut data_graph, node_names) = node_graph();
-    connect(
-        &mut data_graph,
-        &node_names,
-        "stefan",
-        Knows,
-        "Star Wars Holiday Special",
-    );
-    connect(
-        &mut data_graph,
-        &node_names,
-        "yves",
-        PlaysIn,
-        "Star Wars Holiday Special",
-    );
-    connect(
-        &mut data_graph,
-        &node_names,
-        "fabian",
-        PlaysIn,
-        "Star Wars Holiday Special",
-    );
-
-    connect(
-        &mut data_graph,
-        &node_names,
-        "stefan",
-        PlaysIn,
-        "Attack of the Killer Macros",
-    );
-    connect(
-        &mut data_graph,
-        &node_names,
-        "yves",
-        PlaysIn,
-        "Attack of the Killer Macros",
-    );
-    connect(
-        &mut data_graph,
-        &node_names,
-        "fabian",
-        PlaysIn,
-        "Attack of the Killer Macros",
-    );
-
-    connect(
-        &mut data_graph,
-        &node_names,
-        "stefan",
-        PlaysIn,
-        "Star Wars: Rise of the Bechdel Test",
-    );
-    connect(
-        &mut data_graph,
-        &node_names,
-        "yves",
-        PlaysIn,
-        "Star Wars: Rise of the Bechdel Test",
-    );
-    connect(
-        &mut data_graph,
-        &node_names,
-        "fabian",
-        PlaysIn,
-        "Star Wars: Rise of the Bechdel Test",
-    );
-
-    connect(&mut data_graph, &node_names, "stefan", Knows, "yves");
-    connect(&mut data_graph, &node_names, "yves", Knows, "fabian");
-    connect(&mut data_graph, &node_names, "fabian", Knows, "stefan");
+    let data_graph = full_graph().0;
 
     // Pattern
     let mut pattern_graph = petgraph::graph::Graph::new();
