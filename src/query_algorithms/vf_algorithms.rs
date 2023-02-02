@@ -7,8 +7,8 @@ use bimap::BiHashMap;
 
 use crate::{
     graph::Graph,
-    graph_backends::{ graph_helpers, filter_map::FilterMap},
-    query::{PatternGraph, SubgraphAlgorithm, Matcher},
+    graph_backends::{filter_map::FilterMap, graph_helpers},
+    query::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
 };
 
 ///
@@ -47,7 +47,7 @@ pub struct VfState<
     ///
     /// Vec of found graphs we can return.
     ///
-    results: Vec<FilterMap<'a, Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>, &'a NodeWeight, &'a EdgeWeight, P>>,
+    results: Vec<MatchedGraph<'a, NodeWeight, EdgeWeight, P>>,
 
     ///
     /// Matching of nodes in `pattern_graph` to suitable nodes in `base_graph`.
@@ -399,8 +399,7 @@ where
                 });
         }
 
-        let result  =
-            FilterMap::new(self.pattern_graph,node_list, edge_list);
+        let result = FilterMap::new(self.pattern_graph, node_list, edge_list);
         self.results.push(result);
     }
 
@@ -436,19 +435,6 @@ where
             }
         }
     }
-}
-
-impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
-    SubgraphAlgorithm<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
-    for VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
-where
-    NRef: Copy + Hash + Ord,
-    N2Ref: Copy + Hash + Eq,
-    ERef: Copy + Hash + Eq,
-    E2Ref: Copy,
-    P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
-    B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
-{
     ///
     /// Creates a new VfState for the given pattern graph and base graph.
     /// Initialized for each base_graph instance, to use its specific indices.
@@ -490,11 +476,36 @@ where
         }
         self.find_subgraphs(0);
     }
+}
 
-    ///
-    /// Returns a reference to results.
-    ///
-    fn get_results(&self) -> &Vec<FilterMap<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>, &'a NodeWeight, &'a EdgeWeight, P>> {
-        &self.results
+impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
+    SubgraphAlgorithm<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
+    for VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
+where
+    NRef: Copy + Hash + Ord,
+    N2Ref: Copy + Hash + Eq,
+    ERef: Copy + Hash + Eq,
+    E2Ref: Copy,
+    P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
+    B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
+{
+    fn eval(
+        pattern_graph: &'a P,
+        base_graph: &'a B,
+    ) -> Vec<
+        FilterMap<
+            'a,
+            Box<Matcher<NodeWeight>>,
+            Box<Matcher<EdgeWeight>>,
+            &'a NodeWeight,
+            &'a EdgeWeight,
+            P,
+        >,
+    > {
+        let mut vfstate = VfState::init(pattern_graph, base_graph);
+        vfstate.run_query();
+
+        // Move results out of vstate struct before dropping it.
+        std::mem::take(&mut vfstate.results)
     }
 }
