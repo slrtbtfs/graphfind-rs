@@ -3,12 +3,39 @@ use std::hash::Hash;
 use crate::{graph::Graph, graph_backends::filter_map::FilterMap};
 
 ///
-/// The Matcher type stands for any function that evaluates, given an element
+/// The Condition type stands for any function that evaluates, given an element
 /// in the base graph with the type Weight, if the pattern graph accepts this element.
 ///
 /// As an example, we may define a function that tests if a node matches a Rust pattern.
 ///
-pub type Matcher<Weight> = dyn Fn(&Weight) -> bool;
+pub type Condition<Weight> = dyn Fn(&Weight) -> bool;
+
+///
+/// Defines a struct that holds all relevant node/edge matching information.
+///
+pub struct Matcher<Weight> {
+    ///
+    /// The matching function.
+    ///
+    condition: Box<Condition<Weight>>,
+    ///
+    /// A flag that tells us if we should include the matched element in the result,
+    /// or not.
+    ///
+    ignore: bool,
+}
+
+///
+/// Holds the constructor for Matcher.
+///
+impl<Weight> Matcher<Weight> {
+    ///
+    /// Creates a new Matcher struct.
+    ///
+    fn new(condition: Box<Condition<Weight>>, ignore: bool) -> Self {
+        Self { condition, ignore }
+    }
+}
 
 ///
 /// Defines a pattern graph, i.e. a specification for subgraphs that we want to find. This trait
@@ -21,30 +48,72 @@ pub type Matcher<Weight> = dyn Fn(&Weight) -> bool;
 /// PatternGraph is generic with regards to node and edge weights of the graphs it should match on.
 ///
 pub trait PatternGraph<NodeWeight, EdgeWeight>:
-    Graph<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>>
+    Graph<Box<Condition<NodeWeight>>, Box<Condition<EdgeWeight>>>
 {
     ///
-    /// Adds the node identified by `name` to the pattern. Any node that matches `name`
-    /// must fulfill the `matcher` function.
+    /// Adds a new node to the pattern.
+    ///
+    /// ## Input:
+    /// 1. condition, a `Box` that holds a function to test if a node in a base graph matches
+    /// what we want in the pattern graph.
+    /// 2. ignore, a flag that tells us if the matched node should appear in the result.
+    ///
+    /// ## Output:
+    /// A NodeRef.
+    ///
+    fn add_node_to_match_full(
+        &mut self,
+        condition: Box<Condition<NodeWeight>>,
+        ignore: bool,
+    ) -> Self::NodeRef;
+
+    ///
+    /// Adds a new node to the pattern. Matched nodes appear in the result.
     ///
     /// Returns a NodeRef to the added node.
     ///
-    fn add_node_to_match(&mut self, matcher: Box<Matcher<NodeWeight>>) -> Self::NodeRef;
+    fn add_node_to_match(&mut self, matcher: Box<Condition<NodeWeight>>) -> Self::NodeRef {
+        self.add_node_to_match_full(matcher, false)
+    }
 
     ///
-    /// Adds the named `edge` to the pattern.
+    /// Adds a new, directed edge to the pattern.
     ///
-    /// `edge` is directed, and runs from the node referenced by `from` to the node referenced by `to`.
-    /// The matched edge must then fulfill the `matcher` function.
+    /// ## Input:
+    /// 1. from, the source node of the new edge.
+    /// 2. to, the destination node.
+    /// 3. condition, a `Box` that holds a function to test if an edge in a base graph matches
+    /// that we want in the pattern graph.
+    /// 4. ignore, a flag that tells us if the matched edge should appear in the result.
     ///
-    /// Returns an `EdgeRef` to the newly added edge.
+    /// ## Output:
+    /// An EdgeRef.
+    ///
+    /// ## Panics:
+    /// `ignore` is set to false, and either one of the nodes under `from` and `to` is ignored.
+    /// We could then refer to a node in the result that we do not want to refer to.
+    ///
+    fn add_edge_to_match_full(
+        &mut self,
+        from: Self::NodeRef,
+        to: Self::NodeRef,
+        condition: Box<Condition<EdgeWeight>>,
+        ignore: bool,
+    ) -> Self::EdgeRef;
+
+    ///
+    /// Adds a new edge to the pattern. This edge will appear in the result graphs.
+    ///
+    /// Returns an `EdgeRef` to the edge.
     ///
     fn add_edge_to_match(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
-        matcher: Box<Matcher<EdgeWeight>>,
-    ) -> Self::EdgeRef;
+        condition: Box<Condition<EdgeWeight>>,
+    ) -> Self::EdgeRef {
+        self.add_edge_to_match_full(from, to, condition, false)
+    }
 }
 
 ///
@@ -80,8 +149,8 @@ pub trait SubgraphAlgorithm<
     /// Both `pattern_graph` and `base_graph` currently have the same lifetime 'a.
     ///
     /// # Output:
-    /// A reference to a vector of AdjGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
-    /// and its references N1Ref/E1RefType. We want to access matched elements of
+    /// A reference to a vector of MatchedGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
+    /// and its references NRef/ERef. We want to access matched elements of
     /// the base graph by references we set in the pattern graph.
     ///
     /// An implementation find_subgraphs should guarantee set semantics, so that every found
@@ -89,7 +158,6 @@ pub trait SubgraphAlgorithm<
     ///
     /// If `pattern_graph` is an empty graph without nodes (or edges), or if no subgraph of `base_graph`
     /// can be matched to it, then we return an empty vector.
-    ///
     ///
     /// # Panics:
     /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
@@ -100,5 +168,8 @@ pub trait SubgraphAlgorithm<
     ) -> Vec<MatchedGraph<'a, NodeWeight, EdgeWeight, PatternGraphType>>;
 }
 
+///
+/// Type definition of MatchedGraph.
+///
 pub type MatchedGraph<'a, N, E, P> =
-    FilterMap<'a, Box<Matcher<N>>, Box<Matcher<E>>, &'a N, &'a E, P>;
+    FilterMap<'a, Box<Condition<N>>, Box<Condition<E>>, &'a N, &'a E, P>;
