@@ -1,4 +1,4 @@
-use crate::query::{PatternGraph, Matcher};
+use crate::query::{Condition, Matcher, PatternGraph};
 
 ///
 /// Defines an PatternGraph over an directed petgraph. Guarantees that
@@ -32,6 +32,13 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     ) -> Self::EdgeRef
     where
         C: Fn(&EdgeWeight) -> bool + 'static {
+        // Test logical conditions
+        if !ignore
+            && (!self.node_weight(from).unwrap().should_appear()
+                || !self.node_weight(to).unwrap().should_appear())
+        {
+            panic!("Must not refer to an edge that refers to nodes that cannot be referred!")
+        }
         self.add_edge(from, to, Matcher::new(Box::new(condition), ignore))
     }
 }

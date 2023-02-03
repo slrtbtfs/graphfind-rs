@@ -534,14 +534,7 @@ where
         pattern_graph: &'a P,
         base_graph: &'a B,
     ) -> Vec<
-        FilterMap<
-            'a,
-            Matcher<NodeWeight>,
-            Matcher<EdgeWeight>,
-            &'a NodeWeight,
-            &'a EdgeWeight,
-            P,
-        >,
+        FilterMap<'a, Matcher<NodeWeight>, Matcher<EdgeWeight>, &'a NodeWeight, &'a EdgeWeight, P>,
     > {
         let mut vfstate = VfState::init(pattern_graph, base_graph);
         vfstate.run_query();
