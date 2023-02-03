@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     collections::{HashMap, HashSet},
     hash::Hash,
 };
@@ -45,7 +46,7 @@ pub struct VfState<
     ///
     base_graph: &'a B,
     ///
-    /// Vec of found graphs we can return.
+    /// Vec of found graphs we may return.
     ///
     results: Vec<MatchedGraph<'a, NodeWeight, EdgeWeight, P>>,
 
@@ -58,7 +59,7 @@ pub struct VfState<
     ///
     core: BiHashMap<NRef, N2Ref>,
     ///
-    /// out_1 is a matching between outgoing node references from `pattern_graph`,
+    /// `out_1` is a matching between outgoing node references from `pattern_graph`,
     /// and the search depth at which they were inserted. We use this mapping
     /// to find possible successor nodes to insert into `core_1`.
     ///
@@ -77,6 +78,15 @@ pub struct VfState<
     /// Matching for incoming nodes of `pattern_graph`. Analog Definition to `in_1`.
     ///
     in_2: HashMap<N2Ref, usize>,
+
+    ///
+    /// Contains an ordered vector of nodes in `pattern_graph` that we need to match.
+    ///
+    nodes_to_match: Vec<NRef>,
+    ///
+    /// Counter for how many nodes we actually need to return.
+    ///
+    nodes_to_take: usize,
 }
 
 ///
@@ -103,10 +113,11 @@ where
     ///
     fn find_unmatched_unconnected_nodes(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
         let n = self
-            .pattern_graph
-            .nodes()
+            .nodes_to_match
+            .iter()
             .filter(|n| !self.core.contains_left(n))
-            .min();
+            .min()
+            .copied();
 
         let base_nodes: Vec<_> = self
             .base_graph
@@ -131,10 +142,11 @@ where
         base_map: &HashMap<N2Ref, usize>,
     ) -> (Option<NRef>, Vec<N2Ref>) {
         // From pattern_map, i.e. neighbors of matched nodes in pattern_graph,
-        //only select those where no entry is in core.
-        let n = pattern_map
-            .keys()
-            .filter(|n_out| !self.core.contains_left(n_out))
+        // only select those where no entry is in core.
+        let n = self
+            .nodes_to_match
+            .iter()
+            .filter(|n_out| pattern_map.contains_key(n_out) && !self.core.contains_left(n_out))
             .min()
             .cloned();
 
@@ -437,6 +449,26 @@ where
         pattern_graph: &'a P,
         base_graph: &'a B,
     ) -> VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B> {
+        // Sort the pattern nodes so that nodes that we ignore only come
+        // after those we do not want to ignore. Maintain the previous sort.
+        let mut sorted_nodes: Vec<NRef> = pattern_graph.nodes().collect();
+        sorted_nodes.sort_unstable_by(|n1, n2| {
+            let n1_appears = pattern_graph.node_weight(*n1).should_appear();
+            let n2_appears = pattern_graph.node_weight(*n2).should_appear();
+            if n1_appears && !n2_appears {
+                Ordering::Less
+            } else if !n1_appears && n2_appears {
+                Ordering::Greater
+            } else {
+                n1.cmp(n2)
+            }
+        });
+        // Count the number of nodes to not ignore.
+        let nodes_to_take = sorted_nodes
+            .iter()
+            .filter(|n| pattern_graph.node_weight(**n).should_appear())
+            .count();
+
         VfState {
             pattern_graph,
             base_graph,
@@ -446,6 +478,8 @@ where
             out_2: HashMap::new(),
             in_1: HashMap::new(),
             in_2: HashMap::new(),
+            nodes_to_match: sorted_nodes,
+            nodes_to_take,
         }
     }
 
