@@ -111,20 +111,25 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     /// ## Output:
     /// A NodeRef.
     ///
-    fn add_node_to_match_full(
+    fn add_node_to_match_full<C>(
         &mut self,
-        condition: Box<Condition<NodeWeight>>,
+        condition: C,
         ignore: bool,
-    ) -> Self::NodeRef;
+    ) -> Self::NodeRef
+    where
+        C: Fn(&NodeWeight) -> bool + 'static;
 
     ///
     /// Adds a new node to the pattern. Matched nodes appear in the result.
     ///
     /// Returns a NodeRef to the added node.
-    ///
-    fn add_node<M>(&mut self, matcher: M) -> Self::NodeRef
+    ///    
+    fn add_node_to_match<C>(&mut self, condition: C) -> Self::NodeRef 
     where
-        M: Fn(&NodeWeight) -> bool + 'static;
+        C: Fn(&NodeWeight) -> bool + 'static
+    {
+        self.add_node_to_match_full(condition, false)
+    }
 
     ///
     /// Adds a new, directed edge to the pattern.
@@ -132,7 +137,7 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     /// ## Input:
     /// 1. from, the source node of the new edge.
     /// 2. to, the destination node.
-    /// 3. condition, a `Box` that holds a function to test if an edge in a base graph matches
+    /// 3. condition, a function to test if an edge in a base graph matches
     /// that we want in the pattern graph.
     /// 4. ignore, a flag that tells us if the matched edge should appear in the result.
     ///
@@ -143,22 +148,34 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     /// `ignore` is set to false, and either one of the nodes under `from` and `to` is ignored.
     /// We could then refer to a node in the result that we do not want to refer to.
     ///
-    fn add_edge_to_match_full(
+    fn add_edge_to_match_full<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
-        condition: Box<Condition<EdgeWeight>>,
+        condition: C,
         ignore: bool,
-    ) -> Self::EdgeRef;
+    ) -> Self::EdgeRef
+    where
+        C: Fn(&EdgeWeight) -> bool + 'static;
 
     ///
     /// Adds a new edge to the pattern. This edge will appear in the result graphs.
+    /// Adds a new edge to the pattern. This edge will appear in the result graphs.
     ///
     /// Returns an `EdgeRef` to the edge.
+    /// Returns an `EdgeRef` to the edge.
     ///
-    fn add_edge<M>(&mut self, from: Self::NodeRef, to: Self::NodeRef, matcher: M) -> Self::EdgeRef
+    fn add_edge_to_match<C>(
+        &mut self,
+        from: Self::NodeRef,
+        to: Self::NodeRef,
+        condition: C)
+    -> Self::EdgeRef 
     where
-        M: Fn(&EdgeWeight) -> bool + 'static;
+        C: Fn(&EdgeWeight) -> bool + 'static
+    {
+        self.add_edge_to_match_full(from, to, condition, false)
+    }
 }
 
 ///
@@ -216,4 +233,5 @@ pub trait SubgraphAlgorithm<
 ///
 /// Type definition of MatchedGraph.
 ///
-pub type MatchedGraph<'a, N, E, P> = FilterMap<'a, Matcher<N>, Matcher<E>, &'a N, &'a E, P>;
+pub type MatchedGraph<'a, N, E, P> =
+    FilterMap<'a, Matcher<N>, Matcher<E>, &'a N, &'a E, P>;
