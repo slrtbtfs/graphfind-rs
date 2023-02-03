@@ -436,6 +436,8 @@ where
                     // do we need to go back?
                     let next_node = self.find_subgraphs(depth + 1);
                     if next_node == self.nodes_to_take && next_node <= depth {
+                        // Restore State early
+                        self.unassign(&n, &m, depth);
                         return next_node;
                     }
                 }

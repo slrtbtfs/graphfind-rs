@@ -1075,3 +1075,99 @@ fn create() {
         assert!(matches!(graph.edge_weight(pi), PlaysIn));
     }
 }
+
+///
+/// Negative Test: Do not allow an edge to be visible when it refers to a
+/// node that is ignored (source)
+///
+#[test]
+#[should_panic]
+fn ignore_wrong_edge_source() {
+    let mut pattern = petgraph::graph::Graph::new();
+    let from = pattern.add_node_to_match_full(Box::new(|_: &i32| true), true);
+    let to = pattern.add_node_to_match(Box::new(|_: &i32| true));
+    pattern.add_edge_to_match(from, to, Box::new(|_: &i32| false));
+}
+
+///
+/// Negative Test: Do not allow an edge to be visible when it refers to a
+/// node that is ignored (dest)
+///
+#[test]
+#[should_panic]
+fn ignore_wrong_edge_dest() {
+    let mut pattern = petgraph::graph::Graph::new();
+    let from = pattern.add_node_to_match(Box::new(|_: &i32| true));
+    let to = pattern.add_node_to_match_full(Box::new(|_: &i32| true), true);
+    pattern.add_edge_to_match(from, to, Box::new(|_: &i32| false));
+}
+
+///
+/// stefan plays in two movies. But we only want to have one movie in our result!
+///
+#[test]
+fn require_delete() {
+    let mut pattern = petgraph::graph::Graph::new();
+    let p = pattern.add_node_to_match(Box::new(|x| check_for_actor(x, "stefan")));
+    let m1 = pattern.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let m2 = pattern.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+    pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
+    let e = pattern.add_edge_to_match(p, m1, Box::new(|x| matches!(x, PlaysIn)));
+
+    // Run query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern, &base_graph);
+    assert_eq!(3, results.len());
+
+    // Check results
+    for res in results {
+        assert_eq!(2, res.count_nodes());
+        assert_eq!(1, res.count_edges());
+
+        assert!(check_for_actor(res.node_weight(p), "stefan"));
+        assert!(matches!(res.node_weight(m1), MovieNode::Movie(_)));
+        assert!(matches!(res.edge_weight(e), PlaysIn));
+    }
+}
+
+///
+/// Do not allow access for ignored nodes. These do not appear in the result.
+///
+#[test]
+#[should_panic]
+fn check_ignored_nodes() {
+    let mut pattern = petgraph::graph::Graph::new();
+    let p = pattern.add_node_to_match(Box::new(|x| check_for_actor(x, "stefan")));
+    let m2 = pattern.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+    pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
+
+    // Run query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern, &base_graph);
+    let graph = &results[0];
+
+    // Force panic
+    assert!(!graph.nodes().any(|x| x == m2));
+    graph.node_weight(m2);
+}
+
+///
+/// Do not allow access for ignored edges. These do not appear in the result.
+///
+#[test]
+#[should_panic]
+fn check_ignored_edges() {
+    let mut pattern = petgraph::graph::Graph::new();
+    let p = pattern.add_node_to_match(Box::new(|x| check_for_actor(x, "stefan")));
+    let m2 = pattern.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+    let e = pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
+
+    // Run query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern, &base_graph);
+    let graph = &results[0];
+
+    // Force panic
+    assert!(!graph.edges().any(|x| x == e));
+    graph.edge_weight(e);
+}
