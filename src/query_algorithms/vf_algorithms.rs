@@ -347,16 +347,18 @@ where
     }
 
     ///
-    /// Produces a new AdjGraph for the current graph state.
+    /// Produces a new ResultGraph for the current graph state.
     ///
     /// Copy the keys from pattern_graph along with the weights referred
-    /// to by the depths from base_graph.
+    /// to by the depths from base_graph. Note that any elements in the result graph that
+    /// are marked as ignored, will not appear in the result.
     ///
     fn produce_graph(&mut self) {
         // Get node references and weights.
         let node_list = self
             .core
             .iter()
+            .filter(|(n, _)| self.pattern_graph.node_weight(**n).should_appear())
             .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
             .collect();
 
@@ -369,6 +371,7 @@ where
             let n_succs = self
                 .pattern_graph
                 .outgoing_edges(*n)
+                .filter(|e| self.pattern_graph.edge_weight(*e).should_appear())
                 .map(|e| (self.pattern_graph.adjacent_nodes(e).1, e));
             let m_succs: HashMap<_, _> = self
                 .base_graph
