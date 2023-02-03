@@ -405,10 +405,14 @@ where
     ///
     /// Looks up subgraphs and puts them into results.
     ///
-    fn find_subgraphs(&mut self, depth: usize) {
+    /// Returns the node number to go back to. Thus prevents
+    /// duplicate matches when we have elements that we ignore.
+    ///
+    fn find_subgraphs(&mut self, depth: usize) -> usize {
         // Full match may now be added.
         if depth == self.pattern_graph.count_nodes() {
             self.produce_graph();
+            self.nodes_to_take
         } else {
             // Find unmatched nodes that are outgoing neighbors of matched nodes.
             let (mut pat_node, mut base_nodes) =
@@ -428,10 +432,16 @@ where
                 self.assign(n, m, depth);
                 // Test compatibility.
                 if self.is_valid_matching(n, m) {
-                    self.find_subgraphs(depth + 1);
+                    // What node do we need to assign next /
+                    // do we need to go back?
+                    let next_node = self.find_subgraphs(depth + 1);
+                    if next_node == self.nodes_to_take && next_node <= depth {
+                        return next_node;
+                    }
                 }
                 self.unassign(&n, &m, depth);
             }
+            depth
         }
     }
     ///
@@ -495,7 +505,7 @@ where
         {
             return;
         }
-        self.find_subgraphs(0);
+        let _ = self.find_subgraphs(0);
     }
 }
 
