@@ -1,11 +1,11 @@
-use crate::query::{Condition, PatternGraph};
+use crate::query::{Condition, Matcher, PatternGraph};
 
 ///
 /// Defines an PatternGraph over an directed petgraph. Guarantees that
 /// our graph should always be directed.
 ///
 impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
-    for petgraph::graph::Graph<Box<Condition<NodeWeight>>, Box<Condition<EdgeWeight>>>
+    for petgraph::graph::Graph<Matcher<NodeWeight>, Matcher<EdgeWeight>>
 {
     ///
     /// Adds the node to match, and returns the reference.
@@ -15,7 +15,7 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
         condition: Box<Condition<NodeWeight>>,
         ignore: bool,
     ) -> Self::NodeRef {
-        self.add_node(condition)
+        self.add_node(Matcher::new(condition, ignore))
     }
 
     ///
@@ -25,9 +25,16 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
-        matcher: Box<Condition<EdgeWeight>>,
+        condition: Box<Condition<EdgeWeight>>,
         ignore: bool,
     ) -> Self::EdgeRef {
-        self.add_edge(from, to, matcher)
+        // Test logical conditions
+        if !ignore
+            && (!self.node_weight(from).unwrap().should_appear()
+                || !self.node_weight(to).unwrap().should_appear())
+        {
+            panic!("Must not refer to an edge that refers to nodes that cannot be referred!")
+        }
+        self.add_edge(from, to, Matcher::new(condition, ignore))
     }
 }

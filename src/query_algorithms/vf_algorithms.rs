@@ -8,7 +8,7 @@ use bimap::BiHashMap;
 use crate::{
     graph::Graph,
     graph_backends::{filter_map::FilterMap, graph_helpers},
-    query::{Condition, MatchedGraph, PatternGraph, SubgraphAlgorithm},
+    query::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
 };
 
 ///
@@ -250,7 +250,7 @@ where
     fn check_node_semantics(&self, n: NRef, m: N2Ref) -> bool {
         let matcher = self.pattern_graph.node_weight(n);
         let refed_node = self.base_graph.node_weight(m);
-        matcher(refed_node)
+        matcher.may_match(refed_node)
     }
 
     ///
@@ -301,7 +301,7 @@ where
         n_m_pred_edges.chain(n_m_succ_edges).all(|(e, e2)| {
             let matcher = self.pattern_graph.edge_weight(e);
             let matched = self.base_graph.edge_weight(e2);
-            matcher(matched)
+            matcher.may_match(matched)
         })
     }
 
@@ -477,14 +477,7 @@ where
         pattern_graph: &'a P,
         base_graph: &'a B,
     ) -> Vec<
-        FilterMap<
-            'a,
-            Box<Condition<NodeWeight>>,
-            Box<Condition<EdgeWeight>>,
-            &'a NodeWeight,
-            &'a EdgeWeight,
-            P,
-        >,
+        FilterMap<'a, Matcher<NodeWeight>, Matcher<EdgeWeight>, &'a NodeWeight, &'a EdgeWeight, P>,
     > {
         let mut vfstate = VfState::init(pattern_graph, base_graph);
         vfstate.run_query();

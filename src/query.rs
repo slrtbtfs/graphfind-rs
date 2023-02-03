@@ -19,8 +19,7 @@ pub struct Matcher<Weight> {
     ///
     condition: Box<Condition<Weight>>,
     ///
-    /// A flag that tells us if we should include the matched element in the result,
-    /// or not.
+    /// A flag that tells us if we should include the matched element in the result, or not.
     ///
     ignore: bool,
 }
@@ -32,8 +31,22 @@ impl<Weight> Matcher<Weight> {
     ///
     /// Creates a new Matcher struct.
     ///
-    fn new(condition: Box<Condition<Weight>>, ignore: bool) -> Self {
+    pub fn new(condition: Box<Condition<Weight>>, ignore: bool) -> Self {
         Self { condition, ignore }
+    }
+
+    ///
+    /// Returns true if and only if the matched node should appear in the result.
+    ///
+    pub fn should_appear(&self) -> bool {
+        !self.ignore
+    }
+
+    ///
+    /// Tests if the given element may be matched.
+    ///
+    pub fn may_match(&self, element: &Weight) -> bool {
+        (self.condition)(element)
     }
 }
 
@@ -48,7 +61,7 @@ impl<Weight> Matcher<Weight> {
 /// PatternGraph is generic with regards to node and edge weights of the graphs it should match on.
 ///
 pub trait PatternGraph<NodeWeight, EdgeWeight>:
-    Graph<Box<Condition<NodeWeight>>, Box<Condition<EdgeWeight>>>
+    Graph<Matcher<NodeWeight>, Matcher<EdgeWeight>>
 {
     ///
     /// Adds a new node to the pattern.
@@ -171,5 +184,4 @@ pub trait SubgraphAlgorithm<
 ///
 /// Type definition of MatchedGraph.
 ///
-pub type MatchedGraph<'a, N, E, P> =
-    FilterMap<'a, Box<Condition<N>>, Box<Condition<E>>, &'a N, &'a E, P>;
+pub type MatchedGraph<'a, N, E, P> = FilterMap<'a, Matcher<N>, Matcher<E>, &'a N, &'a E, P>;
