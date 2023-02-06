@@ -152,10 +152,14 @@ where
     /// The result, (N, N2), is the smallest unmatched neighbor node reference in `pattern_graph`,
     /// if it exists, and the unmatched neighbor node references in `base_graph`.
     ///
+    /// When `N` is an ignored node and we are still looking for nodes to add to the result,
+    /// `N` will be None so that the algorithm enforces set semantics for the results.
+    ///
     fn find_unmatched_neighbors(
         &'a self,
         pattern_map: &HashMap<NRef, usize>,
         base_map: &HashMap<N2Ref, usize>,
+        find_ignored: bool,
     ) -> (Option<NRef>, Vec<N2Ref>) {
         // From pattern_map, i.e. neighbors of matched nodes in pattern_graph,
         // only select those where no entry is in core.
@@ -163,6 +167,7 @@ where
             .keys()
             .filter(|n_out| !self.core.contains_left(n_out))
             .min_by(|n1, n2| self.give_node_order(**n1, **n2))
+            .filter(|n| find_ignored || self.pattern_graph.node_weight(**n).should_appear())
             .cloned();
 
         let n2: Vec<_> = base_map
@@ -429,12 +434,14 @@ where
             self.produce_graph();
             self.nodes_to_take
         } else {
+            let find_ignored = depth >= self.nodes_to_take;
             // Find unmatched nodes that are outgoing neighbors of matched nodes.
             let (mut pat_node, mut base_nodes) =
-                self.find_unmatched_neighbors(&self.out_1, &self.out_2);
+                self.find_unmatched_neighbors(&self.out_1, &self.out_2, find_ignored);
             // Failing that, try incoming neighbors.
             if pat_node.is_none() || base_nodes.is_empty() {
-                (pat_node, base_nodes) = self.find_unmatched_neighbors(&self.in_1, &self.in_2);
+                (pat_node, base_nodes) =
+                    self.find_unmatched_neighbors(&self.in_1, &self.in_2, find_ignored);
             }
             // Failing that also, try unmatched and unconnected nodes.
             if pat_node.is_none() || base_nodes.is_empty() {
