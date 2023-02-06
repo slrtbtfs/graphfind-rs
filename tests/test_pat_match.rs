@@ -1171,3 +1171,38 @@ fn check_ignored_edges() {
     assert!(!graph.edges().any(|x| x == e));
     graph.edge_weight(e);
 }
+
+///
+/// Two actors (stefan, yves) play in at least two movies.
+///
+#[test]
+fn require() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Actors
+    let s = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "stefan")));
+    let y = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    // Movies
+    let m1 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m2 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    // Four Connections we all ignore
+    pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(y, m1, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(y, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    // Single Result
+    assert_eq!(1, results.len());
+
+    // Checks
+    for graph in results {
+        // Find our actors
+        assert_eq!(2, graph.count_nodes());
+        assert!(check_for_actor(graph.node_weight(s), "stefan"));
+        assert!(check_for_actor(graph.node_weight(y), "yves"));
+    }
+}

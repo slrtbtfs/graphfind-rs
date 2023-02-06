@@ -80,10 +80,6 @@ pub struct VfState<
     in_2: HashMap<N2Ref, usize>,
 
     ///
-    /// Contains an ordered vector of nodes in `pattern_graph` that we need to match.
-    ///
-    nodes_to_match: Vec<NRef>,
-    ///
     /// Counter for how many nodes we actually need to return.
     ///
     nodes_to_take: usize,
@@ -104,6 +100,27 @@ where
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
     ///
+    /// Gives an ordering of two nodes, n1 and n2, from `pattern_graph`.
+    /// This ordering ensures that:
+    ///
+    /// 1. We process nodes in the result before ignored ones.
+    /// 2. We follow the given ordering of the node indices.
+    ///
+    /// We use this method to ensure set semantics.
+    ///
+    fn give_node_order(&self, n1: NRef, n2: NRef) -> Ordering {
+        let n1_appears = self.pattern_graph.node_weight(n1).should_appear();
+        let n2_appears = self.pattern_graph.node_weight(n2).should_appear();
+        if n1_appears && !n2_appears {
+            Ordering::Less
+        } else if !n1_appears && n2_appears {
+            Ordering::Greater
+        } else {
+            n1.cmp(&n2)
+        }
+    }
+
+    ///
     /// Returns a tuple (N, N2) of node references.
     /// N contains the smallest unmatched node within the pattern graph,
     /// and N2 unmatched nodes within the base graph.
@@ -113,11 +130,10 @@ where
     ///
     fn find_unmatched_unconnected_nodes(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
         let n = self
-            .nodes_to_match
-            .iter()
+            .pattern_graph
+            .nodes()
             .filter(|n| !self.core.contains_left(n))
-            .min()
-            .copied();
+            .min_by(|n1, n2| self.give_node_order(*n1, *n2));
 
         let base_nodes: Vec<_> = self
             .base_graph
@@ -143,11 +159,10 @@ where
     ) -> (Option<NRef>, Vec<N2Ref>) {
         // From pattern_map, i.e. neighbors of matched nodes in pattern_graph,
         // only select those where no entry is in core.
-        let n = self
-            .nodes_to_match
-            .iter()
-            .filter(|n_out| pattern_map.contains_key(n_out) && !self.core.contains_left(n_out))
-            .min()
+        let n = pattern_map
+            .keys()
+            .filter(|n_out| !self.core.contains_left(n_out))
+            .min_by(|n1, n2| self.give_node_order(**n1, **n2))
             .cloned();
 
         let n2: Vec<_> = base_map
@@ -446,6 +461,7 @@ where
             depth
         }
     }
+
     ///
     /// Creates a new VfState for the given pattern graph and base graph.
     /// Initialized for each base_graph instance, to use its specific indices.
@@ -461,24 +477,10 @@ where
         pattern_graph: &'a P,
         base_graph: &'a B,
     ) -> VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B> {
-        // Sort the pattern nodes so that nodes that we ignore only come
-        // after those we do not want to ignore. Maintain the previous sort.
-        let mut sorted_nodes: Vec<NRef> = pattern_graph.nodes().collect();
-        sorted_nodes.sort_unstable_by(|n1, n2| {
-            let n1_appears = pattern_graph.node_weight(*n1).should_appear();
-            let n2_appears = pattern_graph.node_weight(*n2).should_appear();
-            if n1_appears && !n2_appears {
-                Ordering::Less
-            } else if !n1_appears && n2_appears {
-                Ordering::Greater
-            } else {
-                n1.cmp(n2)
-            }
-        });
         // Count the number of nodes to not ignore.
-        let nodes_to_take = sorted_nodes
-            .iter()
-            .filter(|n| pattern_graph.node_weight(**n).should_appear())
+        let nodes_to_take = pattern_graph
+            .nodes()
+            .filter(|n| pattern_graph.node_weight(*n).should_appear())
             .count();
 
         VfState {
@@ -490,7 +492,6 @@ where
             out_2: HashMap::new(),
             in_1: HashMap::new(),
             in_2: HashMap::new(),
-            nodes_to_match: sorted_nodes,
             nodes_to_take,
         }
     }
