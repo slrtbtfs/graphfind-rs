@@ -65,7 +65,7 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     add_person(&mut graph, &mut names, "benedikt", Actor);
 
     // Media
-    add_media(&mut graph, &mut names, "Jurassic Park", 10.0, 1993, Movie);
+    add_media(&mut graph, &mut names, "Jurassic Park", 10.0, 1990, Movie);
     add_media(
         &mut graph,
         &mut names,
@@ -156,6 +156,7 @@ fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
         PlaysIn,
         "Star Wars: Rise of the Bechdel Test",
     );
+    connect(&mut graph, &nodes, "fabian", PlaysIn, "Sunday Uke Group");
 
     // Knows Relations
     connect(&mut graph, &nodes, "stefan", Knows, "stefan");
@@ -181,6 +182,13 @@ fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
         &mut graph,
         &nodes,
         "Star Wars Holiday Special",
+        Successor,
+        "Star Wars: Rise of the Bechdel Test",
+    );
+    connect(
+        &mut graph,
+        &nodes,
+        "Sunday Uke Group",
         Successor,
         "Star Wars: Rise of the Bechdel Test",
     );
@@ -855,7 +863,7 @@ fn delete_test() {
 
     // Get & check results
     let results = VfState::eval(&pattern_graph, &base_graph);
-    assert_eq!(6, results.len());
+    assert_eq!(24, results.len());
 
     // Check nodes & edges
     for g in results {
@@ -1052,7 +1060,7 @@ fn check_movie(element: &MovieNode, title1: &str, year1: i32) -> bool {
 }
 
 ///
-/// Find all Actor-Movie pairs.
+/// Find all Actor-Movie pairs (10 overall)
 ///
 #[test]
 fn create() {
@@ -1063,7 +1071,7 @@ fn create() {
 
     let base_graph = full_graph().0;
     let query_results = VfState::eval(&pattern_graph, &base_graph);
-    assert_eq!(9, query_results.len());
+    assert_eq!(10, query_results.len());
 
     // Check structure
     for graph in query_results {
@@ -1205,4 +1213,184 @@ fn require() {
         assert!(check_for_actor(graph.node_weight(s), "stefan"));
         assert!(check_for_actor(graph.node_weight(y), "yves"));
     }
+}
+
+///
+/// Find two persons and movies, so that both persons play in the second movie,
+/// and one movie is the successor of another.
+///
+#[test]
+fn all_stereotypes() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Nodes
+    let p1 = pattern_graph.add_node_to_match(Box::new(|x| check_for_actor(x, "fabian")));
+    let p2 =
+        pattern_graph.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Person(_))), true);
+    let m1 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let m2 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    // Edges
+    let pm1 = pattern_graph.add_edge_to_match(p1, m1, Box::new(|x| matches!(x, PlaysIn)));
+    let pm2 = pattern_graph.add_edge_to_match(p1, m2, Box::new(|x| matches!(x, PlaysIn)));
+    pattern_graph.add_edge_to_match_full(p2, m2, Box::new(|x| matches!(x, PlaysIn)), true);
+    let su = pattern_graph.add_edge_to_match(m1, m2, Box::new(|x| matches!(x, Successor)));
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    assert_eq!(3, results.len());
+
+    // Tests
+    for res in results {
+        assert_eq!(3, res.count_edges());
+        assert_eq!(3, res.count_nodes());
+
+        assert!(check_for_actor(res.node_weight(p1), "fabian"));
+        assert!(matches!(res.node_weight(m1), MovieNode::Movie(_)));
+        assert!(matches!(res.node_weight(m2), MovieNode::Movie(_)));
+
+        assert!(matches!(res.edge_weight(pm1), PlaysIn));
+        assert!(matches!(res.edge_weight(pm2), PlaysIn));
+        assert!(matches!(res.edge_weight(su), Successor));
+    }
+}
+
+///
+/// Two actors (stefan, yves) all
+/// play in two different movies (we ignore the movies).
+///
+#[test]
+fn bk_two_to_two() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Actors
+    let s = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "stefan")));
+    let y = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    // Movies
+    let m1 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m2 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    // Connections
+    pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(y, m1, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(y, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    // One result
+    assert_eq!(1, results.len());
+
+    // Checks
+    for graph in results {
+        // Find our actors
+        assert_eq!(2, graph.count_nodes());
+        assert!(check_for_actor(graph.node_weight(s), "stefan"));
+        assert!(check_for_actor(graph.node_weight(y), "yves"));
+        // No edges
+        assert_eq!(0, graph.edges().collect::<Vec<_>>().len())
+    }
+}
+
+///
+/// Two actors (stefan, yves) all
+/// play in three different movies (we ignore the movies).
+///
+#[test]
+fn bk_two_to_three() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Actors
+    let s = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "stefan")));
+    let y = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    // Movies
+    let m1 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m2 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m3 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    // Connections
+    pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(s, m3, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(y, m1, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(y, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(y, m3, Box::new(|e| matches!(e, PlaysIn)), true);
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    // One result
+    assert_eq!(1, results.len());
+
+    // Checks
+    for graph in results {
+        // Find our actors
+        assert_eq!(2, graph.count_nodes());
+        assert!(check_for_actor(graph.node_weight(s), "stefan"));
+        assert!(check_for_actor(graph.node_weight(y), "yves"));
+        // No edges
+        assert_eq!(0, graph.edges().collect::<Vec<_>>().len())
+    }
+}
+
+///
+/// Assert that yves knows stefan and plays in Jurassic Park.
+/// Does not hold in this graph; thus return empty result!
+///
+#[test]
+fn create_with_attributes() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let s = pattern_graph.add_node_to_match_full(Box::new(|x| check_for_actor(x, "stefan")), true);
+    let y = pattern_graph.add_node_to_match(Box::new(|x| check_for_actor(x, "yves")));
+    let j = pattern_graph
+        .add_node_to_match_full(Box::new(|x| check_movie(x, "Jurassic Park", 1990)), true);
+    pattern_graph.add_edge_to_match_full(y, s, Box::new(|x| matches!(x, Knows)), true);
+    pattern_graph.add_edge_to_match_full(y, j, Box::new(|x| matches!(x, Knows)), true);
+
+    // Run query
+    let base_graph = full_graph().0;
+    assert_eq!(0, VfState::eval(&pattern_graph, &base_graph).len());
+}
+
+///
+/// Find an actor that plays in a movie, and in its two successors,
+/// as well as another movie.
+///
+/// This will be fabian, and "Jurassic Park" the fourth movie.
+///
+#[test]
+fn req_test() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let f = pattern_graph.add_node_to_match(Box::new(|x| check_for_actor(x, "fabian")));
+    let j = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    // Other movies
+    let m1 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m2 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m3 =
+        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+
+    // Relations
+    let pi = pattern_graph.add_edge_to_match(f, j, Box::new(|e| matches!(e, PlaysIn)));
+    pattern_graph.add_edge_to_match_full(f, m1, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(f, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(f, m3, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(m1, m2, Box::new(|x| matches!(x, Successor)), true);
+    pattern_graph.add_edge_to_match_full(m3, m2, Box::new(|x| matches!(x, Successor)), true);
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    assert_eq!(1, results.len());
+
+    // Check movie
+    let (_, movie) = results[0].adjacent_nodes(pi);
+    assert_eq!(movie, j);
+    assert!(check_movie(
+        results[0].node_weight(movie),
+        "Jurassic Park",
+        1990
+    ));
 }
