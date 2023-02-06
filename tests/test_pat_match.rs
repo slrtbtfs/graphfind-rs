@@ -411,31 +411,22 @@ fn match_double_edges() {
 #[test]
 fn match_three_star_in_six_star() {
     let mut six_star = petgraph::graph::Graph::new();
-    let idx_0 = six_star.add_node(0);
-    let idx_1 = six_star.add_node(1);
-    let idx_2 = six_star.add_node(2);
-    let idx_3 = six_star.add_node(3);
-    let idx_4 = six_star.add_node(4);
-    let idx_5 = six_star.add_node(5);
-    let idx_6 = six_star.add_node(6);
+    let center = six_star.add_node(0);
 
-    six_star.add_edge(idx_0, idx_1, 1);
-    six_star.add_edge(idx_0, idx_2, 2);
-    six_star.add_edge(idx_0, idx_3, 3);
-    six_star.add_edge(idx_0, idx_4, 4);
-    six_star.add_edge(idx_0, idx_5, 5);
-    six_star.add_edge(idx_0, idx_6, 6);
+    for i in 1..=6 {
+        let leaf = six_star.add_node(i);
+        six_star.add_edge(center, leaf, i);
+    }
 
+    let mut e = vec![];
+    let mut v = vec![];
     let mut three_star = petgraph::graph::Graph::new();
-    let idx_13 = three_star.add_node_to_match(matcher!());
-    let idx_12 = three_star.add_node_to_match(matcher!());
-    let idx_11 = three_star.add_node_to_match(matcher!());
-    let idx_10 = three_star.add_node_to_match(matcher!());
-
-    // e1: single connection of n3 via n0.
-    let e1 = three_star.add_edge_to_match(idx_10, idx_11, matcher!());
-    let e2 = three_star.add_edge_to_match(idx_10, idx_12, matcher!());
-    let e3 = three_star.add_edge_to_match(idx_10, idx_13, matcher!());
+    let center = three_star.add_node_to_match(matcher!());
+    for _ in 1..=3 {
+        let leaf = three_star.add_node_to_match(matcher!());
+        v.push(leaf);
+        e.push(three_star.add_edge_to_match(center, leaf, matcher!()));
+    }
 
     let results = VfState::eval(&three_star, &six_star);
     assert_eq!(120, results.len());
@@ -444,14 +435,14 @@ fn match_three_star_in_six_star() {
         assert_eq!(4, res.nodes().count());
         assert_eq!(3, res.edges().count());
 
-        let center_weight = res.node_weight(idx_10);
+        let center_weight = res.node_weight(center);
         assert_eq!(&0, *center_weight);
 
-        assert!(res.is_directed_edge(e1));
-        // Check incoming edges.
-        assert_eq!(e1, res.incoming_edges(idx_11).next().unwrap());
-        assert_eq!(e2, res.incoming_edges(idx_12).next().unwrap());
-        assert_eq!(e3, res.incoming_edges(idx_13).next().unwrap());
+        // Check incoming edges.i
+        for i in 0..3 {
+            assert!(res.is_directed_edge(e[i]));
+            assert_eq!(e[i], res.incoming_edges(v[i]).next().unwrap());
+        }
     }
 }
 
@@ -462,31 +453,19 @@ fn match_three_star_in_six_star() {
 #[test]
 fn match_three_star_even_weights() {
     let mut six_star = petgraph::graph::Graph::new();
-    let idx_0 = six_star.add_node(0);
-    let idx_1 = six_star.add_node(1);
-    let idx_2 = six_star.add_node(2);
-    let idx_3 = six_star.add_node(3);
-    let idx_4 = six_star.add_node(4);
-    let idx_5 = six_star.add_node(5);
-    let idx_6 = six_star.add_node(6);
+    let center = six_star.add_node(0);
 
-    six_star.add_edge(idx_0, idx_1, 1);
-    six_star.add_edge(idx_0, idx_2, 2);
-    six_star.add_edge(idx_0, idx_3, 3);
-    six_star.add_edge(idx_0, idx_4, 4);
-    six_star.add_edge(idx_0, idx_5, 5);
-    six_star.add_edge(idx_0, idx_6, 6);
+    for i in 1..=6 {
+        let leaf = six_star.add_node(i);
+        six_star.add_edge(center, leaf, i);
+    }
 
     let mut three_star = petgraph::graph::Graph::new();
-    let idx_13 = three_star.add_node_to_match(matcher!());
-    let idx_12 = three_star.add_node_to_match(matcher!());
-    let idx_11 = three_star.add_node_to_match(matcher!());
-    let idx_10 = three_star.add_node_to_match(matcher!());
-
-    // e1: single connection of n3 via n0.
-    three_star.add_edge_to_match(idx_10, idx_11, |x| x % 2 == 0);
-    three_star.add_edge_to_match(idx_10, idx_12, |x| x % 2 == 0);
-    three_star.add_edge_to_match(idx_10, idx_13, |x| x % 2 == 0);
+    let center = three_star.add_node_to_match(matcher!());
+    for _ in 1..=3 {
+        let leaf = three_star.add_node_to_match(matcher!());
+        three_star.add_edge_to_match(center, leaf, matcher!(i if i%2 == 0));
+    }
 
     let results = VfState::eval(&three_star, &six_star);
     assert_eq!(6, results.len());
@@ -506,31 +485,19 @@ fn match_three_star_even_weights() {
 #[test]
 fn match_three_star_inverse() {
     let mut six_star = petgraph::graph::Graph::new();
-    let idx_0 = six_star.add_node(0);
-    let idx_1 = six_star.add_node(1);
-    let idx_2 = six_star.add_node(2);
-    let idx_3 = six_star.add_node(3);
-    let idx_4 = six_star.add_node(4);
-    let idx_5 = six_star.add_node(5);
-    let idx_6 = six_star.add_node(6);
+    let center = six_star.add_node(0);
 
-    six_star.add_edge(idx_2, idx_0, 2);
-    six_star.add_edge(idx_1, idx_0, 1);
-    six_star.add_edge(idx_3, idx_0, 3);
-    six_star.add_edge(idx_4, idx_0, 4);
-    six_star.add_edge(idx_5, idx_0, 5);
-    six_star.add_edge(idx_6, idx_0, 6);
+    for i in 1..=6 {
+        let leaf = six_star.add_node(i);
+        six_star.add_edge(leaf, center, i);
+    }
 
     let mut three_star = petgraph::graph::Graph::new();
-    let idx_11 = three_star.add_node_to_match(matcher!());
-    let idx_13 = three_star.add_node_to_match(matcher!());
-    let idx_10 = three_star.add_node_to_match(matcher!());
-    let idx_12 = three_star.add_node_to_match(matcher!());
-
-    // e1: single connection of n3 via n0.
-    three_star.add_edge_to_match(idx_13, idx_10, |x| x % 2 == 0);
-    three_star.add_edge_to_match(idx_12, idx_10, |x| x % 2 == 0);
-    three_star.add_edge_to_match(idx_11, idx_10, |x| x % 2 == 0);
+    let center = three_star.add_node_to_match(matcher!());
+    for _ in 1..=3 {
+        let leaf = three_star.add_node_to_match(matcher!());
+        three_star.add_edge_to_match(leaf, center, matcher!(i if i%2 == 0));
+    }
 
     let results = VfState::eval(&three_star, &six_star);
     assert_eq!(6, results.len());
@@ -543,21 +510,12 @@ fn match_three_star_inverse() {
 #[test]
 fn test_node_edge_counts_terminate_early() {
     let mut six_star = petgraph::graph::Graph::new();
-    let idx_0 = six_star.add_node(0);
-    let idx_1 = six_star.add_node(1);
-    let idx_2 = six_star.add_node(2);
-    let idx_3 = six_star.add_node(3);
-    let idx_4 = six_star.add_node(4);
-    let idx_5 = six_star.add_node(5);
-    let idx_6 = six_star.add_node(6);
+    let center = six_star.add_node(0);
 
-    six_star.add_edge(idx_2, idx_0, 2);
-    six_star.add_edge(idx_1, idx_0, 1);
-    six_star.add_edge(idx_3, idx_0, 3);
-    six_star.add_edge(idx_4, idx_0, 4);
-    six_star.add_edge(idx_5, idx_0, 5);
-    six_star.add_edge(idx_6, idx_0, 6);
-
+    for i in 1..=6 {
+        let leaf = six_star.add_node(i);
+        six_star.add_edge(center, leaf, i);
+    }
     let mut four_clique = petgraph::graph::Graph::new();
     let idx_11 = four_clique.add_node_to_match(matcher!());
     let idx_13 = four_clique.add_node_to_match(matcher!());
