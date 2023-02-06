@@ -162,6 +162,7 @@ fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     connect(&mut graph, &nodes, "stefan", Knows, "stefan");
     connect(&mut graph, &nodes, "stefan", Knows, "yves");
     connect(&mut graph, &nodes, "yves", Knows, "yves");
+    connect(&mut graph, &nodes, "yves", Knows, "stefan");
     connect(&mut graph, &nodes, "yves", Knows, "fabian");
     connect(&mut graph, &nodes, "fabian", Knows, "fabian");
     connect(&mut graph, &nodes, "fabian", Knows, "benedikt");
@@ -1393,4 +1394,61 @@ fn req_test() {
         "Jurassic Park",
         1990
     ));
+}
+
+///
+/// Find a person that knows another person, that themselves plays in a movie.
+/// Ignore the PlaysIn relation in the result.
+///
+#[test]
+fn seq_create() {
+    // Two persons, one movie
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    let p1 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let m = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+
+    // Two relations
+    pattern_graph.add_edge_to_match(p1, p2, Box::new(|x| matches!(x, Knows)));
+    pattern_graph.add_edge_to_match_full(p2, m, Box::new(|x| matches!(x, PlaysIn)), true);
+
+    // Query yields seven results
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    assert_eq!(14, results.len());
+
+    // PlaysIn does not appear in the result
+    for res in results {
+        assert_eq!(1, res.count_edges());
+        assert_eq!(0, res.adjacent_edges(m).count());
+    }
+}
+
+///
+/// Find a person that knows to other persons.
+/// These persons play in different movies, but we ignore those.
+///
+#[test]
+fn all_stereotypes_2() {
+    let mut pattern_graph = petgraph::graph::Graph::new();
+    // Three persons
+    let p1 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let p3 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    // Two movies
+    let m1 =
+        pattern_graph.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+    let m2 =
+        pattern_graph.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+
+    // Four relations
+    pattern_graph.add_edge_to_match(p1, p2, Box::new(|x| matches!(x, Knows)));
+    pattern_graph.add_edge_to_match(p1, p3, Box::new(|x| matches!(x, Knows)));
+    pattern_graph.add_edge_to_match_full(p2, m1, Box::new(|x| matches!(x, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(p3, m2, Box::new(|x| matches!(x, PlaysIn)), true);
+
+    // Query with two results
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    assert_eq!(2, results.len())
 }
