@@ -51,6 +51,38 @@ impl<Weight> Matcher<Weight> {
 }
 
 ///
+/// Creates a `Matcher` function from a given pattern
+///
+/// The syntax is similar to the `std::matches` macro.
+/// Calling matcher with no arguments will match anything.
+///
+/// # Examples
+/// ```
+/// #[macro_use]
+/// extern crate rustgql;
+/// use rustgql::query::*;
+///
+/// # // This line is hidden in the docs but required to pass the docstest, see https://users.rust-lang.org/t/how-to-use-a-macro-in-the-doc-test/3664/5?u=slrtbtfs
+/// # fn main() {
+///
+///
+/// let student = matcher!('a' ..= 'c' |  'd' ..= 'f');
+///
+/// let even = matcher!(i if i % 2 == 0);
+/// # }
+#[macro_export]
+macro_rules! matcher {
+    () => {matcher!(_)};
+    ($(|)? $( $pattern:pat_param )|+ $( if $guard: expr )? $(,)?) => {
+        |__weight__: &_|
+        match __weight__ {
+            $( $pattern )|+ $( if $guard )? => true,
+            _ => false
+        }
+    };
+}
+
+///
 /// Defines a pattern graph, i.e. a specification for subgraphs that we want to find. This trait
 /// extends the Graph trait, to allow for navigation & getting subgraph info.
 ///
