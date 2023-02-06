@@ -117,7 +117,7 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ///
     /// Returns a NodeRef to the added node.
     ///
-    fn add_node_to_match<M>(&mut self, matcher: M) -> Self::NodeRef
+    fn add_node<M>(&mut self, matcher: M) -> Self::NodeRef
     where
         M: Fn(&NodeWeight) -> bool + 'static;
 
@@ -151,12 +151,7 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ///
     /// Returns an `EdgeRef` to the edge.
     ///
-    fn add_edge_to_match<M>(
-        &mut self,
-        from: Self::NodeRef,
-        to: Self::NodeRef,
-        matcher: M,
-    ) -> Self::EdgeRef
+    fn add_edge<M>(&mut self, from: Self::NodeRef, to: Self::NodeRef, matcher: M) -> Self::EdgeRef
     where
         M: Fn(&EdgeWeight) -> bool + 'static;
 }

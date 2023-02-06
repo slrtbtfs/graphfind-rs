@@ -1,5 +1,10 @@
 use crate::query::{Condition, Matcher, PatternGraph};
 
+/// Creates an empty new pattern
+pub fn new_pattern<NodeWeight, EdgeWeight>() -> impl PatternGraph<NodeWeight, EdgeWeight> {
+    petgraph::Graph::new()
+}
+
 ///
 /// Defines an PatternGraph over an directed petgraph. Guarantees that
 /// our graph should always be directed.
