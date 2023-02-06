@@ -10,19 +10,25 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     ///
     /// Adds the node to match, and returns the reference.
     ///
-    fn add_node_to_match(&mut self, matcher: Box<Matcher<NodeWeight>>) -> Self::NodeRef {
-        self.add_node(matcher)
+    fn add_node_to_match<M>(&mut self, matcher: M) -> Self::NodeRef
+    where
+        M: Fn(&NodeWeight) -> bool + 'static,
+    {
+        self.add_node(Box::new(matcher))
     }
 
     ///
     /// Adds the edge to match, and returns the reference.
     ///
-    fn add_edge_to_match(
+    fn add_edge_to_match<M>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
-        matcher: Box<Matcher<EdgeWeight>>,
-    ) -> Self::EdgeRef {
-        self.add_edge(from, to, matcher)
+        matcher: M,
+    ) -> Self::EdgeRef
+    where
+        M: Fn(&EdgeWeight) -> bool + 'static,
+    {
+        self.add_edge(from, to, Box::new(matcher))
     }
 }
