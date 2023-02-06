@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use std::{fmt::Debug, hash::Hash};
 
 ///
 /// Graph is a generic trait specifying the functionality that must be implemented by Graph storage backends used for Querying.
@@ -11,12 +11,12 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     /// Hash (allows insertion of Node Weights and their references into a Table),
     /// and Copy (allows use of references in function parameters).
     ///
-    type NodeRef: Copy + Eq + Hash + PartialOrd;
+    type NodeRef: Copy + Eq + Hash + PartialOrd + Ord + Debug;
     ///
     /// EdgeRef is the associated type for edge references.
     /// It implements the same traits as NodeRef.
     ///
-    type EdgeRef: Copy + Eq + Hash + PartialOrd;
+    type EdgeRef: Copy + Eq + Hash + PartialOrd + Ord + Debug;
     ///
     /// Checks if the edges of this graph are directed.
     ///
