@@ -1037,7 +1037,6 @@ fn create() {
     }
 }
 
-/*
 ///
 /// Negative Test: Do not allow an edge to be visible when it refers to a
 /// node that is ignored (source)
@@ -1046,9 +1045,9 @@ fn create() {
 #[should_panic]
 fn ignore_wrong_edge_source() {
     let mut pattern = petgraph::graph::Graph::new();
-    let from = pattern.add_node_to_match_full(Box::new(|_: &i32| true), true);
-    let to = pattern.add_node_to_match(Box::new(|_: &i32| true));
-    pattern.add_edge_to_match(from, to, Box::new(|_: &i32| false));
+    let from = pattern.add_node_to_match_full(|_: &i32| true, true);
+    let to = pattern.add_node_to_match(|_: &i32| true);
+    pattern.add_edge_to_match(from, to, |_: &i32| false);
 }
 
 ///
@@ -1059,9 +1058,9 @@ fn ignore_wrong_edge_source() {
 #[should_panic]
 fn ignore_wrong_edge_dest() {
     let mut pattern = petgraph::graph::Graph::new();
-    let from = pattern.add_node_to_match_to_match(Box::new(|_: &i32| true));
-    let to = pattern.add_node_to_match_to_match_full(Box::new(|_: &i32| true), true);
-    pattern.add_edge_to_match(from, to, Box::new(|_: &i32| false));
+    let from = pattern.add_node_to_match(|_: &i32| true);
+    let to = pattern.add_node_to_match_full(|_: &i32| true, true);
+    pattern.add_edge_to_match(from, to, |_: &i32| false);
 }
 
 ///
@@ -1070,11 +1069,11 @@ fn ignore_wrong_edge_dest() {
 #[test]
 fn require_delete() {
     let mut pattern = petgraph::graph::Graph::new();
-    let p = pattern.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "stefan")));
-    let m1 = pattern.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
-    let m2 = pattern.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
-    pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
-    let e = pattern.add_edge_to_match(p, m1, Box::new(|x| matches!(x, PlaysIn)));
+    let p = pattern.add_node_to_match(|x| check_for_actor(x, "stefan"));
+    let m1 = pattern.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    pattern.add_edge_to_match_full(p, m2, matcher!(PlaysIn), true);
+    let e = pattern.add_edge_to_match(p, m1, matcher!(PlaysIn));
 
     // Run query
     let base_graph = full_graph().0;
@@ -1099,9 +1098,9 @@ fn require_delete() {
 #[should_panic]
 fn check_ignored_nodes() {
     let mut pattern = petgraph::graph::Graph::new();
-    let p = pattern.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "stefan")));
-    let m2 = pattern.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
-    pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
+    let p = pattern.add_node_to_match(|x| check_for_actor(x, "stefan"));
+    let m2 = pattern.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    pattern.add_edge_to_match_full(p, m2, matcher!(PlaysIn), true);
 
     // Run query
     let base_graph = full_graph().0;
@@ -1120,9 +1119,9 @@ fn check_ignored_nodes() {
 #[should_panic]
 fn check_ignored_edges() {
     let mut pattern = petgraph::graph::Graph::new();
-    let p = pattern.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "stefan")));
-    let m2 = pattern.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
-    let e = pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
+    let p = pattern.add_node_to_match(|x| check_for_actor(x, "stefan"));
+    let m2 = pattern.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    let e = pattern.add_edge_to_match_full(p, m2, matcher!(PlaysIn), true);
 
     // Run query
     let base_graph = full_graph().0;
@@ -1141,18 +1140,16 @@ fn check_ignored_edges() {
 fn require() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Actors
-    let s = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "stefan")));
-    let y = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    let s = pattern_graph.add_node_to_match(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node_to_match(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
-    let m2 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m1 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    let m2 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
     // Four Connections we all ignore
-    pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(y, m1, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(y, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(s, m1, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(s, m2, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(y, m1, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(y, m2, matcher!(PlaysIn), true);
 
     // Query
     let base_graph = full_graph().0;
@@ -1177,16 +1174,15 @@ fn require() {
 fn all_stereotypes() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Nodes
-    let p1 = pattern_graph.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "fabian")));
-    let p2 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Person(_))), true);
-    let m1 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
-    let m2 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let p1 = pattern_graph.add_node_to_match(|x| check_for_actor(x, "fabian"));
+    let p2 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Person(_)), true);
+    let m1 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
     // Edges
-    let pm1 = pattern_graph.add_edge_to_match(p1, m1, Box::new(|x| matches!(x, PlaysIn)));
-    let pm2 = pattern_graph.add_edge_to_match(p1, m2, Box::new(|x| matches!(x, PlaysIn)));
-    pattern_graph.add_edge_to_match_full(p2, m2, Box::new(|x| matches!(x, PlaysIn)), true);
-    let su = pattern_graph.add_edge_to_match(m1, m2, Box::new(|x| matches!(x, Successor)));
+    let pm1 = pattern_graph.add_edge_to_match(p1, m1, matcher!(PlaysIn));
+    let pm2 = pattern_graph.add_edge_to_match(p1, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match_full(p2, m2, matcher!(PlaysIn), true);
+    let su = pattern_graph.add_edge_to_match(m1, m2, matcher!(Successor));
 
     // Query
     let base_graph = full_graph().0;
@@ -1216,18 +1212,16 @@ fn all_stereotypes() {
 fn bk_two_to_two() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Actors
-    let s = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "stefan")));
-    let y = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    let s = pattern_graph.add_node_to_match(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node_to_match(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
-    let m2 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m1 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    let m2 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
     // Connections
-    pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(y, m1, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(y, m2, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(s, m1, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(s, m2, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(y, m1, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(y, m2, matcher!(PlaysIn), true);
 
     // Query
     let base_graph = full_graph().0;
@@ -1254,22 +1248,19 @@ fn bk_two_to_two() {
 fn bk_two_to_three() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Actors
-    let s = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "stefan")));
-    let y = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    let s = pattern_graph.add_node_to_match(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node_to_match(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
-    let m2 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
-    let m3 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m1 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    let m2 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    let m3 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
     // Connections
-    pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(s, m3, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(y, m1, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(y, m2, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(y, m3, Box::new(|e| matches!(e, PlaysIn)), true);
+    pattern_graph.add_edge_to_match_full(s, m1, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(s, m2, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(s, m3, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(y, m1, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(y, m2, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(y, m3, matcher!(PlaysIn), true);
 
     // Query
     let base_graph = full_graph().0;
@@ -1295,12 +1286,11 @@ fn bk_two_to_three() {
 #[test]
 fn create_with_attributes() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let s = pattern_graph.add_node_to_match_to_match_full(Box::new(|x| check_for_actor(x, "stefan")), true);
-    let y = pattern_graph.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "yves")));
-    let j = pattern_graph
-        .add_node_to_match_to_match_full(Box::new(|x| check_movie(x, "Jurassic Park", 1990)), true);
-    pattern_graph.add_edge_to_match_full(y, s, Box::new(|x| matches!(x, Knows)), true);
-    pattern_graph.add_edge_to_match_full(y, j, Box::new(|x| matches!(x, Knows)), true);
+    let s = pattern_graph.add_node_to_match_full(|x| check_for_actor(x, "stefan"), true);
+    let y = pattern_graph.add_node_to_match(|x| check_for_actor(x, "yves"));
+    let j = pattern_graph.add_node_to_match_full(|x| check_movie(x, "Jurassic Park", 1990), true);
+    pattern_graph.add_edge_to_match_full(y, s, matcher!(Knows), true);
+    pattern_graph.add_edge_to_match_full(y, j, matcher!(Knows), true);
 
     // Run query
     let base_graph = full_graph().0;
@@ -1316,23 +1306,20 @@ fn create_with_attributes() {
 #[test]
 fn req_test() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let f = pattern_graph.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "fabian")));
-    let j = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let f = pattern_graph.add_node_to_match(|x| check_for_actor(x, "fabian"));
+    let j = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
     // Other movies
-    let m1 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
-    let m2 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
-    let m3 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+    let m1 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    let m2 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    let m3 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
 
     // Relations
-    let pi = pattern_graph.add_edge_to_match(f, j, Box::new(|e| matches!(e, PlaysIn)));
-    pattern_graph.add_edge_to_match_full(f, m1, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(f, m2, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(f, m3, Box::new(|e| matches!(e, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(m1, m2, Box::new(|x| matches!(x, Successor)), true);
-    pattern_graph.add_edge_to_match_full(m3, m2, Box::new(|x| matches!(x, Successor)), true);
+    let pi = pattern_graph.add_edge_to_match(f, j, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match_full(f, m1, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(f, m2, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(f, m3, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(m1, m2, matcher!(Successor), true);
+    pattern_graph.add_edge_to_match_full(m3, m2, matcher!(Successor), true);
 
     // Query
     let base_graph = full_graph().0;
@@ -1357,13 +1344,13 @@ fn req_test() {
 fn seq_create() {
     // Two persons, one movie
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let p1 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
-    let p2 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
-    let m = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let p1 = pattern_graph.add_node_to_match(matcher!(MovieNode::Person(_)));
+    let p2 = pattern_graph.add_node_to_match(matcher!(MovieNode::Person(_)));
+    let m = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
 
     // Two relations
-    pattern_graph.add_edge_to_match(p1, p2, Box::new(|x| matches!(x, Knows)));
-    pattern_graph.add_edge_to_match_full(p2, m, Box::new(|x| matches!(x, PlaysIn)), true);
+    pattern_graph.add_edge_to_match(p1, p2, matcher!(Knows));
+    pattern_graph.add_edge_to_match_full(p2, m, matcher!(PlaysIn), true);
 
     // Query yields seven results
     let base_graph = full_graph().0;
@@ -1385,24 +1372,21 @@ fn seq_create() {
 fn all_stereotypes_2() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Three persons
-    let p1 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
-    let p2 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
-    let p3 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let p1 = pattern_graph.add_node_to_match(matcher!(MovieNode::Person(_)));
+    let p2 = pattern_graph.add_node_to_match(matcher!(MovieNode::Person(_)));
+    let p3 = pattern_graph.add_node_to_match(matcher!(MovieNode::Person(_)));
     // Two movies
-    let m1 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
-    let m2 =
-        pattern_graph.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+    let m1 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
+    let m2 = pattern_graph.add_node_to_match_full(matcher!(MovieNode::Movie(_)), true);
 
     // Four relations
-    pattern_graph.add_edge_to_match(p1, p2, Box::new(|x| matches!(x, Knows)));
-    pattern_graph.add_edge_to_match(p1, p3, Box::new(|x| matches!(x, Knows)));
-    pattern_graph.add_edge_to_match_full(p2, m1, Box::new(|x| matches!(x, PlaysIn)), true);
-    pattern_graph.add_edge_to_match_full(p3, m2, Box::new(|x| matches!(x, PlaysIn)), true);
+    pattern_graph.add_edge_to_match(p1, p2, matcher!(Knows));
+    pattern_graph.add_edge_to_match(p1, p3, matcher!(Knows));
+    pattern_graph.add_edge_to_match_full(p2, m1, matcher!(PlaysIn), true);
+    pattern_graph.add_edge_to_match_full(p3, m2, matcher!(PlaysIn), true);
 
     // Query with two results
     let base_graph = full_graph().0;
     let results = VfState::eval(&pattern_graph, &base_graph);
     assert_eq!(2, results.len())
 }
-*/
