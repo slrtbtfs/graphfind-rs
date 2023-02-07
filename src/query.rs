@@ -11,6 +11,43 @@ use crate::{graph::Graph, graph_backends::filter_map::FilterMap};
 pub type Matcher<Weight> = dyn Fn(&Weight) -> bool;
 
 ///
+/// Creates a `Matcher` function from a given pattern
+///
+/// The syntax is similar to the `std::matches` macro.
+/// Calling matcher with no arguments will match anything.
+///
+/// # Examples
+/// ```
+/// #[macro_use]
+/// extern crate rustgql;
+/// use rustgql::query::*;
+///
+/// # // This line is hidden in the docs but required to pass the docstest, see https://users.rust-lang.org/t/how-to-use-a-macro-in-the-doc-test/3664/5?u=slrtbtfs
+///
+/// # fn main() {
+///
+/// enum Person {
+///     Student {name: String},
+///     Prof {},
+/// }
+///
+/// let student = matcher!(Person::Student{..});
+///
+/// let even = matcher!(i if i % 2 == 0);
+/// # }
+#[macro_export]
+macro_rules! matcher {
+    () => {matcher!(_)};
+    ($(|)? $( $pattern:pat_param )|+ $( if $guard: expr )? $(,)?) => {
+        |__weight__: &_|
+        match __weight__ {
+            $( $pattern )|+ $( if $guard )? => true,
+            _ => false
+        }
+    };
+}
+
+///
 /// Defines a pattern graph, i.e. a specification for subgraphs that we want to find. This trait
 /// extends the Graph trait, to allow for navigation & getting subgraph info.
 ///
@@ -29,7 +66,9 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ///
     /// Returns a NodeRef to the added node.
     ///
-    fn add_node_to_match(&mut self, matcher: Box<Matcher<NodeWeight>>) -> Self::NodeRef;
+    fn add_node<M>(&mut self, matcher: M) -> Self::NodeRef
+    where
+        M: Fn(&NodeWeight) -> bool + 'static;
 
     ///
     /// Adds the named `edge` to the pattern.
@@ -39,12 +78,9 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ///
     /// Returns an `EdgeRef` to the newly added edge.
     ///
-    fn add_edge_to_match(
-        &mut self,
-        from: Self::NodeRef,
-        to: Self::NodeRef,
-        matcher: Box<Matcher<EdgeWeight>>,
-    ) -> Self::EdgeRef;
+    fn add_edge<M>(&mut self, from: Self::NodeRef, to: Self::NodeRef, matcher: M) -> Self::EdgeRef
+    where
+        M: Fn(&EdgeWeight) -> bool + 'static;
 }
 
 ///

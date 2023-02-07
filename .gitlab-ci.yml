@@ -60,7 +60,8 @@ coverage:
     - apt-get update
     - apt-get install graphviz -y
     - rustup component add llvm-tools-preview
-    - cargo test
+    # do everything except doc tests since those don't work in this environment
+    - cargo test --lib --bins --tests
     # generate html report
     - cargo install grcov
     - grcov . --binary-path ./target/debug/ -s . -t html --branch --ignore-not-existing --ignore "*cargo*" -o ./coverage/
