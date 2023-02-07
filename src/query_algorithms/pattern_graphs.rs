@@ -1,4 +1,11 @@
-use crate::query::{Condition, Matcher, PatternGraph};
+use crate::query::{Matcher, PatternGraph};
+
+///
+/// Creates an empty new pattern.
+///
+pub fn new_pattern<NodeWeight, EdgeWeight>() -> impl PatternGraph<NodeWeight, EdgeWeight> {
+    petgraph::Graph::new()
+}
 
 ///
 /// Defines an PatternGraph over an directed petgraph. Guarantees that
@@ -10,13 +17,10 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     ///
     /// Adds the node to match, and returns the reference.
     ///
-    fn add_node_to_match_full<C>(
-        &mut self,
-        condition: C,
-        ignore: bool,
-    ) -> Self::NodeRef
+    fn add_node_to_match_full<C>(&mut self, condition: C, ignore: bool) -> Self::NodeRef
     where
-        C: Fn(&NodeWeight) -> bool + 'static {
+        C: Fn(&NodeWeight) -> bool + 'static,
+    {
         self.add_node(Matcher::new(Box::new(condition), ignore))
     }
 
@@ -31,7 +35,8 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
         ignore: bool,
     ) -> Self::EdgeRef
     where
-        C: Fn(&EdgeWeight) -> bool + 'static {
+        C: Fn(&EdgeWeight) -> bool + 'static,
+    {
         // Test logical conditions
         if !ignore
             && (!self.node_weight(from).unwrap().should_appear()

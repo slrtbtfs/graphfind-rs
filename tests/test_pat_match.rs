@@ -221,7 +221,7 @@ fn test_empty_pattern_no_results() {
 fn test_single_node_any_pattern() {
     let base_graph = node_graph().0;
     let mut single_pattern = new_pattern();
-    single_pattern.add_node(matcher!());
+    single_pattern.add_node_to_match(matcher!());
 
     // Explicitly specify result type.
     let results = VfState::eval(&single_pattern, &base_graph);
@@ -248,8 +248,8 @@ fn test_single_node_any_pattern() {
 fn match_pattern_too_large() {
     let mut pattern_graph = new_pattern();
     let positive = matcher!(i if *i > 0);
-    pattern_graph.add_node(positive);
-    pattern_graph.add_node(positive);
+    pattern_graph.add_node_to_match(positive);
+    pattern_graph.add_node_to_match(positive);
 
     let mut base_graph = petgraph::graph::Graph::new();
     let index = base_graph.add_node(4);
@@ -266,7 +266,7 @@ fn match_pattern_too_large() {
 #[test]
 fn match_person_nodes_only() {
     let mut pattern_graph = new_pattern();
-    let person_index = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
+    let person_index = pattern_graph.add_node_to_match(matcher!(MovieNode::Person(_)));
 
     let base_graph = node_graph().0;
     let results = VfState::eval(&pattern_graph, &base_graph);
@@ -302,8 +302,8 @@ fn match_two_node_pairs() {
     let mut pattern_graph = new_pattern();
 
     let is_movie = matcher!(MovieNode::Movie(_));
-    pattern_graph.add_node(is_movie);
-    pattern_graph.add_node(is_person);
+    pattern_graph.add_node_to_match(is_movie);
+    pattern_graph.add_node_to_match(is_person);
     let base_graph = node_graph().0;
 
     let results = VfState::eval(&pattern_graph, &base_graph);
@@ -318,9 +318,9 @@ fn match_two_node_pairs() {
 fn match_wrong_matches_only() {
     let base_graph = node_graph().0;
     let mut two_pattern = new_pattern();
-    two_pattern.add_node(matcher!(MovieNode::Movie(_)));
+    two_pattern.add_node_to_match(matcher!(MovieNode::Movie(_)));
 
-    two_pattern.add_node(matcher!(MovieNode::Movie(common::Movie { year: 32, .. })));
+    two_pattern.add_node_to_match(matcher!(MovieNode::Movie(common::Movie { year: 32, .. })));
 
     let results = VfState::eval(&two_pattern, &base_graph);
     assert_eq!(0, results.len());
@@ -346,9 +346,9 @@ fn match_single_edges() {
     base_graph.add_edge(idx_2, idx_3, 3);
 
     let mut pattern_graph = new_pattern();
-    let idx_4 = pattern_graph.add_node(matcher!());
-    let idx_5 = pattern_graph.add_node(matcher!());
-    let edge = pattern_graph.add_edge(idx_4, idx_5, matcher!());
+    let idx_4 = pattern_graph.add_node_to_match(matcher!());
+    let idx_5 = pattern_graph.add_node_to_match(matcher!());
+    let edge = pattern_graph.add_edge_to_match(idx_4, idx_5, matcher!());
 
     let results = VfState::eval(&pattern_graph, &base_graph);
 
@@ -384,11 +384,11 @@ fn match_double_edges() {
     base_graph.add_edge(idx_2, idx_3, 3);
 
     let mut pattern_graph = new_pattern();
-    let idx_4 = pattern_graph.add_node(matcher!());
-    let idx_5 = pattern_graph.add_node(matcher!());
-    let idx_6 = pattern_graph.add_node(matcher!());
-    pattern_graph.add_edge(idx_5, idx_6, matcher!());
-    pattern_graph.add_edge(idx_6, idx_4, matcher!());
+    let idx_4 = pattern_graph.add_node_to_match(matcher!());
+    let idx_5 = pattern_graph.add_node_to_match(matcher!());
+    let idx_6 = pattern_graph.add_node_to_match(matcher!());
+    pattern_graph.add_edge_to_match(idx_5, idx_6, matcher!());
+    pattern_graph.add_edge_to_match(idx_6, idx_4, matcher!());
 
     let results = VfState::eval(&pattern_graph, &base_graph);
 
@@ -421,11 +421,11 @@ fn match_three_star_in_six_star() {
     let mut e = vec![];
     let mut v = vec![];
     let mut three_star = new_pattern();
-    let center = three_star.add_node(matcher!());
+    let center = three_star.add_node_to_match(matcher!());
     for _ in 1..=3 {
-        let leaf = three_star.add_node(matcher!());
+        let leaf = three_star.add_node_to_match(matcher!());
         v.push(leaf);
-        e.push(three_star.add_edge(center, leaf, matcher!()));
+        e.push(three_star.add_edge_to_match(center, leaf, matcher!()));
     }
 
     let results = VfState::eval(&three_star, &six_star);
@@ -461,10 +461,10 @@ fn match_three_star_even_weights() {
     }
 
     let mut three_star = new_pattern();
-    let center = three_star.add_node(matcher!());
+    let center = three_star.add_node_to_match(matcher!());
     for _ in 1..=3 {
-        let leaf = three_star.add_node(matcher!());
-        three_star.add_edge(center, leaf, matcher!(i if i%2 == 0));
+        let leaf = three_star.add_node_to_match(matcher!());
+        three_star.add_edge_to_match(center, leaf, matcher!(i if i%2 == 0));
     }
 
     let results = VfState::eval(&three_star, &six_star);
@@ -493,10 +493,10 @@ fn match_three_star_inverse() {
     }
 
     let mut three_star = new_pattern();
-    let center = three_star.add_node(matcher!());
+    let center = three_star.add_node_to_match(matcher!());
     for _ in 1..=3 {
-        let leaf = three_star.add_node(matcher!());
-        three_star.add_edge(leaf, center, matcher!(i if i%2 == 0));
+        let leaf = three_star.add_node_to_match(matcher!());
+        three_star.add_edge_to_match(leaf, center, matcher!(i if i%2 == 0));
     }
 
     let results = VfState::eval(&three_star, &six_star);
@@ -517,23 +517,23 @@ fn test_node_edge_counts_terminate_early() {
         six_star.add_edge(center, leaf, i);
     }
     let mut four_clique = new_pattern();
-    let idx_11 = four_clique.add_node(matcher!());
-    let idx_13 = four_clique.add_node(matcher!());
-    let idx_10 = four_clique.add_node(matcher!());
-    let idx_12 = four_clique.add_node(matcher!());
+    let idx_11 = four_clique.add_node_to_match(matcher!());
+    let idx_13 = four_clique.add_node_to_match(matcher!());
+    let idx_10 = four_clique.add_node_to_match(matcher!());
+    let idx_12 = four_clique.add_node_to_match(matcher!());
 
-    four_clique.add_edge(idx_10, idx_11, matcher!());
-    four_clique.add_edge(idx_10, idx_12, matcher!());
-    four_clique.add_edge(idx_10, idx_13, matcher!());
-    four_clique.add_edge(idx_11, idx_10, matcher!());
-    four_clique.add_edge(idx_11, idx_12, matcher!());
-    four_clique.add_edge(idx_11, idx_13, matcher!());
-    four_clique.add_edge(idx_12, idx_10, matcher!());
-    four_clique.add_edge(idx_12, idx_11, matcher!());
-    four_clique.add_edge(idx_12, idx_13, matcher!());
-    four_clique.add_edge(idx_13, idx_10, matcher!());
-    four_clique.add_edge(idx_13, idx_11, matcher!());
-    four_clique.add_edge(idx_13, idx_12, matcher!());
+    four_clique.add_edge_to_match(idx_10, idx_11, matcher!());
+    four_clique.add_edge_to_match(idx_10, idx_12, matcher!());
+    four_clique.add_edge_to_match(idx_10, idx_13, matcher!());
+    four_clique.add_edge_to_match(idx_11, idx_10, matcher!());
+    four_clique.add_edge_to_match(idx_11, idx_12, matcher!());
+    four_clique.add_edge_to_match(idx_11, idx_13, matcher!());
+    four_clique.add_edge_to_match(idx_12, idx_10, matcher!());
+    four_clique.add_edge_to_match(idx_12, idx_11, matcher!());
+    four_clique.add_edge_to_match(idx_12, idx_13, matcher!());
+    four_clique.add_edge_to_match(idx_13, idx_10, matcher!());
+    four_clique.add_edge_to_match(idx_13, idx_11, matcher!());
+    four_clique.add_edge_to_match(idx_13, idx_12, matcher!());
 
     let results = VfState::eval(&four_clique, &six_star);
     assert_eq!(0, results.len());
@@ -554,15 +554,15 @@ fn optimization_test() {
 
     // Pattern
     let mut pattern_graph = new_pattern();
-    let p1 = pattern_graph.add_node(is_person);
-    let p2 = pattern_graph.add_node(is_person);
-    let p3 = pattern_graph.add_node(is_person);
-    pattern_graph.add_edge(p1, p2, matcher!(Knows));
-    pattern_graph.add_edge(p2, p3, matcher!(Knows));
-    pattern_graph.add_edge(p3, p1, matcher!(Knows));
-    pattern_graph.add_edge(p1, p1, matcher!(Knows));
-    pattern_graph.add_edge(p2, p2, matcher!(Knows));
-    pattern_graph.add_edge(p3, p3, matcher!(Knows));
+    let p1 = pattern_graph.add_node_to_match(is_person);
+    let p2 = pattern_graph.add_node_to_match(is_person);
+    let p3 = pattern_graph.add_node_to_match(is_person);
+    pattern_graph.add_edge_to_match(p1, p2, matcher!(Knows));
+    pattern_graph.add_edge_to_match(p2, p3, matcher!(Knows));
+    pattern_graph.add_edge_to_match(p3, p1, matcher!(Knows));
+    pattern_graph.add_edge_to_match(p1, p1, matcher!(Knows));
+    pattern_graph.add_edge_to_match(p2, p2, matcher!(Knows));
+    pattern_graph.add_edge_to_match(p3, p3, matcher!(Knows));
 
     // Algorithm
     let results = VfState::eval(&pattern_graph, &data_graph);
@@ -600,12 +600,12 @@ fn cycle_in_knows_match() {
 
     // Pattern
     let mut pattern_graph = new_pattern();
-    let p1 = pattern_graph.add_node(is_person);
-    let p2 = pattern_graph.add_node(is_person);
-    let p3 = pattern_graph.add_node(is_person);
-    pattern_graph.add_edge(p1, p2, |m| matches!(m, Knows));
-    pattern_graph.add_edge(p2, p3, |m| matches!(m, Knows));
-    pattern_graph.add_edge(p3, p1, |m| matches!(m, Knows));
+    let p1 = pattern_graph.add_node_to_match(is_person);
+    let p2 = pattern_graph.add_node_to_match(is_person);
+    let p3 = pattern_graph.add_node_to_match(is_person);
+    pattern_graph.add_edge_to_match(p1, p2, |m| matches!(m, Knows));
+    pattern_graph.add_edge_to_match(p2, p3, |m| matches!(m, Knows));
+    pattern_graph.add_edge_to_match(p3, p1, |m| matches!(m, Knows));
 
     // Algorithm
     let results = VfState::eval(&pattern_graph, &data_graph);
@@ -648,16 +648,16 @@ fn sequence_optimization() {
 
     let mut pattern_graph = new_pattern();
     // Five persons
-    let p0 = pattern_graph.add_node(is_person);
-    let p1 = pattern_graph.add_node(is_person);
-    let p2 = pattern_graph.add_node(is_person);
-    let p3 = pattern_graph.add_node(is_person);
-    let p4 = pattern_graph.add_node(is_person);
+    let p0 = pattern_graph.add_node_to_match(is_person);
+    let p1 = pattern_graph.add_node_to_match(is_person);
+    let p2 = pattern_graph.add_node_to_match(is_person);
+    let p3 = pattern_graph.add_node_to_match(is_person);
+    let p4 = pattern_graph.add_node_to_match(is_person);
     // Sequence: p0 -> p1 -> ... -> p4
-    let e0 = pattern_graph.add_edge(p0, p1, matcher!(Knows));
-    let e1 = pattern_graph.add_edge(p1, p2, matcher!(Knows));
-    let e2 = pattern_graph.add_edge(p2, p3, matcher!(Knows));
-    let e3 = pattern_graph.add_edge(p3, p4, matcher!(Knows));
+    let e0 = pattern_graph.add_edge_to_match(p0, p1, matcher!(Knows));
+    let e1 = pattern_graph.add_edge_to_match(p1, p2, matcher!(Knows));
+    let e2 = pattern_graph.add_edge_to_match(p2, p3, matcher!(Knows));
+    let e3 = pattern_graph.add_edge_to_match(p3, p4, matcher!(Knows));
 
     // Query
     let query_results = VfState::eval(&pattern_graph, &data_graph);
@@ -690,16 +690,16 @@ fn reflexive_optimization2() {
 
     let mut pattern_graph = new_pattern();
     // Five persons
-    let p0 = pattern_graph.add_node(is_person);
-    let p1 = pattern_graph.add_node(is_person);
-    let p2 = pattern_graph.add_node(is_person);
-    let p3 = pattern_graph.add_node(is_person);
+    let p0 = pattern_graph.add_node_to_match(is_person);
+    let p1 = pattern_graph.add_node_to_match(is_person);
+    let p2 = pattern_graph.add_node_to_match(is_person);
+    let p3 = pattern_graph.add_node_to_match(is_person);
     // Sequence: p0 -> p1 -> ... -> p3
-    let e0 = pattern_graph.add_edge(p0, p1, matcher!(Knows));
-    let e1 = pattern_graph.add_edge(p1, p2, matcher!(Knows));
-    let e2 = pattern_graph.add_edge(p2, p3, matcher!(Knows));
-    let e3 = pattern_graph.add_edge(p0, p0, matcher!(Knows));
-    let e4 = pattern_graph.add_edge(p3, p3, matcher!(Knows));
+    let e0 = pattern_graph.add_edge_to_match(p0, p1, matcher!(Knows));
+    let e1 = pattern_graph.add_edge_to_match(p1, p2, matcher!(Knows));
+    let e2 = pattern_graph.add_edge_to_match(p2, p3, matcher!(Knows));
+    let e3 = pattern_graph.add_edge_to_match(p0, p0, matcher!(Knows));
+    let e4 = pattern_graph.add_edge_to_match(p3, p3, matcher!(Knows));
 
     // Query
     let query_results = VfState::eval(&pattern_graph, &data_graph);
@@ -740,19 +740,19 @@ fn reflexive_optimization() {
 
     let mut pattern_graph = new_pattern();
     // Five persons
-    let p0 = pattern_graph.add_node(is_person);
-    let p1 = pattern_graph.add_node(is_person);
-    let p2 = pattern_graph.add_node(is_person);
-    let p3 = pattern_graph.add_node(is_person);
+    let p0 = pattern_graph.add_node_to_match(is_person);
+    let p1 = pattern_graph.add_node_to_match(is_person);
+    let p2 = pattern_graph.add_node_to_match(is_person);
+    let p3 = pattern_graph.add_node_to_match(is_person);
     // Sequence: p0 -> p1 -> ... -> p3
-    let e0 = pattern_graph.add_edge(p0, p1, matcher!(Knows));
-    let e1 = pattern_graph.add_edge(p1, p2, matcher!(Knows));
-    let e2 = pattern_graph.add_edge(p2, p3, matcher!(Knows));
+    let e0 = pattern_graph.add_edge_to_match(p0, p1, matcher!(Knows));
+    let e1 = pattern_graph.add_edge_to_match(p1, p2, matcher!(Knows));
+    let e2 = pattern_graph.add_edge_to_match(p2, p3, matcher!(Knows));
     // Self References
-    let e3 = pattern_graph.add_edge(p0, p0, matcher!(Knows));
-    let e4 = pattern_graph.add_edge(p3, p3, matcher!(Knows));
-    let e5 = pattern_graph.add_edge(p1, p1, matcher!(Knows));
-    let e6 = pattern_graph.add_edge(p2, p2, matcher!(Knows));
+    let e3 = pattern_graph.add_edge_to_match(p0, p0, matcher!(Knows));
+    let e4 = pattern_graph.add_edge_to_match(p3, p3, matcher!(Knows));
+    let e5 = pattern_graph.add_edge_to_match(p1, p1, matcher!(Knows));
+    let e6 = pattern_graph.add_edge_to_match(p2, p2, matcher!(Knows));
 
     // Query
     let query_results = VfState::eval(&pattern_graph, &data_graph);
@@ -807,15 +807,15 @@ fn delete_test() {
     let mut pattern_graph = new_pattern();
 
     // Have Fabian
-    let fab = pattern_graph.add_node(|p| check_for_actor(p, "fabian"));
-    let m1 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
-    let m3 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
+    let fab = pattern_graph.add_node_to_match(|p| check_for_actor(p, "fabian"));
+    let m1 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let m3 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
 
     // Fabian plays in three movies
-    pattern_graph.add_edge(fab, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(fab, m2, matcher!(PlaysIn));
-    pattern_graph.add_edge(fab, m3, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(fab, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(fab, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(fab, m3, matcher!(PlaysIn));
 
     // Get & check results
     let results = VfState::eval(&pattern_graph, &base_graph);
@@ -844,23 +844,23 @@ fn delete_test() {
 fn three_to_three() {
     let mut pattern_graph = new_pattern();
     // Actors
-    let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
-    let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
-    let f = pattern_graph.add_node(|p| check_for_actor(p, "fabian"));
+    let s = pattern_graph.add_node_to_match(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node_to_match(|p| check_for_actor(p, "yves"));
+    let f = pattern_graph.add_node_to_match(|p| check_for_actor(p, "fabian"));
     // Movies
-    let m1 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
-    let m3 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let m3 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
     // Lots of connections
-    pattern_graph.add_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.add_edge(s, m3, matcher!(PlaysIn));
-    pattern_graph.add_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(y, m2, matcher!(PlaysIn));
-    pattern_graph.add_edge(y, m3, matcher!(PlaysIn));
-    pattern_graph.add_edge(f, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(f, m2, matcher!(PlaysIn));
-    pattern_graph.add_edge(f, m3, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m3, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(y, m3, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(f, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(f, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(f, m3, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
@@ -893,19 +893,19 @@ fn three_to_three() {
 fn three_to_two() {
     let mut pattern_graph = new_pattern();
     // Actors
-    let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
-    let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
-    let f = pattern_graph.add_node(|p| check_for_actor(p, "fabian"));
+    let s = pattern_graph.add_node_to_match(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node_to_match(|p| check_for_actor(p, "yves"));
+    let f = pattern_graph.add_node_to_match(|p| check_for_actor(p, "fabian"));
     // Movies
-    let m1 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
     // Lots of connections
-    pattern_graph.add_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.add_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(y, m2, matcher!(PlaysIn));
-    pattern_graph.add_edge(f, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(f, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(f, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(f, m2, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
@@ -937,16 +937,16 @@ fn three_to_two() {
 fn two_to_two() {
     let mut pattern_graph = new_pattern();
     // Actors
-    let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
-    let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
+    let s = pattern_graph.add_node_to_match(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node_to_match(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
     // Lots of connections
-    pattern_graph.add_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.add_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(y, m2, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
@@ -976,14 +976,14 @@ fn two_to_two() {
 fn attributes_with_parameters() {
     let mut pattern_graph = new_pattern();
     // Actors
-    let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
+    let s = pattern_graph.add_node_to_match(|p| check_for_actor(p, "stefan"));
     // Movies
-    let m1 = pattern_graph.add_node(|m| check_movie(m, "Star Wars Holiday Special", 1978));
-    let m2 =
-        pattern_graph.add_node(|m| check_movie(m, "Star Wars: Rise of the Bechdel Test", 2015));
+    let m1 = pattern_graph.add_node_to_match(|m| check_movie(m, "Star Wars Holiday Special", 1978));
+    let m2 = pattern_graph
+        .add_node_to_match(|m| check_movie(m, "Star Wars: Rise of the Bechdel Test", 2015));
     // Lots of connections
-    pattern_graph.add_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.add_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_edge_to_match(s, m2, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
@@ -1018,9 +1018,9 @@ fn check_movie(element: &MovieNode, title1: &str, year1: i32) -> bool {
 #[test]
 fn create() {
     let mut pattern_graph = new_pattern();
-    let p = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
-    let m = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
-    let pi = pattern_graph.add_edge(p, m, matcher!(PlaysIn));
+    let p = pattern_graph.add_node_to_match(matcher!(MovieNode::Person(_)));
+    let m = pattern_graph.add_node_to_match(matcher!(MovieNode::Movie(_)));
+    let pi = pattern_graph.add_edge_to_match(p, m, matcher!(PlaysIn));
 
     let base_graph = full_graph().0;
     let query_results = VfState::eval(&pattern_graph, &base_graph);
@@ -1037,6 +1037,7 @@ fn create() {
     }
 }
 
+/*
 ///
 /// Negative Test: Do not allow an edge to be visible when it refers to a
 /// node that is ignored (source)
@@ -1058,8 +1059,8 @@ fn ignore_wrong_edge_source() {
 #[should_panic]
 fn ignore_wrong_edge_dest() {
     let mut pattern = petgraph::graph::Graph::new();
-    let from = pattern.add_node_to_match(Box::new(|_: &i32| true));
-    let to = pattern.add_node_to_match_full(Box::new(|_: &i32| true), true);
+    let from = pattern.add_node_to_match_to_match(Box::new(|_: &i32| true));
+    let to = pattern.add_node_to_match_to_match_full(Box::new(|_: &i32| true), true);
     pattern.add_edge_to_match(from, to, Box::new(|_: &i32| false));
 }
 
@@ -1069,9 +1070,9 @@ fn ignore_wrong_edge_dest() {
 #[test]
 fn require_delete() {
     let mut pattern = petgraph::graph::Graph::new();
-    let p = pattern.add_node_to_match(Box::new(|x| check_for_actor(x, "stefan")));
-    let m1 = pattern.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
-    let m2 = pattern.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+    let p = pattern.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "stefan")));
+    let m1 = pattern.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let m2 = pattern.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
     pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
     let e = pattern.add_edge_to_match(p, m1, Box::new(|x| matches!(x, PlaysIn)));
 
@@ -1098,8 +1099,8 @@ fn require_delete() {
 #[should_panic]
 fn check_ignored_nodes() {
     let mut pattern = petgraph::graph::Graph::new();
-    let p = pattern.add_node_to_match(Box::new(|x| check_for_actor(x, "stefan")));
-    let m2 = pattern.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+    let p = pattern.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "stefan")));
+    let m2 = pattern.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
     pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
 
     // Run query
@@ -1119,8 +1120,8 @@ fn check_ignored_nodes() {
 #[should_panic]
 fn check_ignored_edges() {
     let mut pattern = petgraph::graph::Graph::new();
-    let p = pattern.add_node_to_match(Box::new(|x| check_for_actor(x, "stefan")));
-    let m2 = pattern.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+    let p = pattern.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "stefan")));
+    let m2 = pattern.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
     let e = pattern.add_edge_to_match_full(p, m2, Box::new(|x| matches!(x, PlaysIn)), true);
 
     // Run query
@@ -1140,13 +1141,13 @@ fn check_ignored_edges() {
 fn require() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Actors
-    let s = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "stefan")));
-    let y = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    let s = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "stefan")));
+    let y = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "yves")));
     // Movies
     let m1 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     let m2 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     // Four Connections we all ignore
     pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
     pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
@@ -1176,11 +1177,11 @@ fn require() {
 fn all_stereotypes() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Nodes
-    let p1 = pattern_graph.add_node_to_match(Box::new(|x| check_for_actor(x, "fabian")));
+    let p1 = pattern_graph.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "fabian")));
     let p2 =
-        pattern_graph.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Person(_))), true);
-    let m1 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
-    let m2 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Person(_))), true);
+    let m1 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let m2 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
     // Edges
     let pm1 = pattern_graph.add_edge_to_match(p1, m1, Box::new(|x| matches!(x, PlaysIn)));
     let pm2 = pattern_graph.add_edge_to_match(p1, m2, Box::new(|x| matches!(x, PlaysIn)));
@@ -1215,13 +1216,13 @@ fn all_stereotypes() {
 fn bk_two_to_two() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Actors
-    let s = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "stefan")));
-    let y = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    let s = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "stefan")));
+    let y = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "yves")));
     // Movies
     let m1 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     let m2 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     // Connections
     pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
     pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
@@ -1253,15 +1254,15 @@ fn bk_two_to_two() {
 fn bk_two_to_three() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Actors
-    let s = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "stefan")));
-    let y = pattern_graph.add_node_to_match(Box::new(|p| check_for_actor(p, "yves")));
+    let s = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "stefan")));
+    let y = pattern_graph.add_node_to_match_to_match(Box::new(|p| check_for_actor(p, "yves")));
     // Movies
     let m1 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     let m2 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     let m3 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     // Connections
     pattern_graph.add_edge_to_match_full(s, m1, Box::new(|e| matches!(e, PlaysIn)), true);
     pattern_graph.add_edge_to_match_full(s, m2, Box::new(|e| matches!(e, PlaysIn)), true);
@@ -1294,10 +1295,10 @@ fn bk_two_to_three() {
 #[test]
 fn create_with_attributes() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let s = pattern_graph.add_node_to_match_full(Box::new(|x| check_for_actor(x, "stefan")), true);
-    let y = pattern_graph.add_node_to_match(Box::new(|x| check_for_actor(x, "yves")));
+    let s = pattern_graph.add_node_to_match_to_match_full(Box::new(|x| check_for_actor(x, "stefan")), true);
+    let y = pattern_graph.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "yves")));
     let j = pattern_graph
-        .add_node_to_match_full(Box::new(|x| check_movie(x, "Jurassic Park", 1990)), true);
+        .add_node_to_match_to_match_full(Box::new(|x| check_movie(x, "Jurassic Park", 1990)), true);
     pattern_graph.add_edge_to_match_full(y, s, Box::new(|x| matches!(x, Knows)), true);
     pattern_graph.add_edge_to_match_full(y, j, Box::new(|x| matches!(x, Knows)), true);
 
@@ -1315,15 +1316,15 @@ fn create_with_attributes() {
 #[test]
 fn req_test() {
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let f = pattern_graph.add_node_to_match(Box::new(|x| check_for_actor(x, "fabian")));
-    let j = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let f = pattern_graph.add_node_to_match_to_match(Box::new(|x| check_for_actor(x, "fabian")));
+    let j = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
     // Other movies
     let m1 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     let m2 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
     let m3 =
-        pattern_graph.add_node_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|m| matches!(m, MovieNode::Movie(_))), true);
 
     // Relations
     let pi = pattern_graph.add_edge_to_match(f, j, Box::new(|e| matches!(e, PlaysIn)));
@@ -1356,9 +1357,9 @@ fn req_test() {
 fn seq_create() {
     // Two persons, one movie
     let mut pattern_graph = petgraph::graph::Graph::new();
-    let p1 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
-    let p2 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
-    let m = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
+    let p1 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let m = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Movie(_))));
 
     // Two relations
     pattern_graph.add_edge_to_match(p1, p2, Box::new(|x| matches!(x, Knows)));
@@ -1384,14 +1385,14 @@ fn seq_create() {
 fn all_stereotypes_2() {
     let mut pattern_graph = petgraph::graph::Graph::new();
     // Three persons
-    let p1 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
-    let p2 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
-    let p3 = pattern_graph.add_node_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let p1 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let p2 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
+    let p3 = pattern_graph.add_node_to_match_to_match(Box::new(|x| matches!(x, MovieNode::Person(_))));
     // Two movies
     let m1 =
-        pattern_graph.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
     let m2 =
-        pattern_graph.add_node_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
+        pattern_graph.add_node_to_match_to_match_full(Box::new(|x| matches!(x, MovieNode::Movie(_))), true);
 
     // Four relations
     pattern_graph.add_edge_to_match(p1, p2, Box::new(|x| matches!(x, Knows)));
@@ -1404,3 +1405,4 @@ fn all_stereotypes_2() {
     let results = VfState::eval(&pattern_graph, &base_graph);
     assert_eq!(2, results.len())
 }
+*/

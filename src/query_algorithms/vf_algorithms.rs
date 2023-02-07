@@ -9,7 +9,7 @@ use bimap::BiHashMap;
 use crate::{
     graph::Graph,
     graph_backends::{filter_map::FilterMap, graph_helpers},
-    query::{Matcher, MatchedGraph, PatternGraph, SubgraphAlgorithm},
+    query::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
 };
 
 ///
@@ -282,7 +282,7 @@ where
     fn check_node_semantics(&self, n: NRef, m: N2Ref) -> bool {
         let matcher = self.pattern_graph.node_weight(n);
         let refed_node = self.base_graph.node_weight(m);
-        matcher.may_match.may_match(refed_node)
+        matcher.may_match(refed_node)
     }
 
     ///

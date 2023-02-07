@@ -111,11 +111,7 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     /// ## Output:
     /// A NodeRef.
     ///
-    fn add_node_to_match_full<C>(
-        &mut self,
-        condition: C,
-        ignore: bool,
-    ) -> Self::NodeRef
+    fn add_node_to_match_full<C>(&mut self, condition: C, ignore: bool) -> Self::NodeRef
     where
         C: Fn(&NodeWeight) -> bool + 'static;
 
@@ -124,9 +120,9 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ///
     /// Returns a NodeRef to the added node.
     ///    
-    fn add_node_to_match<C>(&mut self, condition: C) -> Self::NodeRef 
+    fn add_node_to_match<C>(&mut self, condition: C) -> Self::NodeRef
     where
-        C: Fn(&NodeWeight) -> bool + 'static
+        C: Fn(&NodeWeight) -> bool + 'static,
     {
         self.add_node_to_match_full(condition, false)
     }
@@ -169,10 +165,10 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
-        condition: C)
-    -> Self::EdgeRef 
+        condition: C,
+    ) -> Self::EdgeRef
     where
-        C: Fn(&EdgeWeight) -> bool + 'static
+        C: Fn(&EdgeWeight) -> bool + 'static,
     {
         self.add_edge_to_match_full(from, to, condition, false)
     }
@@ -233,5 +229,4 @@ pub trait SubgraphAlgorithm<
 ///
 /// Type definition of MatchedGraph.
 ///
-pub type MatchedGraph<'a, N, E, P> =
-    FilterMap<'a, Matcher<N>, Matcher<E>, &'a N, &'a E, P>;
+pub type MatchedGraph<'a, N, E, P> = FilterMap<'a, Matcher<N>, Matcher<E>, &'a N, &'a E, P>;
