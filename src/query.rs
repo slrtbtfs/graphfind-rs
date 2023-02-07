@@ -63,10 +63,15 @@ impl<Weight> Matcher<Weight> {
 /// use rustgql::query::*;
 ///
 /// # // This line is hidden in the docs but required to pass the docstest, see https://users.rust-lang.org/t/how-to-use-a-macro-in-the-doc-test/3664/5?u=slrtbtfs
+///
 /// # fn main() {
 ///
+/// enum Person {
+///     Student {name: String},
+///     Prof {},
+/// }
 ///
-/// let student = matcher!('a' ..= 'c' |  'd' ..= 'f');
+/// let student = matcher!(Person::Student{..});
 ///
 /// let even = matcher!(i if i % 2 == 0);
 /// # }
