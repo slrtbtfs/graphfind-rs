@@ -7,16 +7,17 @@ pub trait Graph<NodeWeight, EdgeWeight> {
     ///
     /// NodeRef is the associated type for node references.
     ///
-    /// It implements the Eq and PartialOrd traits (compare references),
-    /// Hash (allows insertion of Node Weights and their references into a Table),
-    /// and Copy (allows use of references in function parameters).
+    /// It implements the Ord trait (compare references),
+    /// Eq + Hash (allows insertion of Node Weights and their references into a Table),
+    /// Copy (allows use of references in function parameters),
+    /// and Debug (simplifies debugging).
     ///
-    type NodeRef: Copy + Eq + Hash + PartialOrd + Ord + Debug;
+    type NodeRef: Copy + Eq + Hash + Ord + Debug;
     ///
     /// EdgeRef is the associated type for edge references.
     /// It implements the same traits as NodeRef.
     ///
-    type EdgeRef: Copy + Eq + Hash + PartialOrd + Ord + Debug;
+    type EdgeRef: Copy + Eq + Hash + Ord + Debug;
     ///
     /// Checks if the edges of this graph are directed.
     ///
