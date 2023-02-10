@@ -104,74 +104,68 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     /// Adds a new node to the pattern.
     ///
     /// ## Input:
-    /// 1. condition, a `Box` that holds a function to test if a node in a base graph matches
+    /// condition, a `Box` that holds a function to test if a node in a base graph matches
     /// what we want in the pattern graph.
-    /// 2. ignore, a flag that tells us if the matched node should appear in the result.
     ///
     /// ## Output:
-    /// A NodeRef.
+    /// A NodeRef to a node that appears.
     ///
-    fn add_node_to_match_full<C>(&mut self, condition: C, ignore: bool) -> Self::NodeRef
+    /// A node that matches does not appear in the result, but is ignored. It can't be
+    /// referred in a result graph.
+    ///
+    fn hide_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
         C: Fn(&NodeWeight) -> bool + 'static;
 
     ///
-    /// Adds a new node to the pattern. Matched nodes appear in the result.
+    /// Adds a new node to the pattern.
+    /// Any matched node appears in the result.
     ///
     /// Returns a NodeRef to the added node.
     ///    
-    fn add_node_to_match<C>(&mut self, condition: C) -> Self::NodeRef
+    fn add_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
-        C: Fn(&NodeWeight) -> bool + 'static,
-    {
-        self.add_node_to_match_full(condition, false)
-    }
+        C: Fn(&NodeWeight) -> bool + 'static;
 
     ///
-    /// Adds a new, directed edge to the pattern.
+    /// Adds a new, directed, and ignored edge to the pattern that does not appear.
     ///
     /// ## Input:
     /// 1. from, the source node of the new edge.
     /// 2. to, the destination node.
     /// 3. condition, a function to test if an edge in a base graph matches
     /// that we want in the pattern graph.
-    /// 4. ignore, a flag that tells us if the matched edge should appear in the result.
     ///
     /// ## Output:
-    /// An EdgeRef.
+    /// An EdgeRef. Any edge that matches does not appear in a result graph, but is ignored.
     ///
-    /// ## Panics:
-    /// `ignore` is set to false, and either one of the nodes under `from` and `to` is ignored.
-    /// We could then refer to a node in the result that we do not want to refer to.
-    ///
-    fn add_edge_to_match_full<C>(
+    fn hide_edge<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
         condition: C,
-        ignore: bool,
     ) -> Self::EdgeRef
     where
         C: Fn(&EdgeWeight) -> bool + 'static;
 
     ///
     /// Adds a new edge to the pattern. This edge will appear in the result graphs.
-    /// Adds a new edge to the pattern. This edge will appear in the result graphs.
+    /// See also `hide_edge`.
     ///
     /// Returns an `EdgeRef` to the edge.
-    /// Returns an `EdgeRef` to the edge.
     ///
-    fn add_edge_to_match<C>(
+    /// ## Panics:
+    /// `ignore` is set to false, and either one of the nodes under `from` and `to` is ignored.
+    /// We could then refer to a node in the result that we do not want to refer to.
+    ///
+    fn add_edge<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
         condition: C,
     ) -> Self::EdgeRef
     where
-        C: Fn(&EdgeWeight) -> bool + 'static,
-    {
-        self.add_edge_to_match_full(from, to, condition, false)
-    }
+        C: Fn(&EdgeWeight) -> bool + 'static;
 }
 
 ///

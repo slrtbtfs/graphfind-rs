@@ -15,35 +15,52 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     for petgraph::graph::Graph<Matcher<NodeWeight>, Matcher<EdgeWeight>>
 {
     ///
-    /// Adds the node to match, and returns the reference.
+    /// Adds a hidden node to match, and returns the reference.
     ///
-    fn add_node_to_match_full<C>(&mut self, condition: C, ignore: bool) -> Self::NodeRef
+    fn hide_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
         C: Fn(&NodeWeight) -> bool + 'static,
     {
-        self.add_node(Matcher::new(Box::new(condition), ignore))
+        self.add_node(Matcher::new(Box::new(condition), true))
     }
 
     ///
-    /// Adds the edge to match, and returns the reference.
+    /// Adds a visible node to match, and returns the reference.
     ///
-    fn add_edge_to_match_full<C>(
+    fn add_node<C>(&mut self, condition: C) -> Self::NodeRef
+    where
+        C: Fn(&NodeWeight) -> bool + 'static,
+    {
+        self.add_node(Matcher::new(Box::new(condition), false))
+    }
+
+    ///
+    /// Adds a hidden/ignored edge to match, and returns the reference.
+    ///
+    fn hide_edge<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
         condition: C,
-        ignore: bool,
     ) -> Self::EdgeRef
     where
         C: Fn(&EdgeWeight) -> bool + 'static,
     {
-        // Test logical conditions
-        if !ignore
-            && (!self.node_weight(from).unwrap().should_appear()
-                || !self.node_weight(to).unwrap().should_appear())
+        self.add_edge(from, to, Matcher::new(Box::new(condition), true))
+    }
+
+    ///
+    /// Adds an edge to match, and returns the reference.
+    ///
+    fn add_edge<C>(&mut self, from: Self::NodeRef, to: Self::NodeRef, condition: C) -> Self::EdgeRef
+    where
+        C: Fn(&EdgeWeight) -> bool + 'static,
+    {
+        if !self.node_weight(from).unwrap().should_appear()
+            || !self.node_weight(to).unwrap().should_appear()
         {
             panic!("Must not refer to an edge that refers to nodes that cannot be referred!")
         }
-        self.add_edge(from, to, Matcher::new(Box::new(condition), ignore))
+        self.add_edge(from, to, Matcher::new(Box::new(condition), false))
     }
 }
