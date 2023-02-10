@@ -38,13 +38,13 @@ fn make_sample_graph_mass_filter_map() -> Graph<u64, u64, Undirected> {
 }
 
 ///
-/// Remove all even-numbered edges, and every third node.
+/// Remove every third node. This also implicitly removes all even numbered edges.
 /// Assume we get the graph we expect: edges 1, 3, ...
 ///
 #[test]
-fn test_filter_only() {
+fn test_filter_nodes_only() {
     let graph = make_sample_graph_mass_filter_map();
-    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 2, |e| e % 2 != 1);
+    let result = FilterMap::weight_filter(&graph, |n| n % 3 != 2, |_| true);
 
     // Check nodes.
     let nodes: Vec<NodeIndex<DefaultIx>> = result.nodes().collect();
@@ -83,6 +83,53 @@ fn test_filter_only() {
     }
 }
 
+///
+/// Remove all even numbered edges.
+/// Assume we get the graph we expect: edges 1, 3, ...
+///
+#[test]
+fn test_filter_edges_only() {
+    let graph = make_sample_graph_mass_filter_map();
+    let result = FilterMap::weight_filter(&graph, |_| true, |e| e % 2 == 0);
+
+    // Check nodes.
+    let nodes: Vec<NodeIndex<DefaultIx>> = result.nodes().collect();
+    assert_eq!(nodes.len(), 3000);
+    assert_eq!(result.count_nodes(), 3000);
+
+    for n in nodes {
+        let idx = n.index();
+        assert!(idx <= 3000);
+        let w = *result.node_weight(n);
+        let w_actual = graph.node_weight(n).unwrap();
+        assert_eq!(*w, *w_actual);
+
+        // Only one edge: Edge 2i connects nodes 3i and 3i + 1.
+        let edges: Vec<_> = result.adjacent_edges(n).map(|e| e.index()).collect();
+
+        let expected_edges = match idx % 3 {
+            0 => vec![2 * idx / 3],
+            1 => vec![2 * (idx - 1) / 3],
+            2 => vec![],
+            _ => unreachable!(),
+        };
+        assert_eq!(edges, expected_edges);
+    }
+
+    // Check edges.
+    let edges: Vec<EdgeIndex<DefaultIx>> = result.edges().collect();
+    assert_eq!(edges.len(), 1000);
+    assert_eq!(result.count_edges(), 1000);
+
+    for e in edges {
+        let idx = e.index();
+        assert!(idx % 2 != 1 && idx <= 2000);
+        assert_eq!(*result.edge_weight(e), graph.edge_weight(e).unwrap());
+        let (n1, n2) = result.adjacent_nodes(e);
+        assert_eq!((3 * idx) / 2, n1.index());
+        assert_eq!(((3 * idx) / 2) + 1, n2.index());
+    }
+}
 ///
 /// Remove one of three nodes (0, 3, ...), thus removing all edges.
 /// Triple the weights of remaining nodes. This also tests edge removal.
