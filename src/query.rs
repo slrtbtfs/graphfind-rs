@@ -87,6 +87,7 @@ macro_rules! matcher {
     };
 }
 
+
 ///
 /// Defines a pattern graph, i.e. a specification for subgraphs that we want to find. This trait
 /// extends the Graph trait, to allow for navigation & getting subgraph info.
