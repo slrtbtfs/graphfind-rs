@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     collections::{HashMap, HashSet},
     hash::Hash,
 };
@@ -45,7 +46,7 @@ pub struct VfState<
     ///
     base_graph: &'a B,
     ///
-    /// Vec of found graphs we can return.
+    /// Vec of found graphs we may return.
     ///
     results: Vec<MatchedGraph<'a, NodeWeight, EdgeWeight, P>>,
 
@@ -58,7 +59,7 @@ pub struct VfState<
     ///
     core: BiHashMap<NRef, N2Ref>,
     ///
-    /// out_1 is a matching between outgoing node references from `pattern_graph`,
+    /// `out_1` is a matching between outgoing node references from `pattern_graph`,
     /// and the search depth at which they were inserted. We use this mapping
     /// to find possible successor nodes to insert into `core_1`.
     ///
@@ -77,6 +78,11 @@ pub struct VfState<
     /// Matching for incoming nodes of `pattern_graph`. Analog Definition to `in_1`.
     ///
     in_2: HashMap<N2Ref, usize>,
+
+    ///
+    /// Counter for how many nodes we actually need to return.
+    ///
+    nodes_to_take: usize,
 }
 
 ///
@@ -94,6 +100,27 @@ where
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
     ///
+    /// Gives an ordering of two nodes, n1 and n2, from `pattern_graph`.
+    /// This ordering ensures that:
+    ///
+    /// 1. We process nodes in the result before ignored ones.
+    /// 2. We follow the given ordering of the node indices.
+    ///
+    /// We use this method to ensure set semantics.
+    ///
+    fn give_node_order(&self, n1: NRef, n2: NRef) -> Ordering {
+        let n1_appears = self.pattern_graph.node_weight(n1).should_appear();
+        let n2_appears = self.pattern_graph.node_weight(n2).should_appear();
+        if n1_appears && !n2_appears {
+            Ordering::Less
+        } else if !n1_appears && n2_appears {
+            Ordering::Greater
+        } else {
+            n1.cmp(&n2)
+        }
+    }
+
+    ///
     /// Returns a tuple (N, N2) of node references.
     /// N contains the smallest unmatched node within the pattern graph,
     /// and N2 unmatched nodes within the base graph.
@@ -106,7 +133,7 @@ where
             .pattern_graph
             .nodes()
             .filter(|n| !self.core.contains_left(n))
-            .min();
+            .min_by(|n1, n2| self.give_node_order(*n1, *n2));
 
         let base_nodes: Vec<_> = self
             .base_graph
@@ -125,17 +152,22 @@ where
     /// The result, (N, N2), is the smallest unmatched neighbor node reference in `pattern_graph`,
     /// if it exists, and the unmatched neighbor node references in `base_graph`.
     ///
+    /// When `N` is an ignored node and we are still looking for nodes to add to the result,
+    /// `N` will be None so that the algorithm enforces set semantics for the results.
+    ///
     fn find_unmatched_neighbors(
         &'a self,
         pattern_map: &HashMap<NRef, usize>,
         base_map: &HashMap<N2Ref, usize>,
+        find_ignored: bool,
     ) -> (Option<NRef>, Vec<N2Ref>) {
         // From pattern_map, i.e. neighbors of matched nodes in pattern_graph,
-        //only select those where no entry is in core.
+        // only select those where no entry is in core.
         let n = pattern_map
             .keys()
             .filter(|n_out| !self.core.contains_left(n_out))
-            .min()
+            .min_by(|n1, n2| self.give_node_order(**n1, **n2))
+            .filter(|n| find_ignored || self.pattern_graph.node_weight(**n).should_appear())
             .cloned();
 
         let n2: Vec<_> = base_map
@@ -250,7 +282,7 @@ where
     fn check_node_semantics(&self, n: NRef, m: N2Ref) -> bool {
         let matcher = self.pattern_graph.node_weight(n);
         let refed_node = self.base_graph.node_weight(m);
-        matcher(refed_node)
+        matcher.may_match(refed_node)
     }
 
     ///
@@ -301,7 +333,7 @@ where
         n_m_pred_edges.chain(n_m_succ_edges).all(|(e, e2)| {
             let matcher = self.pattern_graph.edge_weight(e);
             let matched = self.base_graph.edge_weight(e2);
-            matcher(matched)
+            matcher.may_match(matched)
         })
     }
 
@@ -347,16 +379,18 @@ where
     }
 
     ///
-    /// Produces a new AdjGraph for the current graph state.
+    /// Produces a new ResultGraph for the current graph state.
     ///
     /// Copy the keys from pattern_graph along with the weights referred
-    /// to by the depths from base_graph.
+    /// to by the depths from base_graph. Note that any elements in the result graph that
+    /// are marked as ignored, will not appear in the result.
     ///
     fn produce_graph(&mut self) {
         // Get node references and weights.
         let node_list = self
             .core
             .iter()
+            .filter(|(n, _)| self.pattern_graph.node_weight(**n).should_appear())
             .map(|(n, m)| (*n, self.base_graph.node_weight(*m)))
             .collect();
 
@@ -369,6 +403,7 @@ where
             let n_succs = self
                 .pattern_graph
                 .outgoing_edges(*n)
+                .filter(|e| self.pattern_graph.edge_weight(*e).should_appear())
                 .map(|e| (self.pattern_graph.adjacent_nodes(e).1, e));
             let m_succs: HashMap<_, _> = self
                 .base_graph
@@ -390,17 +425,23 @@ where
     ///
     /// Looks up subgraphs and puts them into results.
     ///
-    fn find_subgraphs(&mut self, depth: usize) {
+    /// Returns the node number to go back to. Thus prevents
+    /// duplicate matches when we have elements that we ignore.
+    ///
+    fn find_subgraphs(&mut self, depth: usize) -> usize {
         // Full match may now be added.
         if depth == self.pattern_graph.count_nodes() {
             self.produce_graph();
+            self.nodes_to_take
         } else {
+            let find_ignored = depth >= self.nodes_to_take;
             // Find unmatched nodes that are outgoing neighbors of matched nodes.
             let (mut pat_node, mut base_nodes) =
-                self.find_unmatched_neighbors(&self.out_1, &self.out_2);
+                self.find_unmatched_neighbors(&self.out_1, &self.out_2, find_ignored);
             // Failing that, try incoming neighbors.
             if pat_node.is_none() || base_nodes.is_empty() {
-                (pat_node, base_nodes) = self.find_unmatched_neighbors(&self.in_1, &self.in_2);
+                (pat_node, base_nodes) =
+                    self.find_unmatched_neighbors(&self.in_1, &self.in_2, find_ignored);
             }
             // Failing that also, try unmatched and unconnected nodes.
             if pat_node.is_none() || base_nodes.is_empty() {
@@ -413,12 +454,21 @@ where
                 self.assign(n, m, depth);
                 // Test compatibility.
                 if self.is_valid_matching(n, m) {
-                    self.find_subgraphs(depth + 1);
+                    // What node do we need to assign next /
+                    // do we need to go back?
+                    let next_node = self.find_subgraphs(depth + 1);
+                    if next_node == self.nodes_to_take && next_node <= depth {
+                        // Restore State early
+                        self.unassign(&n, &m, depth);
+                        return next_node;
+                    }
                 }
                 self.unassign(&n, &m, depth);
             }
+            depth
         }
     }
+
     ///
     /// Creates a new VfState for the given pattern graph and base graph.
     /// Initialized for each base_graph instance, to use its specific indices.
@@ -434,6 +484,12 @@ where
         pattern_graph: &'a P,
         base_graph: &'a B,
     ) -> VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B> {
+        // Count the number of nodes to not ignore.
+        let nodes_to_take = pattern_graph
+            .nodes()
+            .filter(|n| pattern_graph.node_weight(*n).should_appear())
+            .count();
+
         VfState {
             pattern_graph,
             base_graph,
@@ -443,6 +499,7 @@ where
             out_2: HashMap::new(),
             in_1: HashMap::new(),
             in_2: HashMap::new(),
+            nodes_to_take,
         }
     }
 
@@ -458,7 +515,7 @@ where
         {
             return;
         }
-        self.find_subgraphs(0);
+        let _ = self.find_subgraphs(0);
     }
 }
 
@@ -477,14 +534,7 @@ where
         pattern_graph: &'a P,
         base_graph: &'a B,
     ) -> Vec<
-        FilterMap<
-            'a,
-            Box<Matcher<NodeWeight>>,
-            Box<Matcher<EdgeWeight>>,
-            &'a NodeWeight,
-            &'a EdgeWeight,
-            P,
-        >,
+        FilterMap<'a, Matcher<NodeWeight>, Matcher<EdgeWeight>, &'a NodeWeight, &'a EdgeWeight, P>,
     > {
         let mut vfstate = VfState::init(pattern_graph, base_graph);
         vfstate.run_query();

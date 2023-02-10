@@ -3,12 +3,52 @@ use std::hash::Hash;
 use crate::{graph::Graph, graph_backends::filter_map::FilterMap};
 
 ///
-/// The Matcher type stands for any function that evaluates, given an element
+/// The Condition type stands for any function that evaluates, given an element
 /// in the base graph with the type Weight, if the pattern graph accepts this element.
 ///
 /// As an example, we may define a function that tests if a node matches a Rust pattern.
 ///
-pub type Matcher<Weight> = dyn Fn(&Weight) -> bool;
+pub type Condition<Weight> = dyn Fn(&Weight) -> bool;
+
+///
+/// Defines a struct that holds all relevant node/edge matching information.
+///
+pub struct Matcher<Weight> {
+    ///
+    /// The matching function.
+    ///
+    condition: Box<Condition<Weight>>,
+    ///
+    /// A flag that tells us if we should include the matched element in the result, or not.
+    ///
+    ignore: bool,
+}
+
+///
+/// Holds the constructor for Matcher.
+///
+impl<Weight> Matcher<Weight> {
+    ///
+    /// Creates a new Matcher struct.
+    ///
+    pub fn new(condition: Box<Condition<Weight>>, ignore: bool) -> Self {
+        Self { condition, ignore }
+    }
+
+    ///
+    /// Returns true if and only if the matched node should appear in the result.
+    ///
+    pub fn should_appear(&self) -> bool {
+        !self.ignore
+    }
+
+    ///
+    /// Tests if the given element may be matched.
+    ///
+    pub fn may_match(&self, element: &Weight) -> bool {
+        (self.condition)(element)
+    }
+}
 
 ///
 /// Creates a `Matcher` function from a given pattern
@@ -58,29 +98,74 @@ macro_rules! matcher {
 /// PatternGraph is generic with regards to node and edge weights of the graphs it should match on.
 ///
 pub trait PatternGraph<NodeWeight, EdgeWeight>:
-    Graph<Box<Matcher<NodeWeight>>, Box<Matcher<EdgeWeight>>>
+    Graph<Matcher<NodeWeight>, Matcher<EdgeWeight>>
 {
     ///
-    /// Adds the node identified by `name` to the pattern. Any node that matches `name`
-    /// must fulfill the `matcher` function.
+    /// Adds a new node to the pattern.
     ///
-    /// Returns a NodeRef to the added node.
+    /// ## Input:
+    /// condition, a `Box` that holds a function to test if a node in a base graph matches
+    /// what we want in the pattern graph.
     ///
-    fn add_node<M>(&mut self, matcher: M) -> Self::NodeRef
+    /// ## Output:
+    /// A NodeRef to a node that appears.
+    ///
+    /// A node that matches does not appear in the result, but is ignored. It can't be
+    /// referred in a result graph.
+    ///
+    fn hide_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
-        M: Fn(&NodeWeight) -> bool + 'static;
+        C: Fn(&NodeWeight) -> bool + 'static;
 
     ///
-    /// Adds the named `edge` to the pattern.
+    /// Adds a new node to the pattern.
+    /// Any matched node appears in the result.
     ///
-    /// `edge` is directed, and runs from the node referenced by `from` to the node referenced by `to`.
-    /// The matched edge must then fulfill the `matcher` function.
-    ///
-    /// Returns an `EdgeRef` to the newly added edge.
-    ///
-    fn add_edge<M>(&mut self, from: Self::NodeRef, to: Self::NodeRef, matcher: M) -> Self::EdgeRef
+    /// Returns a NodeRef to the added node.
+    ///    
+    fn add_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
-        M: Fn(&EdgeWeight) -> bool + 'static;
+        C: Fn(&NodeWeight) -> bool + 'static;
+
+    ///
+    /// Adds a new, directed, and ignored edge to the pattern that does not appear.
+    ///
+    /// ## Input:
+    /// 1. from, the source node of the new edge.
+    /// 2. to, the destination node.
+    /// 3. condition, a function to test if an edge in a base graph matches
+    /// that we want in the pattern graph.
+    ///
+    /// ## Output:
+    /// An EdgeRef. Any edge that matches does not appear in a result graph, but is ignored.
+    ///
+    fn hide_edge<C>(
+        &mut self,
+        from: Self::NodeRef,
+        to: Self::NodeRef,
+        condition: C,
+    ) -> Self::EdgeRef
+    where
+        C: Fn(&EdgeWeight) -> bool + 'static;
+
+    ///
+    /// Adds a new edge to the pattern. This edge will appear in the result graphs.
+    /// See also `hide_edge`.
+    ///
+    /// Returns an `EdgeRef` to the edge.
+    ///
+    /// ## Panics:
+    /// `ignore` is set to false, and either one of the nodes under `from` and `to` is ignored.
+    /// We could then refer to a node in the result that we do not want to refer to.
+    ///
+    fn add_edge<C>(
+        &mut self,
+        from: Self::NodeRef,
+        to: Self::NodeRef,
+        condition: C,
+    ) -> Self::EdgeRef
+    where
+        C: Fn(&EdgeWeight) -> bool + 'static;
 }
 
 ///
@@ -116,8 +201,8 @@ pub trait SubgraphAlgorithm<
     /// Both `pattern_graph` and `base_graph` currently have the same lifetime 'a.
     ///
     /// # Output:
-    /// A reference to a vector of AdjGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
-    /// and its references N1Ref/E1RefType. We want to access matched elements of
+    /// A reference to a vector of MatchedGraph, whose nodes and edges have NodeWeight/EdgeWeight types,
+    /// and its references NRef/ERef. We want to access matched elements of
     /// the base graph by references we set in the pattern graph.
     ///
     /// An implementation find_subgraphs should guarantee set semantics, so that every found
@@ -125,7 +210,6 @@ pub trait SubgraphAlgorithm<
     ///
     /// If `pattern_graph` is an empty graph without nodes (or edges), or if no subgraph of `base_graph`
     /// can be matched to it, then we return an empty vector.
-    ///
     ///
     /// # Panics:
     /// `base_graph` is a directed graph, and `pattern_graph` is not, or vice versa.
@@ -136,5 +220,7 @@ pub trait SubgraphAlgorithm<
     ) -> Vec<MatchedGraph<'a, NodeWeight, EdgeWeight, PatternGraphType>>;
 }
 
-pub type MatchedGraph<'a, N, E, P> =
-    FilterMap<'a, Box<Matcher<N>>, Box<Matcher<E>>, &'a N, &'a E, P>;
+///
+/// Type definition of MatchedGraph.
+///
+pub type MatchedGraph<'a, N, E, P> = FilterMap<'a, Matcher<N>, Matcher<E>, &'a N, &'a E, P>;

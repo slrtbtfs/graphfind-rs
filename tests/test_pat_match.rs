@@ -66,7 +66,7 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     add_person(&mut graph, &mut names, "benedikt", Actor);
 
     // Media
-    add_media(&mut graph, &mut names, "Jurassic Park", 10.0, 1993, Movie);
+    add_media(&mut graph, &mut names, "Jurassic Park", 10.0, 1990, Movie);
     add_media(
         &mut graph,
         &mut names,
@@ -157,11 +157,13 @@ fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
         PlaysIn,
         "Star Wars: Rise of the Bechdel Test",
     );
+    connect(&mut graph, &nodes, "fabian", PlaysIn, "Sunday Uke Group");
 
     // Knows Relations
     connect(&mut graph, &nodes, "stefan", Knows, "stefan");
     connect(&mut graph, &nodes, "stefan", Knows, "yves");
     connect(&mut graph, &nodes, "yves", Knows, "yves");
+    connect(&mut graph, &nodes, "yves", Knows, "stefan");
     connect(&mut graph, &nodes, "yves", Knows, "fabian");
     connect(&mut graph, &nodes, "fabian", Knows, "fabian");
     connect(&mut graph, &nodes, "fabian", Knows, "benedikt");
@@ -182,6 +184,13 @@ fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
         &mut graph,
         &nodes,
         "Star Wars Holiday Special",
+        Successor,
+        "Star Wars: Rise of the Bechdel Test",
+    );
+    connect(
+        &mut graph,
+        &nodes,
+        "Sunday Uke Group",
         Successor,
         "Star Wars: Rise of the Bechdel Test",
     );
@@ -810,7 +819,7 @@ fn delete_test() {
 
     // Get & check results
     let results = VfState::eval(&pattern_graph, &base_graph);
-    assert_eq!(6, results.len());
+    assert_eq!(24, results.len());
 
     // Check nodes & edges
     for g in results {
@@ -1004,7 +1013,7 @@ fn check_movie(element: &MovieNode, title1: &str, year1: i32) -> bool {
 }
 
 ///
-/// Find all Actor-Movie pairs.
+/// Find all Actor-Movie pairs (10 overall)
 ///
 #[test]
 fn create() {
@@ -1015,7 +1024,7 @@ fn create() {
 
     let base_graph = full_graph().0;
     let query_results = VfState::eval(&pattern_graph, &base_graph);
-    assert_eq!(9, query_results.len());
+    assert_eq!(10, query_results.len());
 
     // Check structure
     for graph in query_results {
@@ -1026,4 +1035,379 @@ fn create() {
         assert!(matches!(graph.node_weight(m), MovieNode::Movie(_)));
         assert!(matches!(graph.edge_weight(pi), PlaysIn));
     }
+}
+
+///
+/// Negative Test: Do not allow an edge to be visible when it refers to a
+/// node that is ignored (source)
+///
+#[test]
+#[should_panic]
+fn ignore_wrong_edge_source() {
+    let mut pattern = new_pattern();
+    let from = pattern.hide_node(|_: &i32| true);
+    let to = pattern.add_node(|_: &i32| true);
+    pattern.add_edge(from, to, |_: &i32| false);
+}
+
+///
+/// Negative Test: Do not allow an edge to be visible when it refers to a
+/// node that is ignored (dest)
+///
+#[test]
+#[should_panic]
+fn ignore_wrong_edge_dest() {
+    let mut pattern = new_pattern();
+    let from = pattern.add_node(|_: &i32| true);
+    let to = pattern.hide_node(|_: &i32| true);
+    pattern.add_edge(from, to, |_: &i32| false);
+}
+
+///
+/// stefan plays in two movies. But we only want to have one movie in our result!
+///
+#[test]
+fn require_delete() {
+    let mut pattern = new_pattern();
+    let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
+    let m1 = pattern.add_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
+    pattern.hide_edge(p, m2, matcher!(PlaysIn));
+    let e = pattern.add_edge(p, m1, matcher!(PlaysIn));
+
+    // Run query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern, &base_graph);
+    assert_eq!(3, results.len());
+
+    // Check results
+    for res in results {
+        assert_eq!(2, res.count_nodes());
+        assert_eq!(1, res.count_edges());
+
+        assert!(check_for_actor(res.node_weight(p), "stefan"));
+        assert!(matches!(res.node_weight(m1), MovieNode::Movie(_)));
+        assert!(matches!(res.edge_weight(e), PlaysIn));
+    }
+}
+
+///
+/// Do not allow access for ignored nodes. These do not appear in the result.
+///
+#[test]
+#[should_panic]
+fn check_ignored_nodes() {
+    let mut pattern = new_pattern();
+    let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
+    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
+    pattern.hide_edge(p, m2, matcher!(PlaysIn));
+
+    // Run query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern, &base_graph);
+    let graph = &results[0];
+
+    // Force panic
+    assert!(!graph.nodes().any(|x| x == m2));
+    graph.node_weight(m2);
+}
+
+///
+/// Do not allow access for ignored edges. These do not appear in the result.
+///
+#[test]
+#[should_panic]
+fn check_ignored_edges() {
+    let mut pattern = new_pattern();
+    let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
+    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
+    let e = pattern.hide_edge(p, m2, matcher!(PlaysIn));
+
+    // Run query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern, &base_graph);
+    let graph = &results[0];
+
+    // Force panic
+    assert!(!graph.edges().any(|x| x == e));
+    graph.edge_weight(e);
+}
+
+///
+/// Two actors (stefan, yves) play in at least two movies.
+///
+#[test]
+fn require() {
+    let mut pattern_graph = new_pattern();
+    // Actors
+    let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
+    // Movies
+    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    // Four Connections we all ignore
+    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    // Single Result
+    assert_eq!(1, results.len());
+
+    // Checks
+    for graph in results {
+        // Find our actors
+        assert_eq!(2, graph.count_nodes());
+        assert!(check_for_actor(graph.node_weight(s), "stefan"));
+        assert!(check_for_actor(graph.node_weight(y), "yves"));
+    }
+}
+
+///
+/// Find two persons and movies, so that both persons play in the second movie,
+/// and one movie is the successor of another.
+///
+#[test]
+fn all_stereotypes() {
+    let mut pattern_graph = new_pattern();
+    // Nodes
+    let p1 = pattern_graph.add_node(|x| check_for_actor(x, "fabian"));
+    let p2 = pattern_graph.hide_node(matcher!(MovieNode::Person(_)));
+    let m1 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
+    // Edges
+    let pm1 = pattern_graph.add_edge(p1, m1, matcher!(PlaysIn));
+    let pm2 = pattern_graph.add_edge(p1, m2, matcher!(PlaysIn));
+    pattern_graph.hide_edge(p2, m2, matcher!(PlaysIn));
+    let su = pattern_graph.add_edge(m1, m2, matcher!(Successor));
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    assert_eq!(3, results.len());
+
+    // Tests
+    for res in results {
+        assert_eq!(3, res.count_edges());
+        assert_eq!(3, res.count_nodes());
+
+        assert!(check_for_actor(res.node_weight(p1), "fabian"));
+        assert!(matches!(res.node_weight(m1), MovieNode::Movie(_)));
+        assert!(matches!(res.node_weight(m2), MovieNode::Movie(_)));
+
+        assert!(matches!(res.edge_weight(pm1), PlaysIn));
+        assert!(matches!(res.edge_weight(pm2), PlaysIn));
+        assert!(matches!(res.edge_weight(su), Successor));
+    }
+}
+
+///
+/// Two actors (stefan, yves) all
+/// play in two different movies (we ignore the movies).
+///
+#[test]
+fn bk_two_to_two() {
+    let mut pattern_graph = new_pattern();
+    // Actors
+    let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
+    // Movies
+    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    // Connections
+    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    // One result
+    assert_eq!(1, results.len());
+
+    // Checks
+    for graph in results {
+        // Find our actors
+        assert_eq!(2, graph.count_nodes());
+        assert!(check_for_actor(graph.node_weight(s), "stefan"));
+        assert!(check_for_actor(graph.node_weight(y), "yves"));
+        // No edges
+        assert_eq!(0, graph.edges().collect::<Vec<_>>().len())
+    }
+}
+
+///
+/// Two actors (stefan, yves) all
+/// play in three different movies (we ignore the movies).
+///
+#[test]
+fn bk_two_to_three() {
+    let mut pattern_graph = new_pattern();
+    // Actors
+    let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
+    let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
+    // Movies
+    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m3 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    // Connections
+    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.hide_edge(s, m3, matcher!(PlaysIn));
+    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
+    pattern_graph.hide_edge(y, m3, matcher!(PlaysIn));
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    // One result
+    assert_eq!(1, results.len());
+
+    // Checks
+    for graph in results {
+        // Find our actors
+        assert_eq!(2, graph.count_nodes());
+        assert!(check_for_actor(graph.node_weight(s), "stefan"));
+        assert!(check_for_actor(graph.node_weight(y), "yves"));
+        // No edges
+        assert_eq!(0, graph.edges().collect::<Vec<_>>().len())
+    }
+}
+
+///
+/// Assert that yves knows stefan and plays in Jurassic Park.
+/// Does not hold in this graph; thus return empty result!
+///
+#[test]
+fn create_with_attributes() {
+    let mut pattern_graph = new_pattern();
+    let s = pattern_graph.hide_node(|x| check_for_actor(x, "stefan"));
+    let y = pattern_graph.add_node(|x| check_for_actor(x, "yves"));
+    let j = pattern_graph.hide_node(|x| check_movie(x, "Jurassic Park", 1990));
+    pattern_graph.hide_edge(y, s, matcher!(Knows));
+    pattern_graph.hide_edge(y, j, matcher!(Knows));
+
+    // Run query
+    let base_graph = full_graph().0;
+    assert_eq!(0, VfState::eval(&pattern_graph, &base_graph).len());
+}
+
+///
+/// Find an actor that plays in a movie, and in its two successors,
+/// as well as another movie.
+///
+/// This will be fabian, and "Jurassic Park" the fourth movie.
+///
+#[test]
+fn req_test() {
+    let mut pattern_graph = new_pattern();
+    let f = pattern_graph.add_node(|x| check_for_actor(x, "fabian"));
+    let j = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
+    // Other movies
+    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m3 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+
+    // Relations
+    let pi = pattern_graph.add_edge(f, j, matcher!(PlaysIn));
+    pattern_graph.hide_edge(f, m1, matcher!(PlaysIn));
+    pattern_graph.hide_edge(f, m2, matcher!(PlaysIn));
+    pattern_graph.hide_edge(f, m3, matcher!(PlaysIn));
+    pattern_graph.hide_edge(m1, m2, matcher!(Successor));
+    pattern_graph.hide_edge(m3, m2, matcher!(Successor));
+
+    // Query
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    assert_eq!(1, results.len());
+
+    // Check movie
+    let (_, movie) = results[0].adjacent_nodes(pi);
+    assert_eq!(movie, j);
+    assert!(check_movie(
+        results[0].node_weight(movie),
+        "Jurassic Park",
+        1990
+    ));
+}
+
+///
+/// Find a person that knows another person, that themselves plays in a movie.
+/// Ignore the PlaysIn relation in the result.
+///
+#[test]
+fn seq_create() {
+    // Two persons, one movie
+    let mut pattern_graph = new_pattern();
+    let p1 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
+    let p2 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
+    let m = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
+
+    // Two relations
+    pattern_graph.add_edge(p1, p2, matcher!(Knows));
+    pattern_graph.hide_edge(p2, m, matcher!(PlaysIn));
+
+    // Query yields seven results
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    assert_eq!(14, results.len());
+
+    // PlaysIn does not appear in the result
+    for res in results {
+        assert_eq!(1, res.count_edges());
+        assert_eq!(0, res.adjacent_edges(m).count());
+    }
+}
+
+///
+/// Find a person that knows to other persons.
+/// These persons play in different movies, but we ignore those.
+///
+#[test]
+fn all_stereotypes_2() {
+    let mut pattern_graph = new_pattern();
+    // Three persons
+    let p1 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
+    let p2 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
+    let p3 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
+    // Two movies
+    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+
+    // Four relations
+    pattern_graph.add_edge(p1, p2, matcher!(Knows));
+    pattern_graph.add_edge(p1, p3, matcher!(Knows));
+    pattern_graph.hide_edge(p2, m1, matcher!(PlaysIn));
+    pattern_graph.hide_edge(p3, m2, matcher!(PlaysIn));
+
+    // Query with two results
+    let base_graph = full_graph().0;
+    let results = VfState::eval(&pattern_graph, &base_graph);
+    assert_eq!(2, results.len())
+}
+
+///
+/// Given a pattern where we ignore everything, the result contains
+/// a single, empty graph.
+///
+#[test]
+fn match_empty() {
+    let mut pattern_graph = new_pattern();
+    // Two nodes, an edge that runs between them.
+    let n1 = pattern_graph.hide_node(matcher!());
+    let n2 = pattern_graph.hide_node(matcher!());
+    pattern_graph.hide_edge(n1, n2, matcher!());
+    // Make query
+    let base_graph = full_graph().0;
+    let query = VfState::eval(&pattern_graph, &base_graph);
+
+    // One result with nothing in it
+    assert_eq!(1, query.len());
+    assert_eq!(0, query[0].count_nodes());
+    assert_eq!(0, query[0].count_edges());
 }
