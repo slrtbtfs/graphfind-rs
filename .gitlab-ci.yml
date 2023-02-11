@@ -40,7 +40,8 @@ test:
     # Install script for graphviz
     - apt-get update
     - apt-get install graphviz -y
-    - cargo test
+    # Tell Cargo to print debug output in tests
+    - cargo test -- --nocapture
 
 build:
   stage: cargo

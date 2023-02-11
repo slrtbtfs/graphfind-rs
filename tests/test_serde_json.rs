@@ -102,6 +102,7 @@ fn test_write_error_permissions() {
 
     let graph: Graph<(), ()> = petgraph::Graph::new();
     let write_attempt = read_writer.serialize_graph(&append_path(&dir, EMPTY_FILE_NAME), &graph);
+    dbg!(&write_attempt);
 
     let err = write_attempt.expect_err("Write to nonexistent dir should fail");
     assert_eq!(err.kind(), std::io::ErrorKind::PermissionDenied);
