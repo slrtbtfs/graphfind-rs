@@ -1,3 +1,5 @@
+use std::fs;
+
 use petgraph::{
     graph::Graph,
     visit::{EdgeRef, IntoNodeReferences},
@@ -11,6 +13,7 @@ use common::{make_sample_graph_variant, FriendOf, Person};
 const NAME_TO_READ_AND_WRITE: &str = "path.json";
 const EMPTY_FILE_NAME: &str = "empty.json";
 const MISSING_NAME: &str = "missing.json";
+const MISSING_DIR_NAME: &str = "missing_dir/unwritable_file.json";
 
 #[test]
 fn test_serde_json_graph_read_write() {
@@ -71,6 +74,37 @@ fn test_serde_file_not_exists() {
 
     assert_eq!(err.kind(), std::io::ErrorKind::Other);
     assert!(err.into_inner().is_some());
+}
+
+#[test]
+fn test_write_error_nonexistent_dir() {
+    let dir = TestDir::temp();
+    let read_writer = file_io_backends::petgraph::JsonGraphReadWriter::default();
+
+    let graph: Graph<(), ()> = petgraph::Graph::new();
+    let write_attempt = read_writer.serialize_graph(&append_path(&dir, MISSING_DIR_NAME), &graph);
+
+    dbg!(&write_attempt);
+
+    let err = write_attempt.expect_err("Write to nonexistent dir should fail");
+    assert_eq!(err.kind(), std::io::ErrorKind::NotFound);
+}
+
+#[test]
+fn test_write_error_permissions() {
+    let dir = TestDir::temp();
+
+    let mut perms = fs::metadata(dir.path("")).unwrap().permissions();
+    perms.set_readonly(true);
+    fs::set_permissions(dir.path(""), perms).unwrap();
+
+    let read_writer = file_io_backends::petgraph::JsonGraphReadWriter::default();
+
+    let graph: Graph<(), ()> = petgraph::Graph::new();
+    let write_attempt = read_writer.serialize_graph(&append_path(&dir, EMPTY_FILE_NAME), &graph);
+
+    let err = write_attempt.expect_err("Write to nonexistent dir should fail");
+    assert_eq!(err.kind(), std::io::ErrorKind::PermissionDenied);
 }
 
 fn append_path(dir: &TestDir, path: &str) -> String {
