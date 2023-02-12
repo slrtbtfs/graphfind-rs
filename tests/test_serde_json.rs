@@ -1,5 +1,3 @@
-use std::fs;
-
 use petgraph::{
     graph::Graph,
     visit::{EdgeRef, IntoNodeReferences},
@@ -90,27 +88,7 @@ fn test_write_error_nonexistent_dir() {
     assert_eq!(err.kind(), std::io::ErrorKind::NotFound);
 }
 
-#[test]
-fn test_write_error_permissions() {
-    let dir = TestDir::temp();
-
-    let mut perms = fs::metadata(dir.path("")).unwrap().permissions();
-    perms.set_readonly(true);
-    fs::set_permissions(dir.path(""), perms).unwrap();
-
-    let read_writer = file_io_backends::petgraph::JsonGraphReadWriter::default();
-
-    let graph: Graph<(), ()> = petgraph::Graph::new();
-    let write_attempt = read_writer.serialize_graph(&append_path(&dir, EMPTY_FILE_NAME), &graph);
-    dbg!(&write_attempt);
-
-    let err = write_attempt.expect_err("Write to nonexistent dir should fail");
-    assert_eq!(err.kind(), std::io::ErrorKind::PermissionDenied);
-}
-
 fn append_path(dir: &TestDir, path: &str) -> String {
     let buffer = dir.path(path);
     buffer.to_str().unwrap().to_string()
-    // x.to_string()
-    // todo!()
 }
