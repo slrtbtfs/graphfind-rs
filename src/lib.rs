@@ -11,8 +11,6 @@ pub mod graph;
 pub mod print;
 pub mod query;
 
-// Implementations in their own folders.
-pub mod file_io_backends;
 
 ///
 /// Contains implementations for the Graph trait.
@@ -23,4 +21,4 @@ pub mod graph_backends;
 ///
 pub mod query_algorithms;
 
-mod print_backends;
+mod petgraph;
