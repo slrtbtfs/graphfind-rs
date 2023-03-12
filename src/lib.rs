@@ -8,7 +8,6 @@ pub mod file_io;
 /// Defines the Graph trait for basic navigation in typed graphs.
 ///
 pub mod graph;
-pub mod manifest;
 pub mod print;
 pub mod query;
 
