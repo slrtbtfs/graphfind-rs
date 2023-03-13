@@ -1,5 +1,10 @@
 use std::{fmt::Debug, hash::Hash};
 
+// Serializing graphs to files.
+pub mod file_io;
+// Printing graph visualizations in graphviz dot format.
+pub mod print;
+
 ///
 /// Graph is a generic trait specifying the functionality that must be implemented by Graph storage backends used for Querying.
 ///
@@ -130,7 +135,7 @@ pub fn incoming_nodes<'a, G, N, NW: 'a, EW: 'a>(g: &'a G, n: N) -> impl Iterator
 where
     G: Graph<NW, EW, NodeRef = N>,
 {
-    g.incoming_edges(n).map(|e| g.adjacent_nodes(e).0)
+    g.incoming_edges(n).map(|e| g.adjacent_nodes(e).1)
 }
 
 ///

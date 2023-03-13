@@ -4,7 +4,7 @@ use std::vec;
 use graphviz_rust::cmd::{CommandArg, Format};
 use petgraph::dot::Dot;
 
-use crate::print::VizDotGraph;
+use crate::graph::print::VizDotGraph;
 
 ///
 /// Print implementation for petgraph-type graphs.

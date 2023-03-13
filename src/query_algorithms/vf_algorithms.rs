@@ -6,11 +6,11 @@ use std::{
 
 use bimap::BiHashMap;
 
+use crate::filter_map::FilterMap;
 use crate::{
-    graph::{Graph, incoming_nodes, outgoing_nodes},
+    graph::{incoming_nodes, outgoing_nodes, Graph},
     query::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
 };
-use crate::filter_map::FilterMap;
 
 ///
 /// Implements an subgraph isomorphism algorithm based on the papers

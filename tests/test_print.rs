@@ -1,4 +1,4 @@
-use rustgql::print::VizDotGraph;
+use rustgql::graph::print::VizDotGraph;
 use test_dir::{DirBuilder, TestDir};
 
 pub mod common;

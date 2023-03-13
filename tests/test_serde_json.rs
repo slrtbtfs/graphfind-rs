@@ -3,7 +3,7 @@ use petgraph::{
     visit::{EdgeRef, IntoNodeReferences},
     Directed,
 };
-use rustgql::file_io::GraphReadWriter;
+use rustgql::graph::file_io::GraphReadWriter;
 use test_dir::{DirBuilder, TestDir};
 
 pub mod common;

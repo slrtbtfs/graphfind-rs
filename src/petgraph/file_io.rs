@@ -1,4 +1,4 @@
-use crate::file_io::GraphReadWriter;
+use crate::graph::file_io::GraphReadWriter;
 use petgraph::stable_graph::DefaultIx;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{fs::File, io::Error as IOError};

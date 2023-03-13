@@ -2,14 +2,14 @@ use std::vec;
 
 use petgraph::{
     graph::{EdgeIndex, NodeIndex},
-    Graph,
-    stable_graph::DefaultIx, Undirected,
+    stable_graph::DefaultIx,
+    Graph, Undirected,
 };
 use rustgql::{filter_pattern, graph::Graph as RQLGraph};
 
 pub mod common;
 use common::{
-    FriendOf, into_trait_object, make_sample_graph_undirected, make_sample_graph_variant, Person,
+    into_trait_object, make_sample_graph_undirected, make_sample_graph_variant, FriendOf, Person,
     Role::Student,
 };
 use rustgql::filter_map::FilterMap;
