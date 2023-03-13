@@ -7,10 +7,10 @@ use std::{
 use bimap::BiHashMap;
 
 use crate::{
-    graph::{incoming_nodes, outgoing_nodes, Graph},
-    graph_backends::filter_map::FilterMap,
+    graph::{Graph, incoming_nodes, outgoing_nodes},
     query::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
 };
+use crate::filter_map::FilterMap;
 
 ///
 /// Implements an subgraph isomorphism algorithm based on the papers

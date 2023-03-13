@@ -1,6 +1,7 @@
 use std::hash::Hash;
 
-use crate::{graph::Graph, graph_backends::filter_map::FilterMap};
+use crate::graph::Graph;
+use crate::filter_map::FilterMap;
 
 ///
 /// The Condition type stands for any function that evaluates, given an element
