@@ -11,7 +11,6 @@ pub mod graph;
 pub mod print;
 pub mod query;
 
-
 ///
 /// Contains implementations for the Graph trait.
 ///

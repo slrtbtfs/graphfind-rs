@@ -1,3 +1,3 @@
-mod print;
-mod graph;
 mod file_io;
+mod graph;
+mod print;
