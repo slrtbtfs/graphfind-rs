@@ -1,4 +1,5 @@
-use rustgql::print::VizDotGraph;
+use rustgql::graph::VizDotGraph;
+#[cfg(feature = "svg")]
 use test_dir::{DirBuilder, TestDir};
 
 pub mod common;
@@ -32,6 +33,7 @@ fn test_petgraph_print() {
 ///
 /// Tests that graphviz can generate a .svg file for our sample graph.
 ///
+#[cfg(feature = "svg")]
 #[test]
 fn test_petgraph_svg_print() {
     let dir = TestDir::temp();

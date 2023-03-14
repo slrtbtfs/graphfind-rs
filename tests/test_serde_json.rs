@@ -1,8 +1,9 @@
 use petgraph::{
     graph::Graph,
     visit::{EdgeRef, IntoNodeReferences},
+    Directed,
 };
-use rustgql::{file_io::GraphReadWriter, file_io_backends};
+use rustgql::graph::GraphReadWriter;
 use test_dir::{DirBuilder, TestDir};
 
 pub mod common;
@@ -18,21 +19,19 @@ fn test_serde_json_graph_read_write() {
     // Make a new temp directory
     let dir = TestDir::current_rnd();
 
-    let read_writer = file_io_backends::petgraph::JsonGraphReadWriter::default();
     let graph_back = make_sample_graph_variant();
 
     // Serialize graph.
-    read_writer
-        .serialize_graph(
+    graph_back
+        .serialize_graph_to_file(
             // Append file name to temp dir; make to string, expect it to be there.
             &append_path(&dir, NAME_TO_READ_AND_WRITE),
-            &graph_back,
         )
         .unwrap();
     // Deserialize and pack in a Box.
-    let graph: Box<petgraph::graph::Graph<Person, FriendOf, _, _>> = read_writer
-        .deserialize_graph(&append_path(&dir, NAME_TO_READ_AND_WRITE))
-        .unwrap();
+    let graph: Box<petgraph::graph::Graph<Person, FriendOf, Directed, _>> =
+        GraphReadWriter::deserialize_graph_from_file(&append_path(&dir, NAME_TO_READ_AND_WRITE))
+            .unwrap();
 
     // Assert # of edges, nodes is equal.
     assert_eq!(graph_back.edge_count(), graph.edge_weights().count());
@@ -57,17 +56,16 @@ fn test_serde_file_not_exists() {
     let dir = TestDir::temp().create(EMPTY_FILE_NAME, test_dir::FileType::EmptyFile);
 
     // Fail to serialize from a file that doesn't exist.
-    let read_writer = file_io_backends::petgraph::JsonGraphReadWriter::default();
-    let read_attempt: Result<Box<Graph<Person, FriendOf, _, _>>, std::io::Error> =
-        read_writer.deserialize_graph(&append_path(&dir, MISSING_NAME));
+    let read_attempt: Result<Box<Graph<Person, FriendOf, Directed, _>>, std::io::Error> =
+        GraphReadWriter::deserialize_graph_from_file(&append_path(&dir, MISSING_NAME));
     let err = read_attempt.expect_err("Read attempt from missing file should fail.");
 
     // Default Rust Error to expect
     assert_eq!(err.kind(), std::io::ErrorKind::NotFound);
 
     // Create an empty file and try to deserialize from it.
-    let read_attempt: Result<Box<Graph<Person, FriendOf, _, _>>, std::io::Error> =
-        read_writer.deserialize_graph(&append_path(&dir, EMPTY_FILE_NAME));
+    let read_attempt: Result<Box<Graph<Person, FriendOf, Directed, _>>, std::io::Error> =
+        GraphReadWriter::deserialize_graph_from_file(&append_path(&dir, EMPTY_FILE_NAME));
     let err = read_attempt.expect_err("Read from empty file should fail.");
 
     assert_eq!(err.kind(), std::io::ErrorKind::Other);
@@ -77,10 +75,9 @@ fn test_serde_file_not_exists() {
 #[test]
 fn test_write_error_nonexistent_dir() {
     let dir = TestDir::temp();
-    let read_writer = file_io_backends::petgraph::JsonGraphReadWriter::default();
 
     let graph: Graph<(), ()> = petgraph::Graph::new();
-    let write_attempt = read_writer.serialize_graph(&append_path(&dir, MISSING_DIR_NAME), &graph);
+    let write_attempt = graph.serialize_graph_to_file(&append_path(&dir, MISSING_DIR_NAME));
 
     dbg!(&write_attempt);
 

@@ -5,13 +5,14 @@ use petgraph::{
     stable_graph::DefaultIx,
     Graph, Undirected,
 };
-use rustgql::{filter_pattern, graph::Graph as RQLGraph, graph_backends::filter_map::FilterMap};
+use rustgql::{filter_pattern, graph::Graph as RQLGraph};
 
 pub mod common;
 use common::{
     into_trait_object, make_sample_graph_undirected, make_sample_graph_variant, FriendOf, Person,
     Role::Student,
 };
+use rustgql::filter_map::FilterMap;
 
 ///
 /// Function Tests for filter_map

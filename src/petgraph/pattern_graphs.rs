@@ -1,27 +1,20 @@
-use crate::query::{Matcher, PatternGraph};
-
-///
-/// Creates an empty new pattern.
-///
-pub fn new_pattern<NodeWeight, EdgeWeight>() -> impl PatternGraph<NodeWeight, EdgeWeight> {
-    petgraph::Graph::new()
-}
+use crate::pattern_matching::{PatternElement, PatternGraph};
 
 ///
 /// Defines an PatternGraph over an directed petgraph. Guarantees that
 /// our graph should always be directed.
 ///
 impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
-    for petgraph::graph::Graph<Matcher<NodeWeight>, Matcher<EdgeWeight>>
+    for petgraph::graph::Graph<PatternElement<NodeWeight>, PatternElement<EdgeWeight>>
 {
     ///
     /// Adds a hidden node to match, and returns the reference.
     ///
-    fn hide_node<C>(&mut self, condition: C) -> Self::NodeRef
+    fn add_hidden_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
         C: Fn(&NodeWeight) -> bool + 'static,
     {
-        self.add_node(Matcher::new(Box::new(condition), true))
+        self.add_node(PatternElement::new(Box::new(condition), true))
     }
 
     ///
@@ -31,13 +24,13 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     where
         C: Fn(&NodeWeight) -> bool + 'static,
     {
-        self.add_node(Matcher::new(Box::new(condition), false))
+        self.add_node(PatternElement::new(Box::new(condition), false))
     }
 
     ///
     /// Adds a hidden/ignored edge to match, and returns the reference.
     ///
-    fn hide_edge<C>(
+    fn add_hidden_edge<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
@@ -46,7 +39,7 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     where
         C: Fn(&EdgeWeight) -> bool + 'static,
     {
-        self.add_edge(from, to, Matcher::new(Box::new(condition), true))
+        self.add_edge(from, to, PatternElement::new(Box::new(condition), true))
     }
 
     ///
@@ -61,6 +54,6 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
         {
             panic!("Must not refer to an edge that refers to nodes that cannot be referred!")
         }
-        self.add_edge(from, to, Matcher::new(Box::new(condition), false))
+        self.add_edge(from, to, PatternElement::new(Box::new(condition), false))
     }
 }
