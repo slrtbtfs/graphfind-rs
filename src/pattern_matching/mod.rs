@@ -22,10 +22,12 @@ pub mod vf_algorithms;
 ///
 /// As an example, we may define a function that tests if a node matches a Rust pattern.
 ///
+/// Recommended ways to create conditions are using either the lambda functions or the [crate::matcher] macro.
+///
 pub type Condition<Weight> = dyn Fn(&Weight) -> bool;
 
 ///
-/// Defines a struct that holds all relevant node/edge matching information.
+/// Struct that holds all relevant matching information for a single node/edge.
 ///
 pub struct Matcher<Weight> {
     ///
@@ -40,24 +42,23 @@ pub struct Matcher<Weight> {
 
 ///
 /// Holds the constructor for Matcher.
-///
 impl<Weight> Matcher<Weight> {
     ///
-    /// Creates a new Matcher struct.
+    /// Creates a new Matcher struct. If `ignore` is true, the node/edge will be hidden from the result graph.
     ///
     pub fn new(condition: Box<Condition<Weight>>, ignore: bool) -> Self {
         Self { condition, ignore }
     }
 
     ///
-    /// Returns true if and only if the matched node should appear in the result.
+    /// Checks the matched node should appear in the result graph.
     ///
     pub fn should_appear(&self) -> bool {
         !self.ignore
     }
 
     ///
-    /// Tests if the given element may be matched.
+    /// Tests if the given element matches the condition this matcher.
     ///
     pub fn may_match(&self, element: &Weight) -> bool {
         (self.condition)(element)
@@ -114,46 +115,48 @@ macro_rules! matcher {
 pub trait PatternGraph<NodeWeight, EdgeWeight>:
     Graph<Matcher<NodeWeight>, Matcher<EdgeWeight>>
 {
-    ///
     /// Adds a new node to the pattern.
     ///
+    /// A matched node appears in the result graph.
+    ///
     /// ## Input:
-    /// condition, a `Box` that holds a function to test if a node in a base graph matches
+    /// `condition`, a [Condition] that holds a function to test if a node in a base graph matches what we want in the pattern graph.
+    ///
+    /// ## Output:
+    /// A node reference.
+    fn add_node<C>(&mut self, condition: C) -> Self::NodeRef
+    where
+        C: Fn(&NodeWeight) -> bool + 'static;
+    /// Adds a new hidden node to the pattern.
+    /// A node that matches does not appear in the result graph, but is required to exist in the searched graph.
+    ///
+    /// ## Input:
+    /// condition, a `Condition` that holds a function to test if a node in a base graph matches.
     /// what we want in the pattern graph.
     ///
     /// ## Output:
-    /// A NodeRef to a node that appears.
-    ///
-    /// A node that matches does not appear in the result, but is ignored. It can't be
-    /// referred in a result graph.
-    ///
+    /// A node reference.
     fn hide_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
         C: Fn(&NodeWeight) -> bool + 'static;
 
-    ///
-    /// Adds a new node to the pattern.
-    /// Any matched node appears in the result.
-    ///
-    /// Returns a NodeRef to the added node.
-    ///
-    fn add_node<C>(&mut self, condition: C) -> Self::NodeRef
-    where
-        C: Fn(&NodeWeight) -> bool + 'static;
 
     ///
-    /// Adds a new, directed, and ignored edge to the pattern that does not appear.
+    /// Adds a new edge to the pattern. This edge will appear in the result graphs.
     ///
     /// ## Input:
-    /// 1. from, the source node of the new edge.
-    /// 2. to, the destination node.
-    /// 3. condition, a function to test if an edge in a base graph matches
-    /// that we want in the pattern graph.
+    /// 1. `from`, the source node of the new edge.
+    /// 2. `to`, the destination node.
+    /// 3. `condition`, a function to test if an edge in a base graph matches
+    /// what we want in the pattern graph.
     ///
     /// ## Output:
-    /// An EdgeRef. Any edge that matches does not appear in a result graph, but is ignored.
+    /// An edge reference.
     ///
-    fn hide_edge<C>(
+    /// ## Panics:
+    /// Panics if one of the adjacent nodes is a hidden node.
+    ///
+    fn add_edge<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
@@ -161,18 +164,22 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ) -> Self::EdgeRef
     where
         C: Fn(&EdgeWeight) -> bool + 'static;
-
     ///
-    /// Adds a new edge to the pattern. This edge will appear in the result graphs.
-    /// See also `hide_edge`.
+    /// Adds a new, directed, hidden edge to the pattern.
     ///
-    /// Returns an `EdgeRef` to the edge.
+    /// An edge that matches does not appear in the result graph, but is required to exist in the searched graph.
     ///
-    /// ## Panics:
-    /// `ignore` is set to false, and either one of the nodes under `from` and `to` is ignored.
-    /// We could then refer to a node in the result that we do not want to refer to.
+    /// ## Input:
+    /// 1. `from`, the source node of the new edge.
+    /// 2. `to`, the destination node.
+    /// 3. `condition`, a function to test if an edge in a base graph matches
+    /// what we want in the pattern graph.
     ///
-    fn add_edge<C>(
+    /// ## Output:
+    /// An edge reference.
+    ///
+    ///
+    fn hide_edge<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,

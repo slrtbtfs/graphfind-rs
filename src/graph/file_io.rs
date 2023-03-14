@@ -3,7 +3,7 @@ use std::io;
 use crate::graph::Graph;
 
 ///
-/// Module/Trait to serialize and deserialize a given Graph to a file.
+/// Trait to serialize and deserialize a given Graph to a file.
 /// The file format depends on the graph type being used and can only
 /// be assumed compatible with the same graph type.
 ///

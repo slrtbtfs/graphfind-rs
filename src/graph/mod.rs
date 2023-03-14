@@ -1,8 +1,8 @@
 use std::{fmt::Debug, hash::Hash};
 
-// Serializing graphs to files.
+/// Serializing graphs to files.
 pub mod file_io;
-// Printing graph visualizations in graphviz dot format.
+/// Printing graph visualizations in graphviz dot format.
 pub mod print;
 
 ///
