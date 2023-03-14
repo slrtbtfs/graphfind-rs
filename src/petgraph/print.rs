@@ -5,7 +5,7 @@ use std::fmt::Debug;
 #[cfg(feature = "svg")]
 use std::vec;
 
-use crate::graph::print::VizDotGraph;
+use crate::graph::VizDotGraph;
 
 /// Print implementation for petgraph-type graphs.
 ///
