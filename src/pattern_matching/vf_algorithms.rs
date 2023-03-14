@@ -10,7 +10,7 @@ use bimap::BiHashMap;
 use crate::filter_map::FilterMap;
 use crate::{
     graph::{incoming_nodes, outgoing_nodes, Graph},
-    pattern_matching::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
+    pattern_matching::{MatchedGraph, PatternElement, PatternGraph, SubgraphAlgorithm},
 };
 
 ///
@@ -540,7 +540,14 @@ where
         pattern_graph: &'a P,
         base_graph: &'a B,
     ) -> Vec<
-        FilterMap<'a, Matcher<NodeWeight>, Matcher<EdgeWeight>, &'a NodeWeight, &'a EdgeWeight, P>,
+        FilterMap<
+            'a,
+            PatternElement<NodeWeight>,
+            PatternElement<EdgeWeight>,
+            &'a NodeWeight,
+            &'a EdgeWeight,
+            P,
+        >,
     > {
         let mut vfstate = VfState::init(pattern_graph, base_graph);
         vfstate.run_query();

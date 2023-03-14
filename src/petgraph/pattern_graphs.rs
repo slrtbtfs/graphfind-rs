@@ -1,11 +1,11 @@
-use crate::pattern_matching::{Matcher, PatternGraph};
+use crate::pattern_matching::{PatternElement, PatternGraph};
 
 ///
 /// Defines an PatternGraph over an directed petgraph. Guarantees that
 /// our graph should always be directed.
 ///
 impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
-    for petgraph::graph::Graph<Matcher<NodeWeight>, Matcher<EdgeWeight>>
+    for petgraph::graph::Graph<PatternElement<NodeWeight>, PatternElement<EdgeWeight>>
 {
     ///
     /// Adds a hidden node to match, and returns the reference.
@@ -14,7 +14,7 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     where
         C: Fn(&NodeWeight) -> bool + 'static,
     {
-        self.add_node(Matcher::new(Box::new(condition), true))
+        self.add_node(PatternElement::new(Box::new(condition), true))
     }
 
     ///
@@ -24,7 +24,7 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     where
         C: Fn(&NodeWeight) -> bool + 'static,
     {
-        self.add_node(Matcher::new(Box::new(condition), false))
+        self.add_node(PatternElement::new(Box::new(condition), false))
     }
 
     ///
@@ -39,7 +39,7 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     where
         C: Fn(&EdgeWeight) -> bool + 'static,
     {
-        self.add_edge(from, to, Matcher::new(Box::new(condition), true))
+        self.add_edge(from, to, PatternElement::new(Box::new(condition), true))
     }
 
     ///
@@ -54,6 +54,6 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
         {
             panic!("Must not refer to an edge that refers to nodes that cannot be referred!")
         }
-        self.add_edge(from, to, Matcher::new(Box::new(condition), false))
+        self.add_edge(from, to, PatternElement::new(Box::new(condition), false))
     }
 }

@@ -244,6 +244,9 @@ macro_rules! filter_pattern {
     };
 }
 
+//Show macro in crate level docs as well
+pub use filter_pattern;
+
 impl<
         'g,
         BaseNodeWeight,
