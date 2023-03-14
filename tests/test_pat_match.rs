@@ -12,8 +12,9 @@ use petgraph::graph::{Graph, NodeIndex};
 use rustgql::{
     graph::Graph as QueryGraph,
     matcher,
+    pattern_matching::new_pattern,
     query::{PatternGraph, SubgraphAlgorithm},
-    query_algorithms::{pattern_graphs::new_pattern, vf_algorithms::VfState},
+    query_algorithms::vf_algorithms::VfState,
 };
 
 fn add_person<'a>(
