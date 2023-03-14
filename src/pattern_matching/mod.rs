@@ -153,7 +153,7 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     ///
     /// ## Output:
     /// A node reference.
-    fn hide_node<C>(&mut self, condition: C) -> Self::NodeRef
+    fn add_hidden_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
         C: Fn(&NodeWeight) -> bool + 'static;
 
@@ -195,7 +195,7 @@ pub trait PatternGraph<NodeWeight, EdgeWeight>:
     /// An edge reference.
     ///
     ///
-    fn hide_edge<C>(
+    fn add_hidden_edge<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,

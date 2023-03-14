@@ -1046,7 +1046,7 @@ fn create() {
 #[should_panic]
 fn ignore_wrong_edge_source() {
     let mut pattern = new_pattern();
-    let from = pattern.hide_node(|_: &i32| true);
+    let from = pattern.add_hidden_node(|_: &i32| true);
     let to = pattern.add_node(|_: &i32| true);
     pattern.add_edge(from, to, |_: &i32| false);
 }
@@ -1060,7 +1060,7 @@ fn ignore_wrong_edge_source() {
 fn ignore_wrong_edge_dest() {
     let mut pattern = new_pattern();
     let from = pattern.add_node(|_: &i32| true);
-    let to = pattern.hide_node(|_: &i32| true);
+    let to = pattern.add_hidden_node(|_: &i32| true);
     pattern.add_edge(from, to, |_: &i32| false);
 }
 
@@ -1072,8 +1072,8 @@ fn require_delete() {
     let mut pattern = new_pattern();
     let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
     let m1 = pattern.add_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
-    pattern.hide_edge(p, m2, matcher!(PlaysIn));
+    let m2 = pattern.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    pattern.add_hidden_edge(p, m2, matcher!(PlaysIn));
     let e = pattern.add_edge(p, m1, matcher!(PlaysIn));
 
     // Run query
@@ -1100,8 +1100,8 @@ fn require_delete() {
 fn check_ignored_nodes() {
     let mut pattern = new_pattern();
     let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
-    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
-    pattern.hide_edge(p, m2, matcher!(PlaysIn));
+    let m2 = pattern.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    pattern.add_hidden_edge(p, m2, matcher!(PlaysIn));
 
     // Run query
     let base_graph = full_graph().0;
@@ -1121,8 +1121,8 @@ fn check_ignored_nodes() {
 fn check_ignored_edges() {
     let mut pattern = new_pattern();
     let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
-    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
-    let e = pattern.hide_edge(p, m2, matcher!(PlaysIn));
+    let m2 = pattern.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let e = pattern.add_hidden_edge(p, m2, matcher!(PlaysIn));
 
     // Run query
     let base_graph = full_graph().0;
@@ -1144,13 +1144,13 @@ fn require() {
     let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
     let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
     // Four Connections we all ignore
-    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m2, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
@@ -1176,13 +1176,13 @@ fn all_stereotypes() {
     let mut pattern_graph = new_pattern();
     // Nodes
     let p1 = pattern_graph.add_node(|x| check_for_actor(x, "fabian"));
-    let p2 = pattern_graph.hide_node(matcher!(MovieNode::Person(_)));
+    let p2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Person(_)));
     let m1 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
     let m2 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
     // Edges
     let pm1 = pattern_graph.add_edge(p1, m1, matcher!(PlaysIn));
     let pm2 = pattern_graph.add_edge(p1, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(p2, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(p2, m2, matcher!(PlaysIn));
     let su = pattern_graph.add_edge(m1, m2, matcher!(Successor));
 
     // Query
@@ -1216,13 +1216,13 @@ fn bk_two_to_two() {
     let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
     let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
     // Connections
-    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m2, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
@@ -1252,16 +1252,16 @@ fn bk_two_to_three() {
     let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
     let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m3 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m3 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
     // Connections
-    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(s, m3, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m3, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m3, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m3, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
@@ -1287,11 +1287,11 @@ fn bk_two_to_three() {
 #[test]
 fn create_with_attributes() {
     let mut pattern_graph = new_pattern();
-    let s = pattern_graph.hide_node(|x| check_for_actor(x, "stefan"));
+    let s = pattern_graph.add_hidden_node(|x| check_for_actor(x, "stefan"));
     let y = pattern_graph.add_node(|x| check_for_actor(x, "yves"));
-    let j = pattern_graph.hide_node(|x| check_movie(x, "Jurassic Park", 1990));
-    pattern_graph.hide_edge(y, s, matcher!(Knows));
-    pattern_graph.hide_edge(y, j, matcher!(Knows));
+    let j = pattern_graph.add_hidden_node(|x| check_movie(x, "Jurassic Park", 1990));
+    pattern_graph.add_hidden_edge(y, s, matcher!(Knows));
+    pattern_graph.add_hidden_edge(y, j, matcher!(Knows));
 
     // Run query
     let base_graph = full_graph().0;
@@ -1310,17 +1310,17 @@ fn req_test() {
     let f = pattern_graph.add_node(|x| check_for_actor(x, "fabian"));
     let j = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
     // Other movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m3 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m3 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
 
     // Relations
     let pi = pattern_graph.add_edge(f, j, matcher!(PlaysIn));
-    pattern_graph.hide_edge(f, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(f, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(f, m3, matcher!(PlaysIn));
-    pattern_graph.hide_edge(m1, m2, matcher!(Successor));
-    pattern_graph.hide_edge(m3, m2, matcher!(Successor));
+    pattern_graph.add_hidden_edge(f, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(f, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(f, m3, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(m1, m2, matcher!(Successor));
+    pattern_graph.add_hidden_edge(m3, m2, matcher!(Successor));
 
     // Query
     let base_graph = full_graph().0;
@@ -1351,7 +1351,7 @@ fn seq_create() {
 
     // Two relations
     pattern_graph.add_edge(p1, p2, matcher!(Knows));
-    pattern_graph.hide_edge(p2, m, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(p2, m, matcher!(PlaysIn));
 
     // Query yields seven results
     let base_graph = full_graph().0;
@@ -1377,14 +1377,14 @@ fn all_stereotypes_2() {
     let p2 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
     let p3 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
     // Two movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
 
     // Four relations
     pattern_graph.add_edge(p1, p2, matcher!(Knows));
     pattern_graph.add_edge(p1, p3, matcher!(Knows));
-    pattern_graph.hide_edge(p2, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(p3, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(p2, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(p3, m2, matcher!(PlaysIn));
 
     // Query with two results
     let base_graph = full_graph().0;
@@ -1400,9 +1400,9 @@ fn all_stereotypes_2() {
 fn match_empty() {
     let mut pattern_graph = new_pattern();
     // Two nodes, an edge that runs between them.
-    let n1 = pattern_graph.hide_node(matcher!());
-    let n2 = pattern_graph.hide_node(matcher!());
-    pattern_graph.hide_edge(n1, n2, matcher!());
+    let n1 = pattern_graph.add_hidden_node(matcher!());
+    let n2 = pattern_graph.add_hidden_node(matcher!());
+    pattern_graph.add_hidden_edge(n1, n2, matcher!());
     // Make query
     let base_graph = full_graph().0;
     let query = solve_vf(&pattern_graph, &base_graph);

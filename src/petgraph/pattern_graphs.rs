@@ -10,7 +10,7 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     ///
     /// Adds a hidden node to match, and returns the reference.
     ///
-    fn hide_node<C>(&mut self, condition: C) -> Self::NodeRef
+    fn add_hidden_node<C>(&mut self, condition: C) -> Self::NodeRef
     where
         C: Fn(&NodeWeight) -> bool + 'static,
     {
@@ -30,7 +30,7 @@ impl<NodeWeight, EdgeWeight> PatternGraph<NodeWeight, EdgeWeight>
     ///
     /// Adds a hidden/ignored edge to match, and returns the reference.
     ///
-    fn hide_edge<C>(
+    fn add_hidden_edge<C>(
         &mut self,
         from: Self::NodeRef,
         to: Self::NodeRef,
