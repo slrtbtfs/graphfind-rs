@@ -29,7 +29,7 @@ where
     /// Deserializes a graph stored as JSON, and packs it into a Box.
     /// If serde_json fails, packs the underlying error in an std::io::Error for examination.
     ///
-    fn deserialize_graph_to_file(path: &str) -> Result<Box<Self>, IOError> {
+    fn deserialize_graph_from_file(path: &str) -> Result<Box<Self>, IOError> {
         let file = File::open(path)?;
         serde_json::de::from_reader(file)
             .map(Box::new)

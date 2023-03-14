@@ -18,5 +18,5 @@ pub trait GraphReadWriter<NodeWeight, EdgeWeight>: Graph<NodeWeight, EdgeWeight>
     /// Deserializes a graph stored in the given file.
     /// The result tells us whether the operation succeeded or not.
     ///
-    fn deserialize_graph_to_file(path: &str) -> Result<Box<Self>, io::Error>;
+    fn deserialize_graph_from_file(path: &str) -> Result<Box<Self>, io::Error>;
 }
