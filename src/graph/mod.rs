@@ -135,7 +135,7 @@ pub fn incoming_nodes<'a, G, N, NW: 'a, EW: 'a>(g: &'a G, n: N) -> impl Iterator
 where
     G: Graph<NW, EW, NodeRef = N>,
 {
-    g.incoming_edges(n).map(|e| g.adjacent_nodes(e).1)
+    g.incoming_edges(n).map(|e| g.adjacent_nodes(e).0)
 }
 
 ///
