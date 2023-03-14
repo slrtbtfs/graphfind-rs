@@ -15,6 +15,6 @@ serde_json = "1.0"
 # for Test directories (experimental)
 test_dir = "0.2"
 # to print graphs
-graphviz-rust = "0.5"
+graphviz-rust = "0.6"
 # for VF2 algorithm core set
 bimap = "0.6"
