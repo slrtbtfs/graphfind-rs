@@ -1,15 +1,16 @@
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
+    fmt::Debug,
     hash::Hash,
 };
 
 use bimap::BiHashMap;
 
+use crate::filter_map::FilterMap;
 use crate::{
-    graph::Graph,
-    graph_backends::{filter_map::FilterMap, graph_helpers},
-    query::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
+    graph::{incoming_nodes, outgoing_nodes, Graph},
+    pattern_matching::{MatchedGraph, PatternElement, PatternGraph, SubgraphAlgorithm},
 };
 
 ///
@@ -36,7 +37,12 @@ pub struct VfState<
     E2Ref,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
-> {
+> where
+    NRef: Debug,
+    ERef: Debug,
+    N2Ref: Debug,
+    E2Ref: Debug,
+{
     ///
     /// Reference to the pattern graph.
     ///
@@ -92,10 +98,10 @@ pub struct VfState<
 impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
-    NRef: Copy + Hash + Ord,
-    N2Ref: Copy + Hash + Eq,
-    ERef: Copy + Eq + Hash,
-    E2Ref: Copy,
+    NRef: Copy + Hash + Ord + Debug,
+    N2Ref: Copy + Hash + Eq + Debug,
+    ERef: Copy + Eq + Hash + Debug,
+    E2Ref: Copy + Debug,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
@@ -191,19 +197,19 @@ where
         self.in_2.entry(m).or_insert(depth);
 
         // Iterate over the neighbors of n, and add them to the out_1 set/map.
-        graph_helpers::outgoing_nodes(self.pattern_graph, n).for_each(|n_out| {
+        outgoing_nodes(self.pattern_graph, n).for_each(|n_out| {
             self.out_1.entry(n_out).or_insert(depth);
         });
         // Repeat the process for the outgoing neighbors of m.
-        graph_helpers::outgoing_nodes(self.base_graph, m).for_each(|m_out| {
+        outgoing_nodes(self.base_graph, m).for_each(|m_out| {
             self.out_2.entry(m_out).or_insert(depth);
         });
         // Iterate for the predecessors of n and add them to in_1.
-        graph_helpers::incoming_nodes(self.pattern_graph, n).for_each(|n_in| {
+        incoming_nodes(self.pattern_graph, n).for_each(|n_in| {
             self.in_1.entry(n_in).or_insert(depth);
         });
         // Repeat for in_2 and predecessors of m.
-        graph_helpers::incoming_nodes(self.base_graph, m).for_each(|m_in| {
+        incoming_nodes(self.base_graph, m).for_each(|m_in| {
             self.in_2.entry(m_in).or_insert(depth);
         });
     }
@@ -234,11 +240,11 @@ where
     ///
     fn check_predecessor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Pred(G_1, n)
-        let n_preds: HashSet<_> = graph_helpers::incoming_nodes(self.pattern_graph, n)
+        let n_preds: HashSet<_> = incoming_nodes(self.pattern_graph, n)
             .filter(|n_pred| self.core.contains_left(n_pred))
             .collect();
         // M_2(s) intersected with Pred(G_2, m).
-        let m_preds: HashSet<_> = graph_helpers::incoming_nodes(self.base_graph, m)
+        let m_preds: HashSet<_> = incoming_nodes(self.base_graph, m)
             .filter(|m_pred| self.core.contains_right(m_pred))
             .collect();
 
@@ -258,11 +264,11 @@ where
     ///
     fn check_successor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Succ(G_1, n)
-        let n_succs: HashSet<_> = graph_helpers::outgoing_nodes(self.pattern_graph, n)
+        let n_succs: HashSet<_> = outgoing_nodes(self.pattern_graph, n)
             .filter(|n_succ| self.core.contains_left(n_succ))
             .collect();
         // M_2(s) intersected with Succ(G_2, m).
-        let m_succs: HashSet<_> = graph_helpers::outgoing_nodes(self.base_graph, m)
+        let m_succs: HashSet<_> = outgoing_nodes(self.base_graph, m)
             .filter(|m_succ| self.core.contains_right(m_succ))
             .collect();
 
@@ -350,16 +356,16 @@ where
         Self::remove(m, depth, &mut self.in_2);
 
         // out_1/Pattern Graph
-        graph_helpers::outgoing_nodes(self.pattern_graph, *n)
+        outgoing_nodes(self.pattern_graph, *n)
             .for_each(|n_out| Self::remove(&n_out, depth, &mut self.out_1));
         // out_2/Base Graph
-        graph_helpers::outgoing_nodes(self.base_graph, *m)
+        outgoing_nodes(self.base_graph, *m)
             .for_each(|m_out| Self::remove(&m_out, depth, &mut self.out_2));
         // in_1/Pattern Graph
-        graph_helpers::incoming_nodes(self.pattern_graph, *n)
+        incoming_nodes(self.pattern_graph, *n)
             .for_each(|n_in| Self::remove(&n_in, depth, &mut self.in_1));
         // in_2/Base Graph
-        graph_helpers::incoming_nodes(self.base_graph, *m)
+        incoming_nodes(self.base_graph, *m)
             .for_each(|n_in| Self::remove(&n_in, depth, &mut self.in_2));
     }
 
@@ -523,10 +529,10 @@ impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     SubgraphAlgorithm<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     for VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
-    NRef: Copy + Hash + Ord,
-    N2Ref: Copy + Hash + Eq,
-    ERef: Copy + Hash + Eq,
-    E2Ref: Copy,
+    NRef: Copy + Hash + Ord + Debug,
+    N2Ref: Copy + Hash + Eq + Debug,
+    ERef: Copy + Hash + Eq + Debug,
+    E2Ref: Copy + Debug,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
@@ -534,7 +540,14 @@ where
         pattern_graph: &'a P,
         base_graph: &'a B,
     ) -> Vec<
-        FilterMap<'a, Matcher<NodeWeight>, Matcher<EdgeWeight>, &'a NodeWeight, &'a EdgeWeight, P>,
+        FilterMap<
+            'a,
+            PatternElement<NodeWeight>,
+            PatternElement<EdgeWeight>,
+            &'a NodeWeight,
+            &'a EdgeWeight,
+            P,
+        >,
     > {
         let mut vfstate = VfState::init(pattern_graph, base_graph);
         vfstate.run_query();

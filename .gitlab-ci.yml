@@ -41,7 +41,7 @@ test:
     - apt-get update
     - apt-get install graphviz -y
     # Tell Cargo to print debug output in tests
-    - cargo test -- --nocapture
+    - cargo test --features svg -- --nocapture
 
 build:
   stage: cargo
@@ -62,7 +62,7 @@ coverage:
     - apt-get install graphviz -y
     - rustup component add llvm-tools-preview
     # do everything except doc tests since those don't work in this environment
-    - cargo test --lib --bins --tests
+    - cargo test --lib --bins --tests --features svg
     # generate html report
     - cargo install grcov
     - grcov . --binary-path ./target/debug/ -s . -t html --branch --ignore-not-existing --ignore "*cargo*" -o ./coverage/

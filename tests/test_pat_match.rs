@@ -9,11 +9,10 @@ use common::{
     Relation::{Knows, PlaysIn, Successor},
 };
 use petgraph::graph::{Graph, NodeIndex};
+use rustgql::pattern_matching::solve_vf;
 use rustgql::{
-    graph::Graph as QueryGraph,
-    matcher,
-    query::{PatternGraph, SubgraphAlgorithm},
-    query_algorithms::{pattern_graphs::new_pattern, vf_algorithms::VfState},
+    graph::Graph as QueryGraph, matcher, pattern_matching::new_pattern,
+    pattern_matching::PatternGraph,
 };
 
 fn add_person<'a>(
@@ -209,7 +208,7 @@ fn test_empty_pattern_no_results() {
     assert!(empty_pattern.is_empty_graph());
 
     // Explicitly specify result type.
-    let results = VfState::eval(&empty_pattern, &base_graph);
+    let results = solve_vf(&empty_pattern, &base_graph);
     assert!(results.is_empty());
 }
 
@@ -224,7 +223,7 @@ fn test_single_node_any_pattern() {
     single_pattern.add_node(matcher!());
 
     // Explicitly specify result type.
-    let results = VfState::eval(&single_pattern, &base_graph);
+    let results = solve_vf(&single_pattern, &base_graph);
 
     // Assert eleven results.
     assert_eq!(11, results.len());
@@ -255,7 +254,7 @@ fn match_pattern_too_large() {
     let index = base_graph.add_node(4);
     base_graph.add_edge(index, index, "equals");
 
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     assert_eq!(0, results.len());
 }
 
@@ -269,7 +268,7 @@ fn match_person_nodes_only() {
     let person_index = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
 
     let base_graph = node_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
 
     let names: HashSet<_> = results
         .iter()
@@ -306,7 +305,7 @@ fn match_two_node_pairs() {
     pattern_graph.add_node(is_person);
     let base_graph = node_graph().0;
 
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
 
     assert_eq!(6 * 5, results.len());
 }
@@ -322,7 +321,7 @@ fn match_wrong_matches_only() {
 
     two_pattern.add_node(matcher!(MovieNode::Movie(common::Movie { year: 32, .. })));
 
-    let results = VfState::eval(&two_pattern, &base_graph);
+    let results = solve_vf(&two_pattern, &base_graph);
     assert_eq!(0, results.len());
 }
 
@@ -350,7 +349,7 @@ fn match_single_edges() {
     let idx_5 = pattern_graph.add_node(matcher!());
     let edge = pattern_graph.add_edge(idx_4, idx_5, matcher!());
 
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
 
     // Assert four results.
     assert_eq!(4, results.len());
@@ -390,7 +389,7 @@ fn match_double_edges() {
     pattern_graph.add_edge(idx_5, idx_6, matcher!());
     pattern_graph.add_edge(idx_6, idx_4, matcher!());
 
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
 
     assert_eq!(2, results.len());
     for res in results {
@@ -428,7 +427,7 @@ fn match_three_star_in_six_star() {
         e.push(three_star.add_edge(center, leaf, matcher!()));
     }
 
-    let results = VfState::eval(&three_star, &six_star);
+    let results = solve_vf(&three_star, &six_star);
     assert_eq!(120, results.len());
 
     for res in results {
@@ -467,7 +466,7 @@ fn match_three_star_even_weights() {
         three_star.add_edge(center, leaf, matcher!(i if i%2 == 0));
     }
 
-    let results = VfState::eval(&three_star, &six_star);
+    let results = solve_vf(&three_star, &six_star);
     assert_eq!(6, results.len());
 
     for res in results {
@@ -499,7 +498,7 @@ fn match_three_star_inverse() {
         three_star.add_edge(leaf, center, matcher!(i if i%2 == 0));
     }
 
-    let results = VfState::eval(&three_star, &six_star);
+    let results = solve_vf(&three_star, &six_star);
     assert_eq!(6, results.len());
 }
 
@@ -535,7 +534,7 @@ fn test_node_edge_counts_terminate_early() {
     four_clique.add_edge(idx_13, idx_11, matcher!());
     four_clique.add_edge(idx_13, idx_12, matcher!());
 
-    let results = VfState::eval(&four_clique, &six_star);
+    let results = solve_vf(&four_clique, &six_star);
     assert_eq!(0, results.len());
 }
 
@@ -565,7 +564,7 @@ fn optimization_test() {
     pattern_graph.add_edge(p3, p3, matcher!(Knows));
 
     // Algorithm
-    let results = VfState::eval(&pattern_graph, &data_graph);
+    let results = solve_vf(&pattern_graph, &data_graph);
 
     // Check results
     assert_eq!(3, results.len());
@@ -608,7 +607,7 @@ fn cycle_in_knows_match() {
     pattern_graph.add_edge(p3, p1, |m| matches!(m, Knows));
 
     // Algorithm
-    let results = VfState::eval(&pattern_graph, &data_graph);
+    let results = solve_vf(&pattern_graph, &data_graph);
 
     // Check results
     assert_eq!(3, results.len());
@@ -660,7 +659,7 @@ fn sequence_optimization() {
     let e3 = pattern_graph.add_edge(p3, p4, matcher!(Knows));
 
     // Query
-    let query_results = VfState::eval(&pattern_graph, &data_graph);
+    let query_results = solve_vf(&pattern_graph, &data_graph);
     assert_eq!(1, query_results.len());
 
     // Persons are stefan, yves, fabian, benedikt, tobias
@@ -702,7 +701,7 @@ fn reflexive_optimization2() {
     let e4 = pattern_graph.add_edge(p3, p3, matcher!(Knows));
 
     // Query
-    let query_results = VfState::eval(&pattern_graph, &data_graph);
+    let query_results = solve_vf(&pattern_graph, &data_graph);
     assert_eq!(2, query_results.len());
 
     // Persons are stefan, yves, fabian, benedikt, tobias
@@ -755,7 +754,7 @@ fn reflexive_optimization() {
     let e6 = pattern_graph.add_edge(p2, p2, matcher!(Knows));
 
     // Query
-    let query_results = VfState::eval(&pattern_graph, &data_graph);
+    let query_results = solve_vf(&pattern_graph, &data_graph);
     assert_eq!(2, query_results.len());
 
     // Persons are stefan, yves, fabian, benedikt, tobias
@@ -818,7 +817,7 @@ fn delete_test() {
     pattern_graph.add_edge(fab, m3, matcher!(PlaysIn));
 
     // Get & check results
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     assert_eq!(24, results.len());
 
     // Check nodes & edges
@@ -864,7 +863,7 @@ fn three_to_three() {
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     // Six results
     assert_eq!(6, results.len());
 
@@ -909,7 +908,7 @@ fn three_to_two() {
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     // Six results
     assert_eq!(6, results.len());
 
@@ -950,7 +949,7 @@ fn two_to_two() {
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     // Six results
     assert_eq!(6, results.len());
 
@@ -987,7 +986,7 @@ fn attributes_with_parameters() {
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     // One result
     assert_eq!(1, results.len());
 
@@ -1023,7 +1022,7 @@ fn create() {
     let pi = pattern_graph.add_edge(p, m, matcher!(PlaysIn));
 
     let base_graph = full_graph().0;
-    let query_results = VfState::eval(&pattern_graph, &base_graph);
+    let query_results = solve_vf(&pattern_graph, &base_graph);
     assert_eq!(10, query_results.len());
 
     // Check structure
@@ -1045,7 +1044,7 @@ fn create() {
 #[should_panic]
 fn ignore_wrong_edge_source() {
     let mut pattern = new_pattern();
-    let from = pattern.hide_node(|_: &i32| true);
+    let from = pattern.add_hidden_node(|_: &i32| true);
     let to = pattern.add_node(|_: &i32| true);
     pattern.add_edge(from, to, |_: &i32| false);
 }
@@ -1059,7 +1058,7 @@ fn ignore_wrong_edge_source() {
 fn ignore_wrong_edge_dest() {
     let mut pattern = new_pattern();
     let from = pattern.add_node(|_: &i32| true);
-    let to = pattern.hide_node(|_: &i32| true);
+    let to = pattern.add_hidden_node(|_: &i32| true);
     pattern.add_edge(from, to, |_: &i32| false);
 }
 
@@ -1071,13 +1070,13 @@ fn require_delete() {
     let mut pattern = new_pattern();
     let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
     let m1 = pattern.add_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
-    pattern.hide_edge(p, m2, matcher!(PlaysIn));
+    let m2 = pattern.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    pattern.add_hidden_edge(p, m2, matcher!(PlaysIn));
     let e = pattern.add_edge(p, m1, matcher!(PlaysIn));
 
     // Run query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern, &base_graph);
+    let results = solve_vf(&pattern, &base_graph);
     assert_eq!(3, results.len());
 
     // Check results
@@ -1099,12 +1098,12 @@ fn require_delete() {
 fn check_ignored_nodes() {
     let mut pattern = new_pattern();
     let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
-    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
-    pattern.hide_edge(p, m2, matcher!(PlaysIn));
+    let m2 = pattern.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    pattern.add_hidden_edge(p, m2, matcher!(PlaysIn));
 
     // Run query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern, &base_graph);
+    let results = solve_vf(&pattern, &base_graph);
     let graph = &results[0];
 
     // Force panic
@@ -1120,12 +1119,12 @@ fn check_ignored_nodes() {
 fn check_ignored_edges() {
     let mut pattern = new_pattern();
     let p = pattern.add_node(|x| check_for_actor(x, "stefan"));
-    let m2 = pattern.hide_node(matcher!(MovieNode::Movie(_)));
-    let e = pattern.hide_edge(p, m2, matcher!(PlaysIn));
+    let m2 = pattern.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let e = pattern.add_hidden_edge(p, m2, matcher!(PlaysIn));
 
     // Run query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern, &base_graph);
+    let results = solve_vf(&pattern, &base_graph);
     let graph = &results[0];
 
     // Force panic
@@ -1143,17 +1142,17 @@ fn require() {
     let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
     let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
     // Four Connections we all ignore
-    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m2, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     // Single Result
     assert_eq!(1, results.len());
 
@@ -1175,18 +1174,18 @@ fn all_stereotypes() {
     let mut pattern_graph = new_pattern();
     // Nodes
     let p1 = pattern_graph.add_node(|x| check_for_actor(x, "fabian"));
-    let p2 = pattern_graph.hide_node(matcher!(MovieNode::Person(_)));
+    let p2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Person(_)));
     let m1 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
     let m2 = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
     // Edges
     let pm1 = pattern_graph.add_edge(p1, m1, matcher!(PlaysIn));
     let pm2 = pattern_graph.add_edge(p1, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(p2, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(p2, m2, matcher!(PlaysIn));
     let su = pattern_graph.add_edge(m1, m2, matcher!(Successor));
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     assert_eq!(3, results.len());
 
     // Tests
@@ -1215,17 +1214,17 @@ fn bk_two_to_two() {
     let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
     let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
     // Connections
-    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m2, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     // One result
     assert_eq!(1, results.len());
 
@@ -1251,20 +1250,20 @@ fn bk_two_to_three() {
     let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
     let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
     // Movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m3 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m3 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
     // Connections
-    pattern_graph.hide_edge(s, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(s, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(s, m3, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(y, m3, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(s, m3, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(y, m3, matcher!(PlaysIn));
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     // One result
     assert_eq!(1, results.len());
 
@@ -1286,15 +1285,15 @@ fn bk_two_to_three() {
 #[test]
 fn create_with_attributes() {
     let mut pattern_graph = new_pattern();
-    let s = pattern_graph.hide_node(|x| check_for_actor(x, "stefan"));
+    let s = pattern_graph.add_hidden_node(|x| check_for_actor(x, "stefan"));
     let y = pattern_graph.add_node(|x| check_for_actor(x, "yves"));
-    let j = pattern_graph.hide_node(|x| check_movie(x, "Jurassic Park", 1990));
-    pattern_graph.hide_edge(y, s, matcher!(Knows));
-    pattern_graph.hide_edge(y, j, matcher!(Knows));
+    let j = pattern_graph.add_hidden_node(|x| check_movie(x, "Jurassic Park", 1990));
+    pattern_graph.add_hidden_edge(y, s, matcher!(Knows));
+    pattern_graph.add_hidden_edge(y, j, matcher!(Knows));
 
     // Run query
     let base_graph = full_graph().0;
-    assert_eq!(0, VfState::eval(&pattern_graph, &base_graph).len());
+    assert_eq!(0, solve_vf(&pattern_graph, &base_graph).len());
 }
 
 ///
@@ -1309,21 +1308,21 @@ fn req_test() {
     let f = pattern_graph.add_node(|x| check_for_actor(x, "fabian"));
     let j = pattern_graph.add_node(matcher!(MovieNode::Movie(_)));
     // Other movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m3 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m3 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
 
     // Relations
     let pi = pattern_graph.add_edge(f, j, matcher!(PlaysIn));
-    pattern_graph.hide_edge(f, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(f, m2, matcher!(PlaysIn));
-    pattern_graph.hide_edge(f, m3, matcher!(PlaysIn));
-    pattern_graph.hide_edge(m1, m2, matcher!(Successor));
-    pattern_graph.hide_edge(m3, m2, matcher!(Successor));
+    pattern_graph.add_hidden_edge(f, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(f, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(f, m3, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(m1, m2, matcher!(Successor));
+    pattern_graph.add_hidden_edge(m3, m2, matcher!(Successor));
 
     // Query
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     assert_eq!(1, results.len());
 
     // Check movie
@@ -1350,11 +1349,11 @@ fn seq_create() {
 
     // Two relations
     pattern_graph.add_edge(p1, p2, matcher!(Knows));
-    pattern_graph.hide_edge(p2, m, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(p2, m, matcher!(PlaysIn));
 
     // Query yields seven results
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     assert_eq!(14, results.len());
 
     // PlaysIn does not appear in the result
@@ -1376,18 +1375,18 @@ fn all_stereotypes_2() {
     let p2 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
     let p3 = pattern_graph.add_node(matcher!(MovieNode::Person(_)));
     // Two movies
-    let m1 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
-    let m2 = pattern_graph.hide_node(matcher!(MovieNode::Movie(_)));
+    let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
+    let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
 
     // Four relations
     pattern_graph.add_edge(p1, p2, matcher!(Knows));
     pattern_graph.add_edge(p1, p3, matcher!(Knows));
-    pattern_graph.hide_edge(p2, m1, matcher!(PlaysIn));
-    pattern_graph.hide_edge(p3, m2, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(p2, m1, matcher!(PlaysIn));
+    pattern_graph.add_hidden_edge(p3, m2, matcher!(PlaysIn));
 
     // Query with two results
     let base_graph = full_graph().0;
-    let results = VfState::eval(&pattern_graph, &base_graph);
+    let results = solve_vf(&pattern_graph, &base_graph);
     assert_eq!(2, results.len())
 }
 
@@ -1399,12 +1398,12 @@ fn all_stereotypes_2() {
 fn match_empty() {
     let mut pattern_graph = new_pattern();
     // Two nodes, an edge that runs between them.
-    let n1 = pattern_graph.hide_node(matcher!());
-    let n2 = pattern_graph.hide_node(matcher!());
-    pattern_graph.hide_edge(n1, n2, matcher!());
+    let n1 = pattern_graph.add_hidden_node(matcher!());
+    let n2 = pattern_graph.add_hidden_node(matcher!());
+    pattern_graph.add_hidden_edge(n1, n2, matcher!());
     // Make query
     let base_graph = full_graph().0;
-    let query = VfState::eval(&pattern_graph, &base_graph);
+    let query = solve_vf(&pattern_graph, &base_graph);
 
     // One result with nothing in it
     assert_eq!(1, query.len());

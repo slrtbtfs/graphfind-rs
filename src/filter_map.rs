@@ -19,7 +19,7 @@ use crate::graph::{self};
 /// at the same time, with the possibility to consider the entire graph structure for each individual graph element transformation. For most use cases the simpler, derived constructors
 /// that only do part of that might be more appropriate.
 ///
-/// Note that the base graph is required to outlive the generated FilerMap Graph, since
+/// Note that the base graph is required to outlive the generated FilterMap Graph, since
 /// the graph structure is borrowed from the base graph.
 ///
 pub struct FilterMap<
@@ -44,10 +44,14 @@ impl<
         Graph: graph::Graph<BaseNodeWeight, BaseEdgeWeight>,
     > FilterMap<'g, BaseNodeWeight, BaseEdgeWeight, NodeWeight, EdgeWeight, Graph>
 {
+    /// The most low level constructor offered by this module. Usually its more comfortable
+    /// to use one of the functional constructors below.
+    ///
     /// Creates a new FilterMap Graph directly from the corresponding node
     /// and edge maps provided as HashMaps.
+    ///
     /// It is the responsibility of the callee to ensure that provided edges only
-    /// point to valid node indices that haven't been removed.
+    /// point to valid node indices that haven't been removed from the node map.
     pub fn new(
         base_graph: &'g Graph,
         node_map: HashMap<Graph::NodeRef, NodeWeight>,
@@ -239,6 +243,9 @@ macro_rules! filter_pattern {
         filter_pattern!($graph, node_pattern: _, edge_pattern: $edge_pattern)
     };
 }
+
+//Show macro in crate level docs as well
+pub use filter_pattern;
 
 impl<
         'g,

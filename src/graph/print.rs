@@ -15,5 +15,8 @@ pub trait VizDotGraph<NodeWeight, EdgeWeight>: Graph<NodeWeight, EdgeWeight> {
     ///
     /// The Result contains an error description, if something goes wrong.
     ///
+    ///
+    /// Requires the `svg` feature of this crate to be enabled.
+    #[cfg(feature = "svg")]
     fn print_to_svg(&self, path: &str) -> Result<String, std::io::Error>;
 }

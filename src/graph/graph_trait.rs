@@ -1,5 +1,4 @@
 use std::{fmt::Debug, hash::Hash};
-
 ///
 /// Graph is a generic trait specifying the functionality that must be implemented by Graph storage backends used for Querying.
 ///

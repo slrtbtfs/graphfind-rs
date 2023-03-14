@@ -1,4 +1,4 @@
-use crate::graph::Graph;
+use super::Graph;
 
 ///
 /// Convenience Method to directly access the predecessor nodes of node `n` in Graph `g`.
