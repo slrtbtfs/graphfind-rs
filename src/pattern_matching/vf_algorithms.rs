@@ -10,7 +10,7 @@ use bimap::BiHashMap;
 use crate::filter_map::FilterMap;
 use crate::{
     graph::{incoming_nodes, outgoing_nodes, Graph},
-    query::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
+    pattern_matching::{MatchedGraph, Matcher, PatternGraph, SubgraphAlgorithm},
 };
 
 ///

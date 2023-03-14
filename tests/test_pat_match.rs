@@ -9,12 +9,12 @@ use common::{
     Relation::{Knows, PlaysIn, Successor},
 };
 use petgraph::graph::{Graph, NodeIndex};
+use rustgql::pattern_matching::vf_algorithms::VfState;
 use rustgql::{
     graph::Graph as QueryGraph,
     matcher,
     pattern_matching::new_pattern,
-    query::{PatternGraph, SubgraphAlgorithm},
-    query_algorithms::vf_algorithms::VfState,
+    pattern_matching::{PatternGraph, SubgraphAlgorithm},
 };
 
 fn add_person<'a>(

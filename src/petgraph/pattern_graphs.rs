@@ -1,4 +1,4 @@
-use crate::query::{Matcher, PatternGraph};
+use crate::pattern_matching::{Matcher, PatternGraph};
 
 ///
 /// Defines an PatternGraph over an directed petgraph. Guarantees that
