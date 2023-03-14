@@ -1,6 +1,7 @@
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
+    fmt::Debug,
     hash::Hash,
 };
 
@@ -36,7 +37,12 @@ pub struct VfState<
     E2Ref,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
-> {
+> where
+    NRef: Debug,
+    ERef: Debug,
+    N2Ref: Debug,
+    E2Ref: Debug,
+{
     ///
     /// Reference to the pattern graph.
     ///
@@ -92,10 +98,10 @@ pub struct VfState<
 impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
-    NRef: Copy + Hash + Ord,
-    N2Ref: Copy + Hash + Eq,
-    ERef: Copy + Eq + Hash,
-    E2Ref: Copy,
+    NRef: Copy + Hash + Ord + Debug,
+    N2Ref: Copy + Hash + Eq + Debug,
+    ERef: Copy + Eq + Hash + Debug,
+    E2Ref: Copy + Debug,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
@@ -523,10 +529,10 @@ impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     SubgraphAlgorithm<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     for VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
-    NRef: Copy + Hash + Ord,
-    N2Ref: Copy + Hash + Eq,
-    ERef: Copy + Hash + Eq,
-    E2Ref: Copy,
+    NRef: Copy + Hash + Ord + Debug,
+    N2Ref: Copy + Hash + Eq + Debug,
+    ERef: Copy + Hash + Eq + Debug,
+    E2Ref: Copy + Debug,
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
