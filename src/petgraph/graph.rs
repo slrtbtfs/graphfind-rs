@@ -5,7 +5,6 @@ use petgraph::Direction::Incoming;
 use petgraph::Direction::Outgoing;
 
 use crate::graph::Graph;
-///
 /// Example implementation for in memory graphs stored using the petgraph library.
 ///
 /// Both undirected and directed graphs are supported.
@@ -13,7 +12,6 @@ use crate::graph::Graph;
 /// Node and Edge indices are by default 32-bit unsigned integers. Valid indices are
 /// {0, ..., n - 1} and {0, ..., m - 1}, where n is the number of nodes, and m the
 /// number of edges stored in this graph implementation.
-///
 impl<NodeWeight, EdgeWeight, Direction, IndexType> Graph<NodeWeight, EdgeWeight>
     for petgraph::graph::Graph<NodeWeight, EdgeWeight, Direction, IndexType>
 where

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use crate::graph::{self};
 
-///
 /// `FilterMap` is a graph representation that is designed to abstractly
 /// implement a wide range of possible Queries on a `Graph` object.
 ///
@@ -21,7 +20,6 @@ use crate::graph::{self};
 ///
 /// Note that the base graph is required to outlive the generated FilterMap Graph, since
 /// the graph structure is borrowed from the base graph.
-///
 pub struct FilterMap<
     'g,
     BaseNodeWeight,
@@ -210,10 +208,7 @@ impl<'g, NodeWeight, EdgeWeight, Graph: graph::Graph<NodeWeight, EdgeWeight>>
     }
 }
 
-///
 /// Filters nodes and edges based on the provided patterns.
-///
-
 #[macro_export]
 macro_rules! filter_pattern {
     // filter by pattern, not altering type
@@ -244,7 +239,7 @@ macro_rules! filter_pattern {
     };
 }
 
-//Show macro in crate level docs as well
+// Show macro in crate level docs as well
 pub use filter_pattern;
 
 impl<

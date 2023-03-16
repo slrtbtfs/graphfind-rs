@@ -2,11 +2,9 @@ use vf_algorithms::VfState;
 
 use crate::graph::Graph;
 
-///
 /// Module that contains an implementation for subgraph algorithms.
 ///
 /// Goal: Contain Subgraph Isomorphism Algorithms based on the VF family (VF2, VF2+, VF3...).
-///
 pub mod vf_algorithms;
 
 /// Definition of matcher types.
@@ -21,9 +19,7 @@ pub use pattern::*;
 mod algorithm;
 pub use algorithm::*;
 
-///
 /// Creates an empty new graph pattern.
-///
 pub fn new_pattern<NodeWeight, EdgeWeight>() -> impl PatternGraph<NodeWeight, EdgeWeight> {
     petgraph::Graph::new()
 }

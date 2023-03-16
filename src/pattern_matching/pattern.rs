@@ -4,13 +4,11 @@ use super::Matcher;
 
 /// Struct that holds all relevant matching information for a single node/edge.
 pub struct PatternElement<Weight> {
-    ///
     /// The matching function.
     ///
     condition: Box<Matcher<Weight>>,
     ///
     /// A flag that tells us if we should include the matched element in the result, or not.
-    ///
     ignore: bool,
 }
 

@@ -49,10 +49,8 @@ fn connect<NodeWeight, EdgeWeight>(
     g.add_edge(node1, node2, e);
 }
 
-///
 /// Gives a graph that only contains nodes. Can be modified
 /// to contain different edges to match patterns on.
-///
 fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>) {
     let mut graph: petgraph::Graph<MovieNode, Relation> = Graph::new();
     let mut names: HashMap<&str, NodeIndex> = HashMap::new();
@@ -103,11 +101,9 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     (graph, names)
 }
 
-///
 /// Produces the full graph to use for query tests. See
 /// https://gitlab.informatik.uni-ulm.de/se/graphquery/rustgql/-/issues/36
 /// for the structure.
-///
 fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>) {
     let (mut graph, nodes) = node_graph();
     // PlaysIn Relations
@@ -197,10 +193,8 @@ fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
     (graph, nodes)
 }
 
-///
 /// Given an empty pattern graph and a non-empty base graph,
 /// assert that we do get an empty result.
-///
 #[test]
 fn test_empty_pattern_no_results() {
     let base_graph = node_graph().0;
@@ -212,10 +206,8 @@ fn test_empty_pattern_no_results() {
     assert!(results.is_empty());
 }
 
-///
 /// Given a pattern with a single node to match, assert we get
 /// eleven graphs with one node each, and that we find the previous indices.
-///
 #[test]
 fn test_single_node_any_pattern() {
     let base_graph = node_graph().0;
@@ -240,10 +232,8 @@ fn test_single_node_any_pattern() {
     assert_eq!(1, found_indices.len());
 }
 
-#[test]
-///
 /// Given a pattern with two, and a graph with one node, assert that no results can be found.
-///
+#[test]
 fn match_pattern_too_large() {
     let mut pattern_graph = new_pattern();
     let positive = matcher!(i if *i > 0);
@@ -258,10 +248,8 @@ fn match_pattern_too_large() {
     assert_eq!(0, results.len());
 }
 
-///
 /// Assert that when we query for a person pattern, we only get persons,
 /// and that we get their different names.
-///
 #[test]
 fn match_person_nodes_only() {
     let mut pattern_graph = new_pattern();
@@ -292,10 +280,8 @@ fn is_person(node: &MovieNode) -> bool {
     matches!(node, MovieNode::Person(_))
 }
 
-///
 /// Given a pattern that matches a movie node and person node, assert that
 /// we find all 6*5 = 30 different node pairs.
-///
 #[test]
 fn match_two_node_pairs() {
     let mut pattern_graph = new_pattern();
@@ -310,9 +296,7 @@ fn match_two_node_pairs() {
     assert_eq!(6 * 5, results.len());
 }
 
-///
 /// Test that we do not produce graphs where one node can never be matched.
-///
 #[test]
 fn match_wrong_matches_only() {
     let base_graph = node_graph().0;
@@ -325,12 +309,10 @@ fn match_wrong_matches_only() {
     assert_eq!(0, results.len());
 }
 
-///
 /// Test in a directed acyclic graph we find all four edges
 /// when we match (n1) --> (..) --> (n2).
 ///
 /// Query its edges, and check its references.
-///
 #[test]
 fn match_single_edges() {
     let mut base_graph = petgraph::graph::Graph::new();
@@ -364,11 +346,9 @@ fn match_single_edges() {
     }
 }
 
-///
 /// Implement a two-length pattern on the graph from `match_single_edges`.
 /// Assert two results, and nodes 0/3 to be at the start/end,
 /// with its second node to be 1/2.
-///
 #[test]
 fn match_double_edges() {
     let mut base_graph = petgraph::graph::Graph::new();
@@ -400,13 +380,11 @@ fn match_double_edges() {
     }
 }
 
-///
 /// Define a six-star as base graph and a three-star as pattern.
 /// Find all 120 = 6!/3! possible results. Assert that the middle is 0,
 /// and we have four nodes + three edges.
 ///
 /// Check that all incoming edges have 0 as pointer.
-///
 #[test]
 fn match_three_star_in_six_star() {
     let mut six_star = petgraph::graph::Graph::new();
@@ -445,10 +423,8 @@ fn match_three_star_in_six_star() {
     }
 }
 
-///
 /// Using the graph from match_three_star_in_six_star, test that
 /// we may filter edges on whether they have an even weight attached to them.
-///
 #[test]
 fn match_three_star_even_weights() {
     let mut six_star = petgraph::graph::Graph::new();
@@ -477,10 +453,8 @@ fn match_three_star_even_weights() {
     }
 }
 
-///
 /// Using the graph from match_three_star_in_six_star, test that
 /// we find an star with edges leading _to_ the center, not from it.
-///
 #[test]
 fn match_three_star_inverse() {
     let mut six_star = petgraph::graph::Graph::new();
@@ -502,10 +476,8 @@ fn match_three_star_inverse() {
     assert_eq!(6, results.len());
 }
 
-///
 /// Given the star graph match_three_star_in_six_star as base graph,
 /// and a clique with 4 members + 12 edges, assert we do not find a result.
-///
 #[test]
 fn test_node_edge_counts_terminate_early() {
     let mut six_star = petgraph::graph::Graph::new();
@@ -538,7 +510,6 @@ fn test_node_edge_counts_terminate_early() {
     assert_eq!(0, results.len());
 }
 
-///
 /// Match a given graph on:
 /// 1. Three different actors.
 /// 2. Three different movies.
@@ -546,7 +517,6 @@ fn test_node_edge_counts_terminate_early() {
 /// and also themselves.
 ///
 /// Assert 3 matches.
-///
 #[test]
 fn optimization_test() {
     let data_graph = full_graph().0;
@@ -585,14 +555,12 @@ fn optimization_test() {
     }
 }
 
-///
 /// Match a given graph on:
 /// 1. Three different actors.
 /// 2. Three different movies.
 /// 3. Next to other relations, we have three persons who know each other.
 ///
 /// Assert 3 matches.
-///
 #[test]
 fn cycle_in_knows_match() {
     let data_graph = full_graph().0;
@@ -637,10 +605,8 @@ fn cycle_in_knows_match() {
     }
 }
 
-///
 /// Find a sequence of five persons, starting with stefan,
 /// in the graph.
-///
 #[test]
 fn sequence_optimization() {
     let data_graph = full_graph().0;
@@ -679,10 +645,8 @@ fn sequence_optimization() {
     assert!(res_graph.adjacent_nodes(e3) == (p3, p4));
 }
 
-///
 /// Find a sequence of four persons, starting with stefan or yves
 /// in the graph. The first and last person know themselves.
-///
 #[test]
 fn reflexive_optimization2() {
     let data_graph = full_graph().0;
@@ -729,10 +693,8 @@ fn reflexive_optimization2() {
     }
 }
 
-///
 /// Find a sequence of four persons, starting with stefan or yves
 /// in the graph. All persons know themselves.
-///
 #[test]
 fn reflexive_optimization() {
     let data_graph = full_graph().0;
@@ -796,10 +758,8 @@ fn check_for_actor(x: &MovieNode, given_name: &str) -> bool {
     }
 }
 
-///
 /// Find a star graph with an actor as center, and
 /// three movies he plays in.
-///
 #[test]
 fn delete_test() {
     let base_graph = full_graph().0;
@@ -835,10 +795,8 @@ fn delete_test() {
     }
 }
 
-///
 /// Three actors (stefan, yves, fabian) all
 /// play in three different movies.
-///
 #[test]
 fn three_to_three() {
     let mut pattern_graph = new_pattern();
@@ -884,10 +842,8 @@ fn three_to_three() {
     }
 }
 
-// /
 /// Three actors (stefan, yves, fabian) all
 /// play in two different movies.
-///
 #[test]
 fn three_to_two() {
     let mut pattern_graph = new_pattern();
@@ -928,10 +884,8 @@ fn three_to_two() {
     }
 }
 
-///
 /// Two actors (stefan, yves) all
 /// play in two different movies.
-///
 #[test]
 fn two_to_two() {
     let mut pattern_graph = new_pattern();
@@ -968,9 +922,7 @@ fn two_to_two() {
     }
 }
 
-///
 /// Stefan plays in the Star Wars Movies.
-///
 #[test]
 fn attributes_with_parameters() {
     let mut pattern_graph = new_pattern();
@@ -1011,9 +963,7 @@ fn check_movie(element: &MovieNode, title1: &str, year1: i32) -> bool {
     }
 }
 
-///
 /// Find all Actor-Movie pairs (10 overall)
-///
 #[test]
 fn create() {
     let mut pattern_graph = new_pattern();
@@ -1036,10 +986,8 @@ fn create() {
     }
 }
 
-///
 /// Negative Test: Do not allow an edge to be visible when it refers to a
 /// node that is ignored (source)
-///
 #[test]
 #[should_panic]
 fn ignore_wrong_edge_source() {
@@ -1049,10 +997,8 @@ fn ignore_wrong_edge_source() {
     pattern.add_edge(from, to, |_: &i32| false);
 }
 
-///
 /// Negative Test: Do not allow an edge to be visible when it refers to a
 /// node that is ignored (dest)
-///
 #[test]
 #[should_panic]
 fn ignore_wrong_edge_dest() {
@@ -1062,9 +1008,7 @@ fn ignore_wrong_edge_dest() {
     pattern.add_edge(from, to, |_: &i32| false);
 }
 
-///
 /// stefan plays in two movies. But we only want to have one movie in our result!
-///
 #[test]
 fn require_delete() {
     let mut pattern = new_pattern();
@@ -1090,9 +1034,7 @@ fn require_delete() {
     }
 }
 
-///
 /// Do not allow access for ignored nodes. These do not appear in the result.
-///
 #[test]
 #[should_panic]
 fn check_ignored_nodes() {
@@ -1111,9 +1053,7 @@ fn check_ignored_nodes() {
     graph.node_weight(m2);
 }
 
-///
 /// Do not allow access for ignored edges. These do not appear in the result.
-///
 #[test]
 #[should_panic]
 fn check_ignored_edges() {
@@ -1132,9 +1072,7 @@ fn check_ignored_edges() {
     graph.edge_weight(e);
 }
 
-///
 /// Two actors (stefan, yves) play in at least two movies.
-///
 #[test]
 fn require() {
     let mut pattern_graph = new_pattern();
@@ -1165,10 +1103,8 @@ fn require() {
     }
 }
 
-///
 /// Find two persons and movies, so that both persons play in the second movie,
 /// and one movie is the successor of another.
-///
 #[test]
 fn all_stereotypes() {
     let mut pattern_graph = new_pattern();
@@ -1203,10 +1139,8 @@ fn all_stereotypes() {
     }
 }
 
-///
 /// Two actors (stefan, yves) all
 /// play in two different movies (we ignore the movies).
-///
 #[test]
 fn bk_two_to_two() {
     let mut pattern_graph = new_pattern();
@@ -1239,10 +1173,8 @@ fn bk_two_to_two() {
     }
 }
 
-///
 /// Two actors (stefan, yves) all
 /// play in three different movies (we ignore the movies).
-///
 #[test]
 fn bk_two_to_three() {
     let mut pattern_graph = new_pattern();
@@ -1278,10 +1210,8 @@ fn bk_two_to_three() {
     }
 }
 
-///
 /// Assert that yves knows stefan and plays in Jurassic Park.
 /// Does not hold in this graph; thus return empty result!
-///
 #[test]
 fn create_with_attributes() {
     let mut pattern_graph = new_pattern();
@@ -1296,12 +1226,10 @@ fn create_with_attributes() {
     assert_eq!(0, solve_vf(&pattern_graph, &base_graph).len());
 }
 
-///
 /// Find an actor that plays in a movie, and in its two successors,
 /// as well as another movie.
 ///
 /// This will be fabian, and "Jurassic Park" the fourth movie.
-///
 #[test]
 fn req_test() {
     let mut pattern_graph = new_pattern();
@@ -1335,10 +1263,8 @@ fn req_test() {
     ));
 }
 
-///
 /// Find a person that knows another person, that themselves plays in a movie.
 /// Ignore the PlaysIn relation in the result.
-///
 #[test]
 fn seq_create() {
     // Two persons, one movie
@@ -1363,10 +1289,8 @@ fn seq_create() {
     }
 }
 
-///
 /// Find a person that knows to other persons.
 /// These persons play in different movies, but we ignore those.
-///
 #[test]
 fn all_stereotypes_2() {
     let mut pattern_graph = new_pattern();
@@ -1390,10 +1314,8 @@ fn all_stereotypes_2() {
     assert_eq!(2, results.len())
 }
 
-///
 /// Given a pattern where we ignore everything, the result contains
 /// a single, empty graph.
-///
 #[test]
 fn match_empty() {
     let mut pattern_graph = new_pattern();

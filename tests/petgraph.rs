@@ -12,9 +12,7 @@ fn test_graph() -> impl rustgql::graph::Graph<String, i32> {
 }
 
 #[test]
-/**
- * Create a simple graph and check that correct node and edge weights are delivered through the Graph trait implementation.
- */
+/// Create a simple graph and check that correct node and edge weights are delivered through the Graph trait implementation.
 fn test_graph_weights() {
     // Vague explanation: Cast into a rustgql::Graph trait object.
     // More precise: Create a Box (in C++ that would be a std::unique_ptr)
