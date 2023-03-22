@@ -1,3 +1,21 @@
+//!
+//! The problem being solved here is finding subgraphs matching
+//! a given subgraph pattern in a larger base graph. The subgraph
+//! pattern is a graph where each element weight is a condition.
+//!  A valid match is a subgraph of the base graph that is isomorphic to the
+//! pattern where each element fulfils the condition of the corresponding
+//! pattern element.
+//!
+//! It is also possible to add hidden subgraph elements, that are removed from the matches before returning them to the caller.
+//!
+//! While the architecture is designed to eventually support multiple matching
+//! implementations, currently only one VF based algorithm is implemented. The
+//! easiest way to use it is creating a new pattern with
+//! [pattern_matching::new_pattern] and passing that pattern to
+//! [pattern_matching::solve_vf]. Conditions in the pattern graph can be either constructed as function closures or with the [matcher] macro.
+//!
+//! For examples see the unit tests for this module.
+
 use vf_algorithms::VfState;
 
 use crate::graph::Graph;

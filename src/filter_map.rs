@@ -1,3 +1,16 @@
+//!
+//!  This module implements graph transformations that are limited to the following two operations:
+//! * **filter** graph elements (nodes and edges) based on provided criteria. All elements that are not matching the provided criteria will be removed from the result graph, edges adjacent to removed nodes will be removed too.
+//! * **map** graph element weights to new values. Those are allowed to reference values of the input graph.
+//!
+//! Indices remain stable under these operations.
+//!
+//! The [filter_map::FilterMap] structure provides a variety of methods to apply those graph transformations, some allowing to express arbitrarily complex transformations, others tailored to more economically express special cases.
+//!
+//! The [filter_pattern] macro provides a convenient syntax for filtering graph elements based on patterns.
+//!
+//! The unit tests for this module provide some usage examples.
+
 use std::collections::HashMap;
 
 use crate::graph::{self};
