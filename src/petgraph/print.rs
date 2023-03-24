@@ -18,9 +18,7 @@ where
     IndexType: petgraph::graph::IndexType,
     Direction: petgraph::EdgeType,
 {
-    ///
     /// Use petgraph's Dot struct to output the graph.
-    ///
     fn print(&self) -> String {
         format!("{:?}", Dot::new(self))
     }

@@ -13,7 +13,6 @@ use crate::{
     pattern_matching::{MatchedGraph, PatternElement, PatternGraph, SubgraphAlgorithm},
 };
 
-///
 /// Implements an subgraph isomorphism algorithm based on the papers
 /// "A (Sub)Graph Isomorphism Algorithm for Matching Large Graphs"
 /// by Cordella, Foggia, Sansone, and Vento, published in 2004
@@ -21,12 +20,9 @@ use crate::{
 /// "Performance Evaluation of the VF Graph Matching Algorithm"
 /// by the same authors in 1999 (doi 10.1109/ICIAP.1999.797762).
 /// The paper referenced above call this algorithm VF2 respectively VF.
-///
 
-///
 /// VfState defines the required data structures as defined in Subsection 2.4
 /// of the 2004 paper, as well as the algorithms to run them.
-///
 pub struct VfState<
     'a,
     NodeWeight,
@@ -43,58 +39,38 @@ pub struct VfState<
     N2Ref: Debug,
     E2Ref: Debug,
 {
-    ///
     /// Reference to the pattern graph.
-    ///
     pattern_graph: &'a P,
-    ///
     /// Reference to the base graph.
-    ///
     base_graph: &'a B,
-    ///
     /// Vec of found graphs we may return.
-    ///
     results: Vec<MatchedGraph<'a, NodeWeight, EdgeWeight, P>>,
 
-    ///
     /// Matching of nodes in `pattern_graph` to suitable nodes in `base_graph`.
     /// `core[n] = m` says that the node `n` can be matched to node `m`.
     ///
     /// We use this map to find possible candidates for next nodes, and to
     /// construct the result graph.
-    ///
     core: BiHashMap<NRef, N2Ref>,
-    ///
     /// `out_1` is a matching between outgoing node references from `pattern_graph`,
     /// and the search depth at which they were inserted. We use this mapping
     /// to find possible successor nodes to insert into `core_1`.
-    ///
     out_1: HashMap<NRef, usize>,
-    ///
     /// Matching for outgoing nodes of `base_graph`. Analog Definition to `out_1`.
-    ///
     out_2: HashMap<N2Ref, usize>,
-    ///
     /// `in_1` maps nodes from `core_1` and their predecessors to the search depth
     /// at which they were inserted. We use this mapping to find possible predecessors
     /// of matched nodes to insert into `core_1`.
-    ///
     in_1: HashMap<NRef, usize>,
-    ///
     /// Matching for incoming nodes of `pattern_graph`. Analog Definition to `in_1`.
-    ///
     in_2: HashMap<N2Ref, usize>,
 
-    ///
     /// Counter for how many nodes we actually need to return.
-    ///
     nodes_to_take: usize,
 }
 
-///
 /// Implementation of VfState/the VF2 Algorithm.
 /// This contains the actual parts related to subgraph isomorphism.
-///
 impl<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
     VfState<'a, NodeWeight, EdgeWeight, NRef, ERef, N2Ref, E2Ref, P, B>
 where
@@ -105,7 +81,6 @@ where
     P: PatternGraph<NodeWeight, EdgeWeight, NodeRef = NRef, EdgeRef = ERef>,
     B: Graph<NodeWeight, EdgeWeight, NodeRef = N2Ref, EdgeRef = E2Ref>,
 {
-    ///
     /// Gives an ordering of two nodes, n1 and n2, from `pattern_graph`.
     /// This ordering ensures that:
     ///
@@ -113,7 +88,6 @@ where
     /// 2. We follow the given ordering of the node indices.
     ///
     /// We use this method to ensure set semantics.
-    ///
     fn give_node_order(&self, n1: NRef, n2: NRef) -> Ordering {
         let n1_appears = self.pattern_graph.node_weight(n1).should_appear();
         let n2_appears = self.pattern_graph.node_weight(n2).should_appear();
@@ -126,14 +100,12 @@ where
         }
     }
 
-    ///
     /// Returns a tuple (N, N2) of node references.
     /// N contains the smallest unmatched node within the pattern graph,
     /// and N2 unmatched nodes within the base graph.
     /// When matched nodes contain a successor, we use another method.
     ///
     /// This ordering is described in the 1999 first paper.
-    ///
     fn find_unmatched_unconnected_nodes(&'a self) -> (Option<NRef>, Vec<N2Ref>) {
         let n = self
             .pattern_graph
@@ -150,7 +122,6 @@ where
         (n, base_nodes)
     }
 
-    ///
     /// General implementation of the unmatched neighbors methods.
     /// `pattern_map` and `base_map` contain the in/out sets of matched nodes,
     /// and their forward/backward neighbors.
@@ -160,7 +131,6 @@ where
     ///
     /// When `N` is an ignored node and we are still looking for nodes to add to the result,
     /// `N` will be None so that the algorithm enforces set semantics for the results.
-    ///
     fn find_unmatched_neighbors(
         &'a self,
         pattern_map: &HashMap<NRef, usize>,
@@ -184,10 +154,8 @@ where
         (n, n2)
     }
 
-    ///
     /// Matches node n to node m, where n is from the pattern, and m is from the base graph.
     /// Update out_1/out_2/in_1/in_2 to hold the insertion depths.
-    ///
     fn assign(&mut self, n: NRef, m: N2Ref, depth: usize) {
         // Update core/out/in sets.
         self.core.insert(n, m);
@@ -214,7 +182,6 @@ where
         });
     }
 
-    ///
     /// Tests if matching node n to node m is allowed. This is a shorthand for
     /// these conditions:
     ///
@@ -225,7 +192,6 @@ where
     /// ### Semantic:
     /// 1. `check_node_semantics`
     /// 2. `check_edge_semantics`
-    ///
     fn is_valid_matching(&self, n: NRef, m: N2Ref) -> bool {
         self.check_node_semantics(n, m)
             && self.check_predecessor_relation(n, m)
@@ -233,11 +199,9 @@ where
             && self.check_edge_semantics(n, m)
     }
 
-    ///
     /// Test that assigning n to m leaves the predecessor relations intact:
     /// We may map any matched predecessor n' of n in `pattern_graph` to
     /// another matched node m' that precedes m in `base_graph`.
-    ///
     fn check_predecessor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Pred(G_1, n)
         let n_preds: HashSet<_> = incoming_nodes(self.pattern_graph, n)
@@ -257,11 +221,9 @@ where
         })
     }
 
-    ///
     /// Test that assigning n to m leaves the successor relations intact:
     /// We may map any matched successor n' of n in `pattern_graph` to
     /// another matched node m' that succeeds m in `base_graph`.
-    ///
     fn check_successor_relation(&self, n: NRef, m: N2Ref) -> bool {
         // M_1(s) intersected with Succ(G_1, n)
         let n_succs: HashSet<_> = outgoing_nodes(self.pattern_graph, n)
@@ -280,21 +242,17 @@ where
         })
     }
 
-    ///
     /// Test whether node n in the pattern may be matched to node m
     /// in the graph. That means that the matcher function for n
     /// must return true for the node referred to by m.
-    ///
     fn check_node_semantics(&self, n: NRef, m: N2Ref) -> bool {
         let matcher = self.pattern_graph.node_weight(n);
         let refed_node = self.base_graph.node_weight(m);
         matcher.may_match(refed_node)
     }
 
-    ///
     /// Consider all edges e that lead to and from n. Take those edges for
     /// which we already established a matching to another node m.
-    ///
     fn check_edge_semantics(&self, n: NRef, m: N2Ref) -> bool {
         // Take successor edges of n that have been matched.
         let n_succs_matched = self
@@ -343,9 +301,7 @@ where
         })
     }
 
-    ///
     /// Undoes the matching between nodes n and m.
-    ///
     fn unassign(&mut self, n: &NRef, m: &N2Ref, depth: usize) {
         // Remove from core set
         self.core.remove_by_left(n);
@@ -369,10 +325,8 @@ where
             .for_each(|n_in| Self::remove(&n_in, depth, &mut self.in_2));
     }
 
-    ///
     /// Removes index from map if its insertion depth is equal to
     /// its insertion depth. Removes thus nodes from the out set.
-    ///
     fn remove<N>(index: &N, depth: usize, map: &mut HashMap<N, usize>)
     where
         N: Eq + Hash,
@@ -384,13 +338,11 @@ where
         }
     }
 
-    ///
     /// Produces a new ResultGraph for the current graph state.
     ///
     /// Copy the keys from pattern_graph along with the weights referred
     /// to by the depths from base_graph. Note that any elements in the result graph that
     /// are marked as ignored, will not appear in the result.
-    ///
     fn produce_graph(&mut self) {
         // Get node references and weights.
         let node_list = self
@@ -428,12 +380,10 @@ where
         self.results.push(result);
     }
 
-    ///
     /// Looks up subgraphs and puts them into results.
     ///
     /// Returns the node number to go back to. Thus prevents
     /// duplicate matches when we have elements that we ignore.
-    ///
     fn find_subgraphs(&mut self, depth: usize) -> usize {
         // Full match may now be added.
         if depth == self.pattern_graph.count_nodes() {
@@ -475,7 +425,6 @@ where
         }
     }
 
-    ///
     /// Creates a new VfState for the given pattern graph and base graph.
     /// Initialized for each base_graph instance, to use its specific indices.
     ///
@@ -485,7 +434,6 @@ where
     ///
     /// ## Output:
     /// A VfState struct.
-    ///
     fn init(
         pattern_graph: &'a P,
         base_graph: &'a B,
@@ -509,10 +457,8 @@ where
         }
     }
 
-    ///
     /// Handles empty patterns and otherwise calls the
     /// predefined search function.
-    ///
     fn run_query(&mut self) {
         // Check in advance that our pattern fits in the base graph.
         if self.pattern_graph.is_empty_graph()
