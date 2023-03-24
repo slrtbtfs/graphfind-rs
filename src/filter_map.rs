@@ -9,7 +9,7 @@
 //!
 //! The [filter_pattern] macro provides a convenient syntax for filtering graph elements based on patterns.
 //!
-//! The unit tests for this module provide some usage examples.
+//! The unit tests for this module provide some usage examples (located in the `tests` folder of the crate source).
 
 use std::collections::HashMap;
 

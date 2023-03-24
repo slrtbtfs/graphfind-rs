@@ -1,4 +1,4 @@
-//! Everywhere a graph is used as a function argument or return type within this crate, it is required to implement the [graph::Graph] trait and possibly some of its trait extensions.
+//! Everywhere a graph is used as a function argument or return type within this crate, it is required to implement the [graph::Graph] trait and possibly some of its trait extensions, depending on the specific functionalities required by each API.
 //!
 //! This approach theoretically allows swapping out storage backends for graphs, and allows more implementation flexibility for the return type of graph operations.
 //!

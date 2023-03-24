@@ -7,6 +7,8 @@
 //! It was created with the aim to explore graph query languages that
 //! that are written in general purpose programming languages and
 //! integrate well with compilers and existing development environments.
+//!
+//! The create currently relies on unstable Rust features.
 
 #![feature(type_alias_impl_trait)]
 #![feature(is_some_and)]

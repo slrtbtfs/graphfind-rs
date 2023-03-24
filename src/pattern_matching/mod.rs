@@ -1,7 +1,7 @@
 //!
 //! The problem being solved here is finding subgraphs matching
 //! a given subgraph pattern in a larger base graph. The subgraph
-//! pattern is a graph where each element weight is a condition.
+//! pattern is a graph where each element weight is a condition on a base graph element.
 //!  A valid match is a subgraph of the base graph that is isomorphic to the
 //! pattern where each element fulfils the condition of the corresponding
 //! pattern element.
@@ -14,7 +14,7 @@
 //! [pattern_matching::new_pattern] and passing that pattern to
 //! [pattern_matching::solve_vf]. Conditions in the pattern graph can be either constructed as function closures or with the [matcher] macro.
 //!
-//! For examples see the unit tests for this module.
+//! For examples see the unit tests for this module (located in the `tests` folder of the crate source).
 
 use vf_algorithms::VfState;
 
