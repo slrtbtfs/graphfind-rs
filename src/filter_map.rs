@@ -1,8 +1,20 @@
+//!
+//!  This module implements graph transformations that are limited to the following two operations:
+//! * **filter** graph elements (nodes and edges) based on provided criteria. All elements that are not matching the provided criteria will be removed from the result graph, edges adjacent to removed nodes will be removed too.
+//! * **map** graph element weights to new values. Those are allowed to reference values of the input graph.
+//!
+//! Indices remain stable under these operations.
+//!
+//! The [filter_map::FilterMap] structure provides a variety of methods to apply those graph transformations, some allowing to express arbitrarily complex transformations, others tailored to more economically express special cases.
+//!
+//! The [filter_pattern] macro provides a convenient syntax for filtering graph elements based on patterns.
+//!
+//! The unit tests for this module provide some usage examples (located in the `tests` folder of the crate source).
+
 use std::collections::HashMap;
 
 use crate::graph::{self};
 
-///
 /// `FilterMap` is a graph representation that is designed to abstractly
 /// implement a wide range of possible Queries on a `Graph` object.
 ///
@@ -21,7 +33,6 @@ use crate::graph::{self};
 ///
 /// Note that the base graph is required to outlive the generated FilterMap Graph, since
 /// the graph structure is borrowed from the base graph.
-///
 pub struct FilterMap<
     'g,
     BaseNodeWeight,
@@ -210,10 +221,7 @@ impl<'g, NodeWeight, EdgeWeight, Graph: graph::Graph<NodeWeight, EdgeWeight>>
     }
 }
 
-///
 /// Filters nodes and edges based on the provided patterns.
-///
-
 #[macro_export]
 macro_rules! filter_pattern {
     // filter by pattern, not altering type
@@ -244,7 +252,7 @@ macro_rules! filter_pattern {
     };
 }
 
-//Show macro in crate level docs as well
+// Show macro in crate level docs as well
 pub use filter_pattern;
 
 impl<

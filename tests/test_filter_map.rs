@@ -14,7 +14,6 @@ use common::{
 };
 use rustgql::filter_map::FilterMap;
 
-///
 /// Function Tests for filter_map
 ///
 
@@ -23,7 +22,6 @@ use rustgql::filter_map::FilterMap;
 /// and 2000 edges (0, ..., 1999), so that edge 0 connect nodes 0 and 1,
 /// edge 1 0 and 2, edge 2 nodes 3 and 4, edge 3 3 and 5, etc.
 /// This graph is undirected.
-///
 fn make_sample_graph_mass_filter_map() -> Graph<u64, u64, Undirected> {
     let mut graph = petgraph::graph::Graph::new_undirected();
 
@@ -38,10 +36,8 @@ fn make_sample_graph_mass_filter_map() -> Graph<u64, u64, Undirected> {
     graph
 }
 
-///
 /// Remove every third node. This also implicitly removes all even numbered edges.
 /// Assume we get the graph we expect: edges 1, 3, ...
-///
 #[test]
 fn test_filter_nodes_only() {
     let graph = make_sample_graph_mass_filter_map();
@@ -84,10 +80,8 @@ fn test_filter_nodes_only() {
     }
 }
 
-///
 /// Remove all even numbered edges.
 /// Assume we get the graph we expect: edges 1, 3, ...
-///
 #[test]
 fn test_filter_edges_only() {
     let graph = make_sample_graph_mass_filter_map();
@@ -131,10 +125,8 @@ fn test_filter_edges_only() {
         assert_eq!(((3 * idx) / 2) + 1, n2.index());
     }
 }
-///
 /// Remove one of three nodes (0, 3, ...), thus removing all edges.
 /// Triple the weights of remaining nodes. This also tests edge removal.
-///
 #[test]
 fn test_weight_node_only() {
     let graph = make_sample_graph_mass_filter_map();
@@ -160,10 +152,8 @@ fn test_weight_node_only() {
     }
 }
 
-///
 /// Take the Persons graph, and give me the names of all persons,
 /// and all existing friendships that existed after 2011.
-///
 #[test]
 fn test_edge_node_projection() {
     let graph = make_sample_graph_variant();
@@ -201,10 +191,8 @@ fn test_edge_node_projection() {
     }
 }
 
-///
 /// Take the Tramways graph, and take all stations with >= 2 incoming/outgoing edges.
 /// Use general_filter_map directly.
-///
 #[test]
 fn test_filter_map_directly() {
     let graph = make_sample_graph_undirected().0;
@@ -237,10 +225,8 @@ fn test_filter_map_directly() {
     );
 }
 
-///
 /// Square all weights in the filter_map sample graph twice, using weight_map.
 /// Assert that the structure remains unchanged.
-///
 #[test]
 fn test_map_only() {
     let graph = into_trait_object(make_sample_graph_mass_filter_map());
@@ -284,9 +270,7 @@ fn test_map_only() {
     }
 }
 
-///
 /// Test that access to a non-existing node fails in the result graph of a filter-map.
-///
 #[test]
 #[should_panic]
 fn test_wrong_node_index() {
@@ -296,9 +280,7 @@ fn test_wrong_node_index() {
     let _invalid_weight = result.node_weight(NodeIndex::from(0));
 }
 
-///
 /// Test that access to the adjacent non-existing node fails in the result graph of a filter-map.
-///
 #[test]
 #[should_panic]
 fn test_wrong_node_adjacent_edges() {
@@ -308,9 +290,7 @@ fn test_wrong_node_adjacent_edges() {
     let _invalid_edge_iter = result.adjacent_edges(NodeIndex::from(0));
 }
 
-///
 /// Test that access to the outgoing non-existing node fails in the result graph of a filter-map.
-///
 #[test]
 #[should_panic]
 fn test_wrong_node_outgoing_edges() {
@@ -320,9 +300,7 @@ fn test_wrong_node_outgoing_edges() {
     let _invalid_edge_iter = result.outgoing_edges(NodeIndex::from(0));
 }
 
-///
 /// Test that access to the incoming non-existing node fails in the result graph of a filter-map.
-///
 #[test]
 #[should_panic]
 fn test_wrong_node_incoming_edges() {
@@ -332,9 +310,7 @@ fn test_wrong_node_incoming_edges() {
     let _invalid_edge_iter = result.outgoing_edges(NodeIndex::from(0));
 }
 
-///
 /// Test that access to a non-existing edge fails.
-///
 #[test]
 #[should_panic]
 fn test_wrong_edge_index() {
@@ -344,9 +320,7 @@ fn test_wrong_edge_index() {
     let _invalid_weight = result.edge_weight(EdgeIndex::from(0));
 }
 
-///
 /// Test that access to the ends of a non-existing node fails.
-///
 #[test]
 #[should_panic]
 fn test_wrong_edge_ends() {
@@ -359,9 +333,7 @@ fn test_wrong_edge_ends() {
     let (_s, _e) = result.adjacent_nodes(EdgeIndex::from(0));
 }
 
-///
 /// Test that the filter_pattern macro evaluates to correct code.
-///
 #[test]
 fn test_filter_pattern() {
     let base_graph = make_sample_graph_variant();
@@ -381,10 +353,8 @@ fn test_filter_pattern() {
     assert_eq!(old_friends.edges().count(), 2);
 }
 
-///
 /// Test that the filter_pattern macro is aware of the type of the matched
 /// pattern.
-///
 #[test]
 fn test_filter_pattern_result() {
     // generate a graph having Results as values

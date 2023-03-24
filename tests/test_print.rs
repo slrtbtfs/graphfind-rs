@@ -5,10 +5,8 @@ use test_dir::{DirBuilder, TestDir};
 pub mod common;
 use common::make_sample_graph_variant;
 
-///
 /// Test Case for Printing to GraphViz dot format:
 /// Create the String representation of a Graph, then compare it to the created String.
-///
 #[test]
 fn test_petgraph_print() {
     let graph = make_sample_graph_variant();
@@ -30,9 +28,7 @@ fn test_petgraph_print() {
     assert_eq!(actual_print, dot_print);
 }
 
-///
 /// Tests that graphviz can generate a .svg file for our sample graph.
-///
 #[cfg(feature = "svg")]
 #[test]
 fn test_petgraph_svg_print() {
