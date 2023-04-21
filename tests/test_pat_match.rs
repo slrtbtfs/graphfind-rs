@@ -9,8 +9,8 @@ use common::{
     Relation::{Knows, PlaysIn, Successor},
 };
 use petgraph::graph::{Graph, NodeIndex};
-use rustgql::pattern_matching::solve_vf;
-use rustgql::{
+use graphfind_rs::pattern_matching::solve_vf;
+use graphfind_rs::{
     graph::Graph as QueryGraph, matcher, pattern_matching::new_pattern,
     pattern_matching::PatternGraph,
 };
@@ -102,7 +102,7 @@ fn node_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>)
 }
 
 /// Produces the full graph to use for query tests. See
-/// https://gitlab.informatik.uni-ulm.de/se/graphquery/rustgql/-/issues/36
+/// https://gitlab.informatik.uni-ulm.de/se/graphquery/graphfind_rs/-/issues/36
 /// for the structure.
 fn full_graph<'a>() -> (Graph<MovieNode, Relation>, HashMap<&'a str, NodeIndex>) {
     let (mut graph, nodes) = node_graph();

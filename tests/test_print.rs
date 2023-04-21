@@ -1,4 +1,4 @@
-use rustgql::graph::VizDotGraph;
+use graphfind_rs::graph::VizDotGraph;
 #[cfg(feature = "svg")]
 use test_dir::{DirBuilder, TestDir};
 

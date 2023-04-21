@@ -1,8 +1,8 @@
-use rustgql::graph::Graph;
+use graphfind_rs::graph::Graph;
 
-extern crate rustgql;
+extern crate graphfind_rs;
 
-fn test_graph() -> impl rustgql::graph::Graph<String, i32> {
+fn test_graph() -> impl graphfind_rs::graph::Graph<String, i32> {
     let mut g = petgraph::graph::Graph::new();
     let a = g.add_node(String::from("a"));
     let b = g.add_node(String::from("b"));
@@ -14,7 +14,7 @@ fn test_graph() -> impl rustgql::graph::Graph<String, i32> {
 #[test]
 /// Create a simple graph and check that correct node and edge weights are delivered through the Graph trait implementation.
 fn test_graph_weights() {
-    // Vague explanation: Cast into a rustgql::Graph trait object.
+    // Vague explanation: Cast into a graphfind_rs::Graph trait object.
     // More precise: Create a Box (in C++ that would be a std::unique_ptr)
     // containing a trait implementation of with functions dynamically resolved at runtime,
     // in order to drop any petgraph functionality and keep only what's included in the Graph trait.

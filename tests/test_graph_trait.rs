@@ -1,5 +1,5 @@
 use petgraph::graph::{EdgeIndex, NodeIndex};
-use rustgql::graph::Graph as RQLGraph;
+use graphfind_rs::graph::Graph as RQLGraph;
 
 pub mod common;
 use common::{

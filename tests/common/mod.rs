@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 ///
 pub fn into_trait_object<N, E, D: EdgeType>(
     g: petgraph::graph::Graph<N, E, D, DefaultIx>,
-) -> impl rustgql::graph::Graph<
+) -> impl graphfind_rs::graph::Graph<
     N,
     E,
     NodeRef = petgraph::graph::NodeIndex,
