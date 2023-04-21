@@ -1,5 +1,5 @@
-use petgraph::graph::{EdgeIndex, NodeIndex};
 use graphfind_rs::graph::Graph as RQLGraph;
+use petgraph::graph::{EdgeIndex, NodeIndex};
 
 pub mod common;
 use common::{

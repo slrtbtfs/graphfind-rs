@@ -8,12 +8,12 @@ use common::{
     Relation,
     Relation::{Knows, PlaysIn, Successor},
 };
-use petgraph::graph::{Graph, NodeIndex};
 use graphfind_rs::pattern_matching::solve_vf;
 use graphfind_rs::{
     graph::Graph as QueryGraph, matcher, pattern_matching::new_pattern,
     pattern_matching::PatternGraph,
 };
+use petgraph::graph::{Graph, NodeIndex};
 
 fn add_person<'a>(
     g: &mut Graph<MovieNode, Relation>,

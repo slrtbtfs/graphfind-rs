@@ -1,11 +1,11 @@
 use std::vec;
 
+use graphfind_rs::{filter_pattern, graph::Graph as RQLGraph};
 use petgraph::{
     graph::{EdgeIndex, NodeIndex},
     stable_graph::DefaultIx,
     Graph, Undirected,
 };
-use graphfind_rs::{filter_pattern, graph::Graph as RQLGraph};
 
 pub mod common;
 use common::{
