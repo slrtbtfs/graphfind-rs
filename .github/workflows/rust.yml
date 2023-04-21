@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Skip Duplicate Actions
         uses: fkirc/skip-duplicate-actions@v5.3.0
+        with:
+          cancel_others: true
       - uses: actions/checkout@v3
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
       - run: rustup component add rustfmt
