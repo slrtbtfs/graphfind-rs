@@ -219,10 +219,7 @@ fn test_filter_map_directly() {
     let edge_index: Vec<_> = result.edges().collect();
     assert_eq!(edge_index[0].index(), 0);
     assert_eq!(edge_index.len(), 1);
-    assert_eq!(
-        *result.edge_weight(edge_index[0]),
-        &5
-    );
+    assert_eq!(*result.edge_weight(edge_index[0]), &5);
 }
 
 /// Square all weights in the filter_map sample graph twice, using weight_map.
