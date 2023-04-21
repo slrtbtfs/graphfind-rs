@@ -1,4 +1,4 @@
-[![https://github.com/graphfind-rs/actions/workflows/rust.yml/badge.svg?branch=master][]](https://github.com/slrtbtfs/graphfind-rs/actions) [![https://img.shields.io/crates/v/graphfind-rs][]](https://crates.io/crates/graphfind-rs)
+[![build status](https://github.com/slrtbtfs/graphfind-rs/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/slrtbtfs/graphfind-rs/actions) [![crates.io](https://img.shields.io/crates/v/graphfind-rs)](https://crates.io/crates/graphfind-rs)
 # graphfind-rs
 
 Library for finding patterns in graphs.
