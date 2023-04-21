@@ -11,7 +11,7 @@
 //! The create currently relies on unstable Rust features.
 
 #![feature(type_alias_impl_trait)]
-#![feature(is_some_and)]
+#![feature(impl_trait_in_assoc_type)]
 
 /// Generic graph traits used as abstractions within this library.
 pub mod graph;
