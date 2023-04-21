@@ -3,6 +3,10 @@ name = "graphfind-rs"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+description = "Library for finding patterns in graphs"
+repository = "https://github.com/slrtbtfs/graphfind-rs"
+keywords = ["dsl", "graph", "graph-algorithms", "pattern"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
