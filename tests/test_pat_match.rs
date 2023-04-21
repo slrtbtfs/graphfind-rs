@@ -1076,31 +1076,26 @@ fn check_ignored_edges() {
 #[test]
 fn require() {
     let mut pattern_graph = new_pattern();
-    // Actors
+    // Add Actors and Movies
     let s = pattern_graph.add_node(|p| check_for_actor(p, "stefan"));
     let y = pattern_graph.add_node(|p| check_for_actor(p, "yves"));
-    // Movies
     let m1 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
     let m2 = pattern_graph.add_hidden_node(matcher!(MovieNode::Movie(_)));
-    // Four Connections we all ignore
+    // Add connections from Actors to Movies
     pattern_graph.add_hidden_edge(s, m1, matcher!(PlaysIn));
     pattern_graph.add_hidden_edge(s, m2, matcher!(PlaysIn));
     pattern_graph.add_hidden_edge(y, m1, matcher!(PlaysIn));
     pattern_graph.add_hidden_edge(y, m2, matcher!(PlaysIn));
 
-    // Query
+    // Run Query
     let base_graph = full_graph().0;
     let results = solve_vf(&pattern_graph, &base_graph);
-    // Single Result
     assert_eq!(1, results.len());
-
-    // Checks
-    for graph in results {
-        // Find our actors
-        assert_eq!(2, graph.count_nodes());
-        assert!(check_for_actor(graph.node_weight(s), "stefan"));
-        assert!(check_for_actor(graph.node_weight(y), "yves"));
-    }
+    let graph = results.first().unwrap();
+    // Find our actors
+    assert_eq!(2, graph.count_nodes());
+    assert!(check_for_actor(graph.node_weight(s), "stefan"));
+    assert!(check_for_actor(graph.node_weight(y), "yves"));
 }
 
 /// Find two persons and movies, so that both persons play in the second movie,
