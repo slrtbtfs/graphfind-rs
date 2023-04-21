@@ -202,7 +202,7 @@ fn test_filter_map_directly() {
             let degree = g.edges(n).count();
             Some(degree).filter(|_| degree >= 2)
         },
-        |g, e| Some(("highly frequented", g.edge_weight(e).unwrap())),
+        |g, e| Some(g.edge_weight(e).unwrap()),
     );
 
     // Two nodes; new data is degree (3).
@@ -221,7 +221,7 @@ fn test_filter_map_directly() {
     assert_eq!(edge_index.len(), 1);
     assert_eq!(
         *result.edge_weight(edge_index[0]),
-        ("highly frequented", &5)
+        &5
     );
 }
 
