@@ -1,3 +1,4 @@
+[![build_status][]](https://github.com/slrtbtfs/graphfind-rs/actions) [![crates][]](https://crates.io/crates/graphfind-rs)
 # graphfind-rs
 
 Library for finding patterns in graphs.
