@@ -25,6 +25,6 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets --all-features
       - run: cargo build --verbose
-      - run: apt-get update
-      - run: apt-get -y install graphviz
+      - run: sudo apt-get update
+      - run: sudo apt-get -y install graphviz
       - run: cargo test --verbose --bins --tests --features svg
