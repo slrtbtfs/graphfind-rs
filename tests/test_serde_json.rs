@@ -1,9 +1,9 @@
+use graphfind_rs::graph::GraphReadWriter;
 use petgraph::{
     graph::Graph,
     visit::{EdgeRef, IntoNodeReferences},
     Directed,
 };
-use graphfind_rs::graph::GraphReadWriter;
 use test_dir::{DirBuilder, TestDir};
 
 pub mod common;
